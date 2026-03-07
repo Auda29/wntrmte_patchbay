@@ -9,6 +9,10 @@
     },
     "dependencies": {
         "@patchbay/core": "*",
-        "commander": "^12.0.0"
+        "@patchbay/runner-bash": "^0.1.0",
+        "@patchbay/runner-cursor": "^0.1.0",
+        "@patchbay/runner-http": "^0.1.0",
+        "commander": "^12.0.0",
+        "enquirer": "^2.4.1"
     }
 }

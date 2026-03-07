@@ -45,13 +45,20 @@ export class Orchestrator {
         };
         this.store.saveRun(run);
 
+        const project = this.store.getProject();
+        const repoPath = project.repoPath || process.cwd();
+        const projectRules = project.rules ? project.rules.join('\n') : undefined;
+        const contextFiles = this.store.getContextFiles();
+
         try {
             const output = await runner.execute({
                 taskId,
-                repoPath: process.cwd(), // Will be updated to match project later
+                repoPath,
                 branch: 'main',
                 affectedFiles: task.affectedFiles,
-                goal: task.goal || task.description || task.title
+                contextFiles,
+                projectRules,
+                goal: task.goal || task.description || task.title || ''
             });
 
             if (output.status === 'blocked') {

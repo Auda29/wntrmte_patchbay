@@ -1,13 +1,43 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';
+import Ajv, { ValidateFunction } from 'ajv';
 import { Project, Task, Run, Decision, AgentProfile } from './types';
 
 export class Store {
     private baseDir: string;
+    private ajv: Ajv;
+    private validateProject: ValidateFunction;
+    private validateTask: ValidateFunction;
+    private validateRun: ValidateFunction;
+    private validateDecision: ValidateFunction;
 
     constructor(targetRepoPath: string = process.cwd()) {
         this.baseDir = path.join(targetRepoPath, '.project-agents');
+        this.ajv = new Ajv({ allErrors: true });
+
+        // Try importing copied schemas (or local in monorepo during dev)
+        // __dirname in dist/ is packages/core/dist. Schemas are in packages/core/schema
+        let schemaDir = path.join(__dirname, '../schema');
+        if (!fs.existsSync(schemaDir)) {
+            // Fallback for dev/ts-node where __dirname is src/
+            schemaDir = path.join(__dirname, '../../schema');
+            if (!fs.existsSync(schemaDir)) {
+                // Fallback for direct repo usage
+                schemaDir = path.resolve(process.cwd(), 'schema');
+            }
+        }
+
+        const loadSchema = (name: string) => {
+            const p = path.join(schemaDir, name);
+            if (!fs.existsSync(p)) return {}; // Mock or skip if missing in dev
+            return JSON.parse(fs.readFileSync(p, 'utf8'));
+        };
+
+        this.validateProject = this.ajv.compile(loadSchema('project.schema.json'));
+        this.validateTask = this.ajv.compile(loadSchema('task.schema.json'));
+        this.validateRun = this.ajv.compile(loadSchema('run.schema.json'));
+        this.validateDecision = this.ajv.compile(loadSchema('decision.schema.json'));
     }
 
     get isInitialized(): boolean {
@@ -38,7 +68,13 @@ export class Store {
             throw new Error(`No project.yml found in ${this.baseDir}`);
         }
         const content = fs.readFileSync(projectFile, 'utf8');
-        return yaml.parse(content) as Project;
+        const project = yaml.parse(content) as Project;
+
+        if (!this.validateProject(project)) {
+            console.error('Project schema validation errors:', this.ajv.errorsText(this.validateProject.errors));
+            throw new Error('project.yml fails schema validation');
+        }
+        return project;
     }
 
     listTasks(): Task[] {
@@ -59,11 +95,21 @@ export class Store {
     }
 
     saveTask(task: Task) {
+        if (!this.validateTask(task)) {
+            const taskId = (task as any).id || 'unknown';
+            console.error(`Task ${taskId} schema validation errors:`, this.ajv.errorsText(this.validateTask.errors));
+            throw new Error(`Task ${taskId} fails schema validation`);
+        }
         const tasksDir = path.join(this.baseDir, 'tasks');
         fs.writeFileSync(path.join(tasksDir, `${task.id}.yml`), yaml.stringify(task));
     }
 
     saveRun(run: Run) {
+        if (!this.validateRun(run)) {
+            const runId = (run as any).id || 'unknown';
+            console.error(`Run ${runId} schema validation errors:`, this.ajv.errorsText(this.validateRun.errors));
+            throw new Error(`Run ${runId} fails schema validation`);
+        }
         const runsDir = path.join(this.baseDir, 'runs');
         fs.writeFileSync(path.join(runsDir, `${run.id}.json`), JSON.stringify(run, null, 2));
     }
@@ -96,5 +142,36 @@ export class Store {
                     return { id: f, title: f, rationale: content, timestamp: new Date().toISOString() } as Decision;
                 }
             });
+    }
+
+    getContextFiles(): string[] {
+        const contextDir = path.join(this.baseDir, 'context');
+        if (!fs.existsSync(contextDir)) return [];
+        return fs.readdirSync(contextDir)
+            .filter(f => fs.statSync(path.join(contextDir, f)).isFile())
+            .map(f => {
+                const content = fs.readFileSync(path.join(contextDir, f), 'utf-8');
+                return `--- ${f} ---\n${content}`;
+            });
+    }
+
+    createTask(title: string, goal: string, affectedFiles?: string[]): Task {
+        const id = `TASK-${Date.now()}`;
+        const task: Task = { id, title, goal, affectedFiles, status: 'open' };
+        this.saveTask(task);
+        return task;
+    }
+
+    createDecision(title: string, rationale: string, proposedBy?: string): Decision {
+        const id = `DEC-${Date.now()}`;
+        const decision: Decision = { id, title, rationale, proposedBy, timestamp: new Date().toISOString() };
+        if (!this.validateDecision(decision)) {
+            const decId = (decision as any).id || id;
+            console.error(`Decision ${decId} validation errors:`, this.ajv.errorsText(this.validateDecision.errors));
+            throw new Error(`Decision ${decId} fails validation`);
+        }
+        const decisionsDir = path.join(this.baseDir, 'decisions');
+        fs.writeFileSync(path.join(decisionsDir, `${id}.json`), JSON.stringify(decision, null, 2));
+        return decision;
     }
 }

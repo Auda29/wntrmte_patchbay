@@ -2,7 +2,8 @@
     "name": "patchbay-monorepo",
     "private": true,
     "workspaces": [
-        "packages/*"
+        "packages/*",
+        "packages/runners/*"
     ],
     "scripts": {
         "build": "npm run build --workspaces"

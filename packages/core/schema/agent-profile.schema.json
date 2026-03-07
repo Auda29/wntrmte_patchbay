@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Agent Profile",
+    "description": "Profile definition for a task runner/agent",
+    "type": "object",
+    "properties": {
+        "role": {
+            "type": "string",
+            "description": "The role of the agent (e.g., 'cursor-builder', 'reviewer')"
+        },
+        "toolType": {
+            "type": "string",
+            "enum": [
+                "bash",
+                "http",
+                "cursor",
+                "claude-code",
+                "custom"
+            ],
+            "description": "The type of runner this profile uses"
+        },
+        "modelProvider": {
+            "type": "string",
+            "description": "The AI model/provider if applicable (e.g., 'claude-3-5-sonnet')"
+        },
+        "allowedTools": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "List of tools this agent is permitted to use"
+        },
+        "promptProfile": {
+            "type": "string",
+            "description": "The system prompt or default instructions for this agent"
+        },
+        "scope": {
+            "type": "string",
+            "description": "The boundaries or scope of this agent's operation"
+        }
+    },
+    "required": [
+        "role",
+        "toolType"
+    ],
+    "additionalProperties": false
+}

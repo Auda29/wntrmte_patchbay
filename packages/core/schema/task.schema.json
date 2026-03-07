@@ -1,0 +1,64 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Task",
+    "description": "A unit of work to be done",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Unique identifier for the task (e.g., 'TASK-001')"
+        },
+        "title": {
+            "type": "string",
+            "description": "Short title of the task"
+        },
+        "description": {
+            "type": "string",
+            "description": "Detailed description of what needs to be done"
+        },
+        "goal": {
+            "type": "string",
+            "description": "The specific outcome expected"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "open",
+                "in_progress",
+                "blocked",
+                "review",
+                "done"
+            ],
+            "default": "open",
+            "description": "Current status of the task"
+        },
+        "owner": {
+            "type": "string",
+            "description": "The runner or person assigned to this task"
+        },
+        "affectedFiles": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Files expected to be modified or created"
+        },
+        "acceptanceCriteria": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Conditions that must be met for the task to be considered done"
+        },
+        "result": {
+            "type": "string",
+            "description": "Summary of the outcome once completed"
+        }
+    },
+    "required": [
+        "id",
+        "title",
+        "status"
+    ],
+    "additionalProperties": true
+}

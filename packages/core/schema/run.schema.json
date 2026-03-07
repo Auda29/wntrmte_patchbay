@@ -1,0 +1,76 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Run",
+    "description": "Log of a task execution by a runner",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Unique identifier for the run"
+        },
+        "taskId": {
+            "type": "string",
+            "description": "Reference to the task ID being executed"
+        },
+        "runner": {
+            "type": "string",
+            "description": "The runner used (e.g., 'bash', 'cursor-builder')"
+        },
+        "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the run started"
+        },
+        "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the run ended"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "running",
+                "completed",
+                "failed",
+                "cancelled"
+            ],
+            "description": "Current status of the execution"
+        },
+        "logs": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Execution logs (stdout/stderr or summary from runner)"
+        },
+        "summary": {
+            "type": "string",
+            "description": "Short summary of what happened"
+        },
+        "diffRef": {
+            "type": "string",
+            "description": "Reference to the diff or patch artifact generated"
+        },
+        "blockers": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Any blockers encountered during execution"
+        },
+        "suggestedNextSteps": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Runner's suggestions for the next actions"
+        }
+    },
+    "required": [
+        "taskId",
+        "runner",
+        "status",
+        "startTime"
+    ],
+    "additionalProperties": false
+}
