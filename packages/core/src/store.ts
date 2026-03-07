@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'yaml';
 import Ajv, { ValidateFunction } from 'ajv';
+import addFormats from 'ajv-formats';
 import { Project, Task, Run, Decision, AgentProfile } from './types';
 
 export class Store {
@@ -15,6 +16,7 @@ export class Store {
     constructor(targetRepoPath: string = process.cwd()) {
         this.baseDir = path.join(targetRepoPath, '.project-agents');
         this.ajv = new Ajv({ allErrors: true });
+        addFormats(this.ajv);
 
         // Try importing copied schemas (or local in monorepo during dev)
         // __dirname in dist/ is packages/core/dist. Schemas are in packages/core/schema
