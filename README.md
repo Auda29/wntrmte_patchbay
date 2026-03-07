@@ -26,7 +26,8 @@ Patchbay works standalone with any editor, but has first-class integration with 
 
 ## Status
 
-Early development. See [PLAN.md](PLAN.md) for the roadmap.
+Active development. Phases 1 (Schema & Data Model), Phase 2 (Orchestrator Core) and the first Batch of Runner Adapters are completed. Currently working on Phase 3 (Dashboard UI).
+See [PLAN.md](PLAN.md) for the roadmap.
 
 ## License
 

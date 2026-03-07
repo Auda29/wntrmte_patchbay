@@ -320,17 +320,17 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 
 ## Status
 
-### Phase 1: Schema & Datenmodell — TODO
-- [ ] `.project-agents/`-Verzeichnisstruktur festgelegt
-- [ ] Kernobjekte (Project, Task, Run, Decision, Agent Profile) definiert
-- [ ] JSON-Schemas in `schema/` erstellt
-- [ ] `patchbay init` erstellt valide Struktur
+### Phase 1: Schema & Datenmodell — DONE
+- [x] `.project-agents/`-Verzeichnisstruktur festgelegt
+- [x] Kernobjekte (Project, Task, Run, Decision, Agent Profile) definiert
+- [x] JSON-Schemas in `schema/` erstellt
+- [x] `patchbay init` erstellt valide Struktur
 
-### Phase 2: Orchestrator (Core) — TODO
-- [ ] File-basierter Store implementiert
-- [ ] Runner-Interface definiert
-- [ ] Orchestrator: Task-State + Runner-Dispatch
-- [ ] Run-Logs werden korrekt geschrieben
+### Phase 2: Orchestrator (Core) — DONE
+- [x] File-basierter Store implementiert
+- [x] Runner-Interface definiert
+- [x] Orchestrator: Task-State + Runner-Dispatch
+- [x] Run-Logs werden korrekt geschrieben
 
 ### Phase 3: Dashboard (Web-UI) — TODO
 - [ ] Projekt-Übersicht
@@ -339,10 +339,10 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 - [ ] Diff/Artifact-Viewer
 - [ ] Decision-Log
 
-### Phase 4: Runner-Adapter — TODO
-- [ ] Bash Runner
-- [ ] HTTP Runner
-- [ ] Cursor Runner (Stufe 1: dateibasiert)
+### Phase 4: Runner-Adapter — IN PROGRESS
+- [x] Bash Runner
+- [x] HTTP Runner
+- [x] Cursor Runner (Stufe 1: dateibasiert)
 - [ ] Claude Code Runner (optional)
 
 ### Phase 5: wntrmte-Integration — TODO
