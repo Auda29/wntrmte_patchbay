@@ -81,4 +81,20 @@ export class Store {
         if (taskId) runs = runs.filter(r => r.taskId === taskId);
         return runs;
     }
+
+    listDecisions(): Decision[] {
+        const decisionsDir = path.join(this.baseDir, 'decisions');
+        if (!fs.existsSync(decisionsDir)) return [];
+
+        return fs.readdirSync(decisionsDir)
+            .filter(f => f.endsWith('.json') || f.endsWith('.md'))
+            .map(f => {
+                const content = fs.readFileSync(path.join(decisionsDir, f), 'utf-8');
+                try {
+                    return JSON.parse(content) as Decision;
+                } catch {
+                    return { id: f, title: f, rationale: content, timestamp: new Date().toISOString() } as Decision;
+                }
+            });
+    }
 }
