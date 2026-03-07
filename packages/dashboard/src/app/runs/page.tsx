@@ -1,18 +1,18 @@
-import { getStore } from '@/lib/store';
+'use client';
+import useSWR from 'swr';
 import { Run } from '@patchbay/core';
 import { TerminalSquare, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
-export default async function RunsViewer() {
-    const store = getStore();
-    let runs: Run[] = [];
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-    try {
-        if (store.isInitialized) {
-            runs = store.listRuns().sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
-        }
-    } catch (error) {
-        console.error("Error loading runs:", error);
-    }
+export default function RunsViewer() {
+    const { data, error, isLoading } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
+
+    if (isLoading) return <div className="p-8 text-surface-400">Loading runs...</div>;
+    if (error) return <div className="p-8 text-red-400">Error connecting to backend</div>;
+
+    const runs: Run[] = data?.runs || [];
+    runs.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
 
     const getStatusIcon = (status: string) => {
         switch (status) {

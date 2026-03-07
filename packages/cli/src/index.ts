@@ -1,4 +1,4 @@
-#!/usr/env node
+#!/usr/bin/env node
 import { Command } from 'commander';
 import { Store, Project, Orchestrator } from '@patchbay/core';
 import { BashRunner } from '@patchbay/runner-bash';

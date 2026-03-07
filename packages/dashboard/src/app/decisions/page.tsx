@@ -1,18 +1,18 @@
-import { getStore } from '@/lib/store';
+'use client';
+import useSWR from 'swr';
 import { Decision } from '@patchbay/core';
 import { Network, Search } from 'lucide-react';
 
-export default async function DecisionsLog() {
-    const store = getStore();
-    let decisions: Decision[] = [];
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-    try {
-        if (store.isInitialized) {
-            decisions = store.listDecisions().sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        }
-    } catch (error) {
-        console.error("Error loading decisions:", error);
-    }
+export default function DecisionsLog() {
+    const { data, error, isLoading } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
+
+    if (isLoading) return <div className="p-8 text-surface-400">Loading decisions...</div>;
+    if (error) return <div className="p-8 text-red-400">Error connecting to backend</div>;
+
+    const decisions: Decision[] = data?.decisions || [];
+    decisions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 h-full flex flex-col">

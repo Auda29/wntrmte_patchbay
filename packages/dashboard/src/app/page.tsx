@@ -1,23 +1,19 @@
-import { getStore } from '@/lib/store';
+'use client';
+import useSWR from 'swr';
 import { Project, Task, Run } from '@patchbay/core';
 import { Activity, GitMerge, FileCode2, CheckCircle2, Clock } from 'lucide-react';
 
-export default async function DashboardHome() {
-  const store = getStore();
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-  let projectOptions: Project | undefined;
-  let tasks: Task[] = [];
-  let runs: Run[] = [];
+export default function DashboardHome() {
+  const { data, error, isLoading } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
 
-  try {
-    if (store.isInitialized) {
-      projectOptions = store.getProject();
-      tasks = store.listTasks();
-      runs = store.listRuns();
-    }
-  } catch (error) {
-    console.error("Error loading store:", error);
-  }
+  if (isLoading) return <div className="p-8 text-surface-400">Loading live data...</div>;
+  if (error) return <div className="p-8 text-red-400">Error connecting to Patchbay backend</div>;
+
+  const projectOptions: Project | undefined = data?.project;
+  const tasks: Task[] = data?.tasks || [];
+  const runs: Run[] = data?.runs || [];
 
   const activeTasks = tasks.filter(t => t.status === 'in_progress' || t.status === 'review');
   const openTasks = tasks.filter(t => t.status === 'open');
@@ -28,7 +24,7 @@ export default async function DashboardHome() {
       <header>
         <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">Dashboard</h1>
         <p className="text-surface-400">
-          {store.isInitialized
+          {data?.project
             ? `Connected to ${projectOptions?.name || 'Project'}`
             : 'Patchbay is not initialized in the target repository.'}
         </p>

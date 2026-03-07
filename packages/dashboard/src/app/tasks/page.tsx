@@ -1,17 +1,16 @@
-import { getStore } from '@/lib/store';
+'use client';
+import useSWR from 'swr';
 import { Task } from '@patchbay/core';
 
-export default async function TasksBoard() {
-    const store = getStore();
-    let tasks: Task[] = [];
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-    try {
-        if (store.isInitialized) {
-            tasks = store.listTasks();
-        }
-    } catch (error) {
-        console.error("Error loading tasks:", error);
-    }
+export default function TasksBoard() {
+    const { data, error, isLoading } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
+
+    if (isLoading) return <div className="p-8 text-surface-400">Loading tasks...</div>;
+    if (error) return <div className="p-8 text-red-400">Error connecting to backend</div>;
+
+    const tasks: Task[] = data?.tasks || [];
 
     const columns = [
         { id: 'open', title: 'Open', color: 'border-surface-600' },
