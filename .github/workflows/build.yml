@@ -18,8 +18,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build all packages
-        run: npm run build --workspaces
+      - name: Build core
+        run: npm run build --workspace=packages/core
+
+      - name: Build runners
+        run: |
+          npm run build --workspace=packages/runners/bash
+          npm run build --workspace=packages/runners/http
+          npm run build --workspace=packages/runners/cursor
+
+      - name: Build cli and dashboard
+        run: |
+          npm run build --workspace=packages/cli
+          npm run build --workspace=packages/dashboard
 
       - name: Lint dashboard
         run: npm run lint --workspace=dashboard
