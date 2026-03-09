@@ -10,7 +10,7 @@ Patchbay is **not** a new IDE or coding agent. It's a **command center** that or
 
 - **Dashboard** — Plan, dispatch, monitor, and review tasks
 - **Orchestrator** — Manage task state, dispatch runners, collect results
-- **Runners** — Bash, HTTP, Cursor, Claude Code, and more via standardized adapters
+- **Runners** — Bash, HTTP, Cursor (file-based), Cursor CLI, Claude Code via standardized adapters
 - **`.project-agents/`** — Git-versioned, file-based project state (no cloud required)
 
 ## Principles
@@ -24,7 +24,7 @@ Patchbay is **not** a new IDE or coding agent. It's a **command center** that or
 
 Patchbay works standalone with any editor, but has first-class integration with [Wintermute](https://github.com/Auda29/wntrmte) — a minimalist VS Code distribution with a built-in Patchbay client extension. See [VISION.md](../VISION.md) for the shared architecture.
 
-Active development. Phases 1 (Schema & Data Model), Phase 2 (Orchestrator Core), Phase 3 (Dashboard UI) and the first batch of Runner Adapters are completed. Currently refining the integration and starting Phase 5 (wntrmte-Integration).
+Phases 1–4 are complete: Schema & Data Model, Orchestrator Core, Dashboard UI, and all Runner Adapters (Bash, HTTP, Cursor file-based, Cursor CLI, Claude Code). Next up: Phase 5 (wntrmte-Integration).
 See [PLAN.md](PLAN.md) for the detailed roadmap.
 
 ## License

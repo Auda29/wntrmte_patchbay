@@ -51,6 +51,7 @@ patchbay/
 │       ├── bash/
 │       ├── http/
 │       ├── cursor/
+│       ├── cursor-cli/
 │       └── claude-code/
 ├── PLAN.md
 ├── CLAUDE.md
@@ -241,16 +242,26 @@ Ruft externe APIs oder Dokumentation ab.
 - Ergebnisse aus Diffs, Logs, Artefakten zurücklesen
 - Kein direkter API-Zugriff nötig — rein dateibasiert
 
-### 4.4 Claude Code Runner (optional)
+### 4.4 Claude Code Runner
 
-- CLI-Wrapper um `claude` falls CLI verfügbar
+- CLI-Wrapper um `claude -p` falls CLI verfügbar
 - Prompt aus Task-Goal + Kontext zusammensetzen
 - Output parsen und als RunnerOutput zurückgeben
+- Graceful fallback wenn `claude` nicht im PATH
+
+### 4.5 Cursor CLI Runner
+
+- CLI-Wrapper um `cursor agent -p` (Headless-Modus)
+- Identisches Prompt-Modell wie Claude Code Runner
+- `--output-format text` für maschinenlesbaren Output
+- Graceful fallback wenn `cursor` nicht im PATH
 
 ### Verifikation:
 - Bash Runner: `echo "hello"` → Run mit Status completed, Log enthält "hello"
 - HTTP Runner: Fetch einer URL → Run mit Response-Body als Artifact
 - Cursor Runner: Task-Datei wird erstellt, nach manuellem Cursor-Run wird Diff eingesammelt
+- Claude Code Runner: `claude -p "<prompt>"` → Run mit Output als Log
+- Cursor CLI Runner: `cursor agent -p "<prompt>"` → Run mit Output als Log
 
 ---
 
@@ -307,6 +318,8 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 - Decision-Log
 - Bash & HTTP Runner
 - Cursor als dateibasierter Runner
+- Claude Code Runner (CLI)
+- Cursor CLI Runner (Headless)
 
 ### Bewusst nicht in v1
 - Komplexe Multi-User-Organisation
@@ -340,11 +353,12 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 - [x] Decision-Log
 - [x] Interaktive Aktionen (Task/Decision anlegen, Dispatch starten)
 
-### Phase 4: Runner-Adapter — IN PROGRESS
+### Phase 4: Runner-Adapter — DONE
 - [x] Bash Runner
 - [x] HTTP Runner
 - [x] Cursor Runner (Stufe 1: dateibasiert)
-- [ ] Claude Code Runner (optional)
+- [x] Claude Code Runner (`claude -p`)
+- [x] Cursor CLI Runner (`cursor agent -p`)
 
 ### Phase 5: wntrmte-Integration — TODO
 - [ ] Extension liest `.project-agents/` (offline)
