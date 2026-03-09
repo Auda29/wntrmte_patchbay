@@ -360,8 +360,7 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 - [x] Claude Code Runner (`claude -p`)
 - [x] Cursor CLI Runner (`cursor agent -p`)
 
-### Phase 5: wntrmte-Integration — TODO
-- [ ] Extension liest `.project-agents/` (offline)
-- [ ] WebSocket-Verbindung zum Backend (connected)
-- [ ] Dashboard als Webview-Panel
-- [ ] Approval Gates im Editor
+### Phase 5: wntrmte-Integration
+- [x] Phase 5.1 — Offline-Modus: Extension liest `.project-agents/` direkt (FileStore, TaskTreeProvider, StatusBarItem, RunLogProvider, setStatus command)
+- [ ] Phase 5.2 — Connected-Modus: ApiStore via HTTP + Dashboard Webview-Panel
+- [ ] Phase 5.3 — AgentRunner + ApprovalGate im Editor
