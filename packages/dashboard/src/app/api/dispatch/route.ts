@@ -5,11 +5,13 @@ import { BashRunner } from '@patchbay/runner-bash';
 import { HttpRunner } from '@patchbay/runner-http';
 import { CursorRunner } from '@patchbay/runner-cursor';
 import { ClaudeCodeRunner } from '@patchbay/runner-claude-code';
+import { CursorCliRunner } from '@patchbay/runner-cursor-cli';
 
 const orchestrator = new Orchestrator();
 orchestrator.registerRunner('bash', new BashRunner());
 orchestrator.registerRunner('http', new HttpRunner());
 orchestrator.registerRunner('cursor', new CursorRunner());
+orchestrator.registerRunner('cursor-cli', new CursorCliRunner());
 orchestrator.registerRunner('claude-code', new ClaudeCodeRunner());
 
 export async function POST(request: Request) {

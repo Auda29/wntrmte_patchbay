@@ -34,6 +34,7 @@ export async function GET() {
             { id: 'bash', role: 'Shell Command Runner', toolType: 'bash' },
             { id: 'http', role: 'HTTP Request Runner', toolType: 'http' },
             { id: 'cursor', role: 'Cursor (file-based)', toolType: 'cursor' },
+            { id: 'cursor-cli', role: 'Cursor CLI (agent -p)', toolType: 'cursor-cli' },
             { id: 'claude-code', role: 'Claude Code (CLI)', toolType: 'claude-code' },
         ];
 
