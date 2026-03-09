@@ -42,8 +42,8 @@ export function NewDecisionModal({ open, onClose, onCreated }: NewDecisionModalP
             setProposedBy('');
             onCreated();
             onClose();
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Request failed');
         } finally {
             setLoading(false);
         }
