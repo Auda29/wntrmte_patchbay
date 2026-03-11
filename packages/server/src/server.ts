@@ -1,29 +1,52 @@
+import { createServer as createHttpServer, IncomingMessage, Server, ServerResponse } from 'http';
+import { Store } from '@patchbay/core';
 import type { CreateServerOptions } from './types';
+import { getState } from './handlers/state';
+import { createConfiguredOrchestrator } from './runtime';
 
 export async function createServer(opts: CreateServerOptions) {
-    const [{ default: Fastify }, { default: cors }, { default: sse }, { default: storePlugin }, { registerStateRoutes }] =
-        await Promise.all([
-            import('fastify'),
-            import('@fastify/cors'),
-            import('@fastify/sse'),
-            import('./plugins/store'),
-            import('./routes/state')
-        ]);
+    const store = new Store(opts.repoRoot);
+    const orchestrator = createConfiguredOrchestrator(opts.repoRoot);
 
-    const server = Fastify({
-        logger: false
-    });
+    const server = createHttpServer(
+        async (request: IncomingMessage, response: ServerResponse) => {
+            response.setHeader('Access-Control-Allow-Origin', '*');
+            response.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,OPTIONS');
+            response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    server.decorate('repoRoot', opts.repoRoot);
+            if (request.method === 'OPTIONS') {
+                response.statusCode = 204;
+                response.end();
+                return;
+            }
 
-    await server.register(cors, {
-        origin: true
-    });
-    await server.register(sse);
-    await server.register(storePlugin);
-    await registerStateRoutes(server);
+            const url = request.url || '/';
 
-    server.get('/health', async () => ({ ok: true }));
+            if (request.method === 'GET' && url === '/health') {
+                sendJson(response, 200, { ok: true });
+                return;
+            }
+
+            if (request.method === 'GET' && url === '/state') {
+                if (!store.isInitialized) {
+                    sendJson(response, 404, { error: 'Patchbay not initialized' });
+                    return;
+                }
+
+                sendJson(response, 200, getState(store));
+                return;
+            }
+
+            void orchestrator;
+            sendJson(response, 404, { error: 'Not found' });
+        }
+    );
 
     return server;
+}
+
+function sendJson(response: ServerResponse, statusCode: number, payload: unknown) {
+    response.statusCode = statusCode;
+    response.setHeader('Content-Type', 'application/json');
+    response.end(JSON.stringify(payload));
 }

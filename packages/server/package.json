@@ -7,8 +7,6 @@
         "build": "tsc"
     },
     "dependencies": {
-        "@fastify/cors": "^10.1.0",
-        "@fastify/sse": "^0.4.0",
         "@patchbay/core": "*",
         "@patchbay/runner-bash": "*",
         "@patchbay/runner-claude-code": "*",
@@ -16,9 +14,6 @@
         "@patchbay/runner-cursor": "*",
         "@patchbay/runner-cursor-cli": "*",
         "@patchbay/runner-gemini": "*",
-        "@patchbay/runner-http": "*",
-        "fastify": "^5.6.1",
-        "fastify-plugin": "^5.0.1",
-        "yaml": "^2.3.0"
+        "@patchbay/runner-http": "*"
     }
 }

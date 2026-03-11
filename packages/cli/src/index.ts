@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { once } from 'events';
 import { Command } from 'commander';
 import { Store, Project, loadConfig, saveConfig, maskApiKey } from '@patchbay/core';
 import { createConfiguredOrchestrator, createServer } from '@patchbay/server';
@@ -200,10 +201,8 @@ program
                 host: opts.host
             });
 
-            await server.listen({
-                port,
-                host: opts.host
-            });
+            server.listen(port, opts.host);
+            await once(server, 'listening');
 
             console.log(`Patchbay server listening on http://${opts.host}:${port}`);
         } catch (err: any) {

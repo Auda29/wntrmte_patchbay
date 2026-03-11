@@ -1,5 +1,5 @@
-import type { FastifyReply, FastifyRequest } from 'fastify';
-import { Store, Orchestrator } from '@patchbay/core';
+import { IncomingMessage, ServerResponse } from 'http';
+import { Store } from '@patchbay/core';
 
 export interface CreateServerOptions {
     repoRoot: string;
@@ -14,15 +14,13 @@ export interface StateResponse {
     decisions: ReturnType<Store['listDecisions']>;
 }
 
-export type RouteHandler<TReply = unknown> = (
-    request: FastifyRequest,
-    reply: FastifyReply
-) => Promise<TReply> | TReply;
-
-declare module 'fastify' {
-    interface FastifyInstance {
-        repoRoot: string;
-        store: Store;
-        orchestrator: Orchestrator;
-    }
+export interface ServerContext {
+    repoRoot: string;
+    store: Store;
 }
+
+export type RouteHandler<TReply = unknown> = (
+    request: IncomingMessage,
+    response: ServerResponse,
+    context: ServerContext
+) => Promise<TReply> | TReply;
