@@ -5,22 +5,22 @@ import { buildPrompt } from '@patchbay/runner-claude-code';
 
 const execAsync = promisify(exec);
 
-export class CursorCliRunner implements Runner {
-    name = 'cursor-cli';
+export class GeminiRunner implements Runner {
+    name = 'gemini';
 
     constructor(private readonly auth?: RunnerAuth) {}
 
     async execute(input: RunnerInput): Promise<RunnerOutput> {
         const logs: string[] = [];
 
-        // Check if cursor CLI is available
+        // Check if gemini CLI is available
         try {
-            await execAsync('cursor --version');
+            await execAsync('gemini --version');
         } catch {
             return {
                 status: 'failed',
-                summary: 'cursor CLI not found. Install Cursor and ensure it is in PATH.',
-                logs: ['ERROR: `cursor` command not found in PATH.'],
+                summary: 'gemini CLI not found. Install Google Gemini CLI to use this runner.',
+                logs: ['ERROR: `gemini` command not found in PATH.'],
             };
         }
 
@@ -28,12 +28,12 @@ export class CursorCliRunner implements Runner {
         logs.push(`Prompt built (${prompt.length} chars)`);
 
         const env = this.auth?.mode === 'apiKey'
-            ? { ...process.env, CURSOR_API_KEY: this.auth.apiKey }
+            ? { ...process.env, GEMINI_API_KEY: this.auth.apiKey }
             : process.env;
 
         try {
             const { stdout, stderr } = await execAsync(
-                `cursor agent -p ${JSON.stringify(prompt)} --output-format text`,
+                `gemini -p ${JSON.stringify(prompt)}`,
                 { cwd: input.repoPath, maxBuffer: 10 * 1024 * 1024, env }
             );
 
@@ -42,7 +42,7 @@ export class CursorCliRunner implements Runner {
 
             return {
                 status: 'completed',
-                summary: stdout.split('\n').find(l => l.trim()) ?? 'Cursor CLI run completed.',
+                summary: stdout.split('\n').find(l => l.trim()) ?? 'Gemini run completed.',
                 logs,
             };
         } catch (err) {
@@ -50,7 +50,7 @@ export class CursorCliRunner implements Runner {
             logs.push(`ERROR:\n${message}`);
             return {
                 status: 'failed',
-                summary: `Cursor CLI run failed: ${message}`,
+                summary: `Gemini run failed: ${message}`,
                 logs,
             };
         }

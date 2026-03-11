@@ -1,4 +1,4 @@
-import { Runner, RunnerInput, RunnerOutput } from '@patchbay/core';
+import { Runner, RunnerInput, RunnerOutput, RunnerAuth } from '@patchbay/core';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
@@ -6,7 +6,7 @@ import * as path from 'path';
 
 const execAsync = promisify(exec);
 
-function buildPrompt(input: RunnerInput): string {
+export function buildPrompt(input: RunnerInput): string {
     const parts: string[] = [];
 
     if (input.projectRules) {
@@ -34,6 +34,8 @@ function buildPrompt(input: RunnerInput): string {
 export class ClaudeCodeRunner implements Runner {
     name = 'claude-code';
 
+    constructor(private readonly auth?: RunnerAuth) {}
+
     async execute(input: RunnerInput): Promise<RunnerOutput> {
         const logs: string[] = [];
 
@@ -51,10 +53,14 @@ export class ClaudeCodeRunner implements Runner {
         const prompt = buildPrompt(input);
         logs.push(`Prompt built (${prompt.length} chars)`);
 
+        const env = this.auth?.mode === 'apiKey'
+            ? { ...process.env, ANTHROPIC_API_KEY: this.auth.apiKey }
+            : process.env;
+
         try {
             const { stdout, stderr } = await execAsync(
                 `claude -p ${JSON.stringify(prompt)}`,
-                { cwd: input.repoPath, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: input.repoPath, maxBuffer: 10 * 1024 * 1024, env }
             );
 
             if (stderr) logs.push(`STDERR:\n${stderr}`);

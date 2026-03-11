@@ -1,19 +1,29 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { Store, Project, Orchestrator } from '@patchbay/core';
+import { Store, Project, Orchestrator, loadConfig, saveConfig, maskApiKey } from '@patchbay/core';
 import { BashRunner } from '@patchbay/runner-bash';
 import { HttpRunner } from '@patchbay/runner-http';
 import { CursorRunner } from '@patchbay/runner-cursor';
+import { ClaudeCodeRunner } from '@patchbay/runner-claude-code';
+import { CursorCliRunner } from '@patchbay/runner-cursor-cli';
+import { CodexRunner } from '@patchbay/runner-codex';
+import { GeminiRunner } from '@patchbay/runner-gemini';
 import { prompt } from 'enquirer';
 
 const program = new Command();
 const store = new Store();
 
 function getOrchestrator() {
+    const cfg = loadConfig();
+    const r = cfg.runners;
     const orchestrator = new Orchestrator();
     orchestrator.registerRunner('bash', new BashRunner());
     orchestrator.registerRunner('http', new HttpRunner());
     orchestrator.registerRunner('cursor', new CursorRunner());
+    orchestrator.registerRunner('claude-code', new ClaudeCodeRunner(r['claude-code']));
+    orchestrator.registerRunner('cursor-cli', new CursorCliRunner(r['cursor-cli']));
+    orchestrator.registerRunner('codex', new CodexRunner(r['codex']));
+    orchestrator.registerRunner('gemini', new GeminiRunner(r['gemini']));
     return orchestrator;
 }
 
@@ -139,7 +149,7 @@ taskCmd
 
 program
     .command('run <taskId> <runnerId>')
-    .description('Dispatch a task to a runner (bash, http, cursor, etc.)')
+    .description('Dispatch a task to a runner (bash, http, cursor, claude-code, codex, gemini, etc.)')
     .action(async (taskId, runnerId) => {
         if (!store.isInitialized) return console.error('Not initialized.');
 
@@ -152,6 +162,70 @@ program
         } catch (err: any) {
             console.error(`Run failed:`, err.message);
         }
+    });
+
+// --- Auth commands ---
+
+const authCmd = program.command('auth').description('Manage runner authentication');
+
+authCmd
+    .command('set <runner>')
+    .description('Configure authentication for a runner')
+    .option('--api-key <key>', 'API key for the runner')
+    .option('--subscription', 'Use CLI subscription/login auth')
+    .action((runner: string, opts: { apiKey?: string; subscription?: boolean }) => {
+        if (!opts.apiKey && !opts.subscription) {
+            console.error('Specify --api-key <key> or --subscription.');
+            process.exit(1);
+        }
+
+        const cfg = loadConfig();
+
+        if (opts.subscription) {
+            cfg.runners[runner] = { mode: 'subscription' };
+        } else if (opts.apiKey) {
+            cfg.runners[runner] = { mode: 'apiKey', apiKey: opts.apiKey };
+        }
+
+        saveConfig(cfg);
+        console.log(`Auth for '${runner}' saved.`);
+    });
+
+authCmd
+    .command('list')
+    .description('List configured runner authentication')
+    .action(() => {
+        const cfg = loadConfig();
+        const entries = Object.entries(cfg.runners);
+
+        if (entries.length === 0) {
+            console.log('No runner auth configured. Use `patchbay auth set <runner>`.');
+            return;
+        }
+
+        for (const [runner, auth] of entries) {
+            if (auth.mode === 'subscription') {
+                console.log(`  ${runner.padEnd(14)} subscription`);
+            } else {
+                console.log(`  ${runner.padEnd(14)} apiKey  ${maskApiKey(auth.apiKey)}`);
+            }
+        }
+    });
+
+authCmd
+    .command('clear <runner>')
+    .description('Remove authentication for a runner')
+    .action((runner: string) => {
+        const cfg = loadConfig();
+
+        if (!cfg.runners[runner]) {
+            console.error(`No auth configured for '${runner}'.`);
+            return;
+        }
+
+        delete cfg.runners[runner];
+        saveConfig(cfg);
+        console.log(`Auth for '${runner}' cleared.`);
     });
 
 program.parse(process.argv);

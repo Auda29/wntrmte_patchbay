@@ -1,5 +1,5 @@
 {
-    "name": "@patchbay/runner-cursor-cli",
+    "name": "@patchbay/runner-codex",
     "version": "0.1.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

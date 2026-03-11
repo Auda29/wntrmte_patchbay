@@ -10,7 +10,11 @@
     "dependencies": {
         "@patchbay/core": "*",
         "@patchbay/runner-bash": "^0.1.0",
+        "@patchbay/runner-claude-code": "^0.1.0",
+        "@patchbay/runner-codex": "^0.1.0",
         "@patchbay/runner-cursor": "^0.1.0",
+        "@patchbay/runner-cursor-cli": "^0.1.0",
+        "@patchbay/runner-gemini": "^0.1.0",
         "@patchbay/runner-http": "^0.1.0",
         "commander": "^12.0.0",
         "enquirer": "^2.4.1"
