@@ -8,7 +8,7 @@ export interface Project {
 
 export interface AgentProfile {
     role: string;
-    toolType: 'bash' | 'http' | 'cursor' | 'claude-code' | 'custom';
+    toolType: 'bash' | 'http' | 'cursor' | 'cursor-cli' | 'claude-code' | 'codex' | 'gemini' | 'custom';
     modelProvider?: string;
     allowedTools?: string[];
     promptProfile?: string;

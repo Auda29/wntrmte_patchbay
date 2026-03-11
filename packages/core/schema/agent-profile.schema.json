@@ -14,7 +14,10 @@
                 "bash",
                 "http",
                 "cursor",
+                "cursor-cli",
                 "claude-code",
+                "codex",
+                "gemini",
                 "custom"
             ],
             "description": "The type of runner this profile uses"

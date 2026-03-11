@@ -151,7 +151,11 @@ program
     .command('run <taskId> <runnerId>')
     .description('Dispatch a task to a runner (bash, http, cursor, claude-code, codex, gemini, etc.)')
     .action(async (taskId, runnerId) => {
-        if (!store.isInitialized) return console.error('Not initialized.');
+        if (!store.isInitialized) {
+            console.error('Not initialized.');
+            process.exitCode = 1;
+            return;
+        }
 
         const orchestrator = getOrchestrator();
         console.log(`Dispatching Task ${taskId} to Runner '${runnerId}'...`);
@@ -159,8 +163,12 @@ program
             const run = await orchestrator.dispatchTask(taskId, runnerId);
             console.log(`Run finished with status: ${run.status}`);
             console.log(`Summary: ${run.summary}`);
+            if (run.status === 'failed') {
+                process.exitCode = 1;
+            }
         } catch (err: any) {
             console.error(`Run failed:`, err.message);
+            process.exitCode = 1;
         }
     });
 

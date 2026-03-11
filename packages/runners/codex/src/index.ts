@@ -33,7 +33,7 @@ export class CodexRunner implements Runner {
 
         try {
             const { stdout, stderr } = await execAsync(
-                `codex -p ${JSON.stringify(prompt)}`,
+                `codex exec ${JSON.stringify(prompt)}`,
                 { cwd: input.repoPath, maxBuffer: 10 * 1024 * 1024, env }
             );
 

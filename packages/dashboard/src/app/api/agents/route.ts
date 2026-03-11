@@ -36,6 +36,8 @@ export async function GET() {
             { id: 'cursor', role: 'Cursor (file-based)', toolType: 'cursor' },
             { id: 'cursor-cli', role: 'Cursor CLI (agent -p)', toolType: 'cursor-cli' },
             { id: 'claude-code', role: 'Claude Code (CLI)', toolType: 'claude-code' },
+            { id: 'codex', role: 'OpenAI Codex (CLI)', toolType: 'codex' },
+            { id: 'gemini', role: 'Google Gemini (CLI)', toolType: 'gemini' },
         ];
 
         // Merge: use agent profiles if present, otherwise fall back to built-in
