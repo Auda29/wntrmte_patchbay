@@ -45,7 +45,9 @@ patchbay/
 │       ├── http/                  #   HTTP/API requests
 │       ├── cursor/                #   Cursor file-based (manual handoff)
 │       ├── cursor-cli/            #   Cursor headless (cursor agent -p)
-│       └── claude-code/           #   Claude Code CLI (claude -p)
+│       ├── claude-code/           #   Claude Code CLI (claude -p)
+│       ├── codex/                 #   OpenAI Codex CLI (codex exec)
+│       └── gemini/                #   Google Gemini CLI (gemini -p)
 └── package.json                   # npm workspaces root
 ```
 
@@ -80,6 +82,7 @@ patchbay/
 - `patchbay init` — interactive project setup, creates `.project-agents/` structure
 - `patchbay task create|list|status` — task management
 - `patchbay run <taskId> <runnerId>` — dispatch a task to a runner
+- `patchbay auth set|list|clear` — manage runner authentication (API keys or subscription mode)
 
 **Dashboard** — Next.js web application:
 - Project overview with stats and recent activity
@@ -98,6 +101,8 @@ patchbay/
 | **Cursor** | Writes context to `current-focus.md`, returns `blocked` (manual handoff) |
 | **Cursor CLI** | Runs `cursor agent -p <prompt>` headless |
 | **Claude Code** | Runs `claude -p <prompt>` with project context |
+| **Codex** | Runs `codex exec <prompt>` with project context |
+| **Gemini** | Runs `gemini -p <prompt>` with project context |
 
 ### API
 
@@ -145,7 +150,7 @@ Patchbay thinks from the outside in (external dashboard). Wintermute thinks from
 
 - **Offline:** Wintermute reads `.project-agents/` directly — no Patchbay backend needed
 - **Connected:** Wintermute connects via HTTP/SSE for real-time updates, run submission, and an embedded dashboard webview
-- **Agent dispatch:** Wintermute can run LLM agents on tasks via `vscode.lm` API, with approval gates for tool execution
+- **Agent dispatch:** Wintermute delegates to Patchbay CLI (`patchbay run`) for task execution, with runner picker and live output streaming
 
 ## Roadmap
 
@@ -154,6 +159,7 @@ Patchbay thinks from the outside in (external dashboard). Wintermute thinks from
 - [x] Phase 3: Dashboard (Next.js, Kanban board, run viewer, dispatch)
 - [x] Phase 4: Runner adapters (Bash, HTTP, Cursor, Cursor CLI, Claude Code)
 - [x] Phase 5: Wintermute integration (SSE events, runs API, connected mode)
+- [x] Phase 6: Auth system + Codex/Gemini runners + PatchbayRunner (CLI delegation)
 
 See [PLAN.md](PLAN.md) for the detailed technical roadmap.
 

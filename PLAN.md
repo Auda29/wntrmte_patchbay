@@ -52,7 +52,9 @@ patchbay/
 │       ├── http/
 │       ├── cursor/
 │       ├── cursor-cli/
-│       └── claude-code/
+│       ├── claude-code/
+│       ├── codex/
+│       └── gemini/
 ├── PLAN.md
 ├── CLAUDE.md
 ├── LICENSE
@@ -256,12 +258,28 @@ Ruft externe APIs oder Dokumentation ab.
 - `--output-format text` für maschinenlesbaren Output
 - Graceful fallback wenn `cursor` nicht im PATH
 
+### 4.6 Codex Runner
+
+- CLI-Wrapper um `codex exec "<prompt>"`
+- Prompt aus Task-Goal + Kontext zusammensetzen (shared `buildPrompt()`)
+- Env Var `OPENAI_API_KEY` bei apiKey-Auth injizieren
+- Graceful fallback wenn `codex` nicht im PATH
+
+### 4.7 Gemini Runner
+
+- CLI-Wrapper um `gemini -p "<prompt>"`
+- Prompt aus Task-Goal + Kontext zusammensetzen (shared `buildPrompt()`)
+- Env Var `GEMINI_API_KEY` bei apiKey-Auth injizieren
+- Graceful fallback wenn `gemini` nicht im PATH
+
 ### Verifikation:
 - Bash Runner: `echo "hello"` → Run mit Status completed, Log enthält "hello"
 - HTTP Runner: Fetch einer URL → Run mit Response-Body als Artifact
 - Cursor Runner: Task-Datei wird erstellt, nach manuellem Cursor-Run wird Diff eingesammelt
 - Claude Code Runner: `claude -p "<prompt>"` → Run mit Output als Log
 - Cursor CLI Runner: `cursor agent -p "<prompt>"` → Run mit Output als Log
+- Codex Runner: `codex exec "<prompt>"` → Run mit Output als Log
+- Gemini Runner: `gemini -p "<prompt>"` → Run mit Output als Log
 
 ---
 
@@ -320,6 +338,9 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 - Cursor als dateibasierter Runner
 - Claude Code Runner (CLI)
 - Cursor CLI Runner (Headless)
+- Codex Runner (CLI)
+- Gemini Runner (CLI)
+- Auth-System (API Key + Subscription Mode)
 
 ### Bewusst nicht in v1
 - Komplexe Multi-User-Organisation
@@ -359,8 +380,20 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 - [x] Cursor Runner (Stufe 1: dateibasiert)
 - [x] Claude Code Runner (`claude -p`)
 - [x] Cursor CLI Runner (`cursor agent -p`)
+- [x] Codex Runner (`codex exec`)
+- [x] Gemini Runner (`gemini -p`)
 
 ### Phase 5: wntrmte-Integration — DONE
 - [x] Phase 5.1 — Offline-Modus: Extension liest `.project-agents/` direkt (FileStore, TaskTreeProvider, StatusBarItem, RunLogProvider, setStatus command)
 - [x] Phase 5.2 — Connected-Modus: SSE EventBus, ApiStore via HTTP, StoreFactory (auto/offline/connected), Runs-Endpoint (GET/POST), Dashboard Webview-Panel (iframe)
-- [x] Phase 5.3 — AgentRunner (vscode.lm LLM-Loop), ToolRegistry (fs_readFile, fs_writeFile, fs_listDir, shell_execute), ApprovalGate (Allow/Allow All/Deny)
+- [x] Phase 5.3 — ~~AgentRunner (vscode.lm LLM-Loop)~~ → replaced by PatchbayRunner (CLI delegation via `patchbay run`)
+
+### Phase 6: Auth-System + Neue Runner — DONE
+- [x] `RunnerAuth` type (`subscription` | `apiKey`) in `packages/core/src/auth.ts`
+- [x] `loadConfig()` / `saveConfig()` — reads/writes `~/.patchbay/config.json` (chmod 600)
+- [x] `patchbay auth set/list/clear` CLI commands
+- [x] Claude Code + Cursor CLI runners accept `RunnerAuth` constructor param
+- [x] Codex Runner (`codex exec`) — new package `@patchbay/runner-codex`
+- [x] Gemini Runner (`gemini -p`) — new package `@patchbay/runner-gemini`
+- [x] All 7 runners registered with auth in CLI, Dashboard dispatch + agents routes
+- [x] wntrmte extension: PatchbayRunner replaces AgentRunner/ToolRegistry/ApprovalGate

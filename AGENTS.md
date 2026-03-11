@@ -31,7 +31,9 @@ patchbay/
 │       ├── http/         # GET URL fetch
 │       ├── cursor/       # File-based handoff (Stage 1)
 │       ├── cursor-cli/   # cursor agent -p wrapper
-│       └── claude-code/  # claude -p wrapper
+│       ├── claude-code/  # claude -p wrapper
+│       ├── codex/        # codex exec wrapper
+│       └── gemini/       # gemini -p wrapper
 ├── PLAN.md           # Implementation roadmap
 └── README.md
 ```
@@ -49,4 +51,4 @@ Core objects: Project, Task, Run, Decision, Artifact, Agent/Runner Profile. All 
 
 ## Current status
 
-All 5 phases complete: Schema, Orchestrator, Dashboard (Next.js + SWR + SSE), Runner-Adapters (bash, http, cursor, cursor-cli, claude-code), and wntrmte integration. See `PLAN.md` for details.
+All 6 phases complete: Schema, Orchestrator, Dashboard (Next.js + SWR + SSE), Runner-Adapters (bash, http, cursor, cursor-cli, claude-code, codex, gemini), wntrmte integration, and Auth-System (`patchbay auth` CLI, `RunnerAuth` with API key / subscription modes). See `PLAN.md` for details.
