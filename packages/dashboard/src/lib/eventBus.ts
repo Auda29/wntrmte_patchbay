@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import { EventEmitter } from 'events';
 
 class EventBus extends EventEmitter {
