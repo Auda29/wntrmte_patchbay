@@ -410,7 +410,9 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 
 **Ziel:** Orchestrator-API als leichtgewichtiger Server ohne Next.js-Abhängigkeit.
 
-**Framework:** Fastify (built-in AJV-Validation, TypeScript, `@fastify/sse`)
+**Aktuelle Implementierungsstrategie:** Start mit einem kleinen dependency-armen Node-`http`-Server, danach optionaler Ausbau auf Fastify sobald die Route-/Handler-Extraktion stabil ist.
+
+**Geplante Ziel-Runtime:** Fastify (AJV-Validation, Plugin-Modell, SSE) bleibt die bevorzugte Zielarchitektur, ist aber nicht mehr Voraussetzung für den ersten lauffähigen 7b-Slice.
 
 **Architektur-Zielbild:**
 - `@patchbay/server` wird die gemeinsame HTTP/SSE-Runtime für Patchbay-Clients
@@ -429,28 +431,23 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 - `createConfiguredOrchestrator()` wurde als gemeinsame Runtime-Factory eingeführt
 - `createServer(opts)` existiert und registriert bereits `GET /state` plus `GET /health`
 - CLI-Command `patchbay serve` ist angelegt
-- Vollständige Laufzeit-Verifikation steht noch aus, da die neuen Fastify-Dependencies noch installiert werden müssen
+- `@patchbay/server` ist als Workspace im Lockfile eingebunden
+- CLI-Build triggert vorab den Build von `@patchbay/server`, damit `@patchbay/cli` dessen Typen sicher importieren kann
+- CI ist mit diesem Start-Slice wieder grün
 
 **Package-Struktur:**
 ```
 packages/server/
-  package.json          # fastify, @fastify/cors, @patchbay/core, runner-*
+  package.json          # @patchbay/core, runner-*, später optional fastify/*
   tsconfig.json
   src/
-    index.ts            # CLI entry
-    server.ts           # createServer(opts) factory → Fastify instance
-    routes/
-      agents.ts         # GET /agents
-      artifacts.ts      # GET /artifacts
-      decisions.ts      # POST /decisions
-      dispatch.ts       # POST /dispatch (registriert alle 7 Runner)
-      events.ts         # GET /events (SSE via EventBus)
-      runs.ts           # GET/POST /runs
+    index.ts            # Exporte
+    server.ts           # createServer(opts) factory → Node HTTP server
+    runtime.ts          # createConfiguredOrchestrator()
+    handlers/
       state.ts          # GET /state
-      tasks.ts          # POST/PATCH /tasks
-    plugins/
-      store.ts          # Fastify plugin: Store-Instanz pro Request
-      eventBus.ts       # Fastify plugin: EventBus Lifecycle
+    routes/             # optionaler späterer Ausbau
+    plugins/            # optionaler späterer Ausbau (bei Fastify-Migration)
 ```
 
 **Geplante Shared-Extraktionen vor dem Server-Bau:**
@@ -462,12 +459,14 @@ packages/server/
 **Schritte:**
 - [x] Package `packages/server/` scaffolden
 - [x] `createServer(opts: { repoRoot: string; port?: number })` Factory
-- [x] Store-Plugin: dekoriert Request mit Store-Instanz
-- [ ] Route-Handler aus Dashboard-API-Routes extrahieren (Next/Fastify nur noch thin wrappers)
-- [ ] EventBus als Fastify-Plugin (bestehender EventBus ist framework-agnostisch)
-- [ ] SSE `/events` via `@fastify/sse`
+- [x] Minimalen HTTP-Server mit `GET /health` und `GET /state` bereitstellen
+- [x] CLI-Build-Reihenfolge für `@patchbay/server` absichern
+- [ ] Route-Handler aus Dashboard-API-Routes extrahieren (Next/Server nur noch thin wrappers)
+- [ ] EventBus in `@patchbay/server` integrieren
+- [ ] SSE `/events` bereitstellen
+- [ ] Optional: Server von Node-`http` auf Fastify migrieren
 - [x] `patchbay serve [--port 3001] [--repo-root .]` CLI Command
-- [ ] `packages/server` zu root `package.json` workspaces hinzufügen
+- [x] `packages/server` in Workspace-/Lockfile-Auflösung integrieren
 
 **Empfohlene Umsetzungsreihenfolge (PR-freundlich):**
 1. Shared Factorys + Handler extrahieren
@@ -492,16 +491,18 @@ packages/server/
 - `GET /events` → SSE `change`-Events bei Store-Änderungen
 
 **Technische Leitlinien:**
-- Business-Logik nicht in Fastify-Handlern duplizieren, sondern in wiederverwendbare Funktionsmodule verschieben
+- Business-Logik nicht in Transport-Handlern duplizieren, sondern in wiederverwendbare Funktionsmodule verschieben
 - Dashboard-API-Routen dürfen nach der Extraktion nur Transport-/Response-Code enthalten
 - `repoRoot` muss explizit injizierbar sein, damit Server, Tests und eingebettete Clients dieselbe Runtime nutzen können
 - Bestehende Dateiformate in `.project-agents/` bleiben unverändert
+- Transport-Layer soll austauschbar bleiben: aktueller Node-`http`-Slice darf einen späteren Fastify-Wechsel nicht verbauen
 
 **Risiken / besondere Aufmerksamkeit:**
 - `dispatch` dupliziert aktuell die Runner-Registrierung aus der CLI; diese Divergenz soll in 7b beseitigt werden
 - `agents` und `artifacts` lesen heute direkt aus dem Dateisystem in den Next-Routen; entscheiden, ob diese Logik im Server bleibt oder nach `core` wandert
 - SSE/EventBus-Lifecycle muss Watcher sauber freigeben, damit parallele Clients und Tests keine hängenden Prozesse erzeugen
 - Wenn Dashboard später direkt gegen den Standalone-Server spricht, braucht es eine saubere CORS-Konfiguration
+- Der spätere Fastify-Wechsel soll erst erfolgen, wenn Lockfile/CI-Story für neue Server-Dependencies sauber vorbereitet ist
 
 **Verifikation:**
 - `patchbay serve --port 3001` → `curl localhost:3001/state` gibt Projekt-State zurück
@@ -514,11 +515,11 @@ packages/server/
 - `tasks`, `runs` und `decisions` als wiederverwendbare Handler extrahieren und im Server registrieren
 - Dashboard-Route `dispatch` auf die gemeinsame Runner-Factory umstellen
 - EventBus + SSE-Endpunkt in `@patchbay/server` nachziehen
-- Danach erst End-to-End-Verifikation mit installierten Fastify-Paketen durchführen
+- Danach entscheiden, ob die HTTP-Runtime auf Fastify migriert wird oder der schlanke Node-Server ausreicht
 
 **Definition of Done:**
 - Standalone-Server startet lokal per CLI ohne Next.js
-- Alle bestehenden Dashboard-Endpunkte sind im Fastify-Server funktional abgebildet
+- Alle bestehenden Dashboard-Endpunkte sind im Standalone-Server funktional abgebildet
 - Runner-Bootstrap ist zentralisiert und nicht mehr in CLI und Dashboard doppelt implementiert
 - SSE liefert mindestens das bestehende `change`-Signal zuverlässig aus
 - Dashboard und wntrmte können parallel mit dem Server betrieben werden
