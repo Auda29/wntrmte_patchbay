@@ -83,6 +83,7 @@ patchbay/
 - `patchbay task create|list|status` — task management
 - `patchbay run <taskId> <runnerId>` — dispatch a task to a runner
 - `patchbay auth set|list|clear` — manage runner authentication (API keys or subscription mode)
+- `patchbay serve [--port 3001] [--repo-root .]` — start standalone HTTP server (Phase 7b, in progress)
 
 **Dashboard** — Next.js web application:
 - Project overview with stats and recent activity
@@ -204,7 +205,7 @@ Patchbay thinks from the outside in (external dashboard). Wintermute thinks from
 - [x] Phase 5: Wintermute integration (SSE events, runs API, connected mode)
 - [x] Phase 6: Auth system + Codex/Gemini runners + PatchbayRunner (CLI delegation)
 - [x] Phase 7a: Non-interactive `patchbay init --yes` for CLI delegation from wntrmte extension
-- [ ] Phase 7b: Standalone HTTP server (`@patchbay/server` with Fastify)
+- [~] Phase 7b: Standalone HTTP server (`@patchbay/server`) — scaffolded, `/state` + `/health` + `patchbay serve` done; remaining routes + SSE pending
 
 See [PLAN.md](PLAN.md) for the detailed technical roadmap.
 

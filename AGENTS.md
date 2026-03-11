@@ -23,9 +23,11 @@ patchbay/
 ├── schema/           # .project-agents/ JSON Schemas
 ├── packages/
 │   ├── core/         # Orchestrator, Store (ajv-validated), Runner interface, Types
-│   ├── cli/          # patchbay init (interactive + --yes), task create/list/status, run, status, auth
+│   ├── cli/          # patchbay init (interactive + --yes), task create/list/status, run, status, auth, serve
 │   ├── dashboard/    # Next.js + Tailwind + SWR dashboard
 │   │   └── src/app/api/  # API routes: state, dispatch, artifacts, tasks, runs, agents, events (SSE)
+│   ├── server/       # Standalone HTTP server (@patchbay/server, patchbay serve) — IN PROGRESS
+│   │   └── src/      # createServer(), GET /state + /health; remaining routes pending
 │   └── runners/
 │       ├── bash/         # Shell command execution
 │       ├── http/         # GET URL fetch
@@ -51,4 +53,4 @@ Core objects: Project, Task, Run, Decision, Artifact, Agent/Runner Profile. All 
 
 ## Current status
 
-Phases 1–6 complete, Phase 7a done: Schema, Orchestrator, Dashboard (Next.js + SWR + SSE), Runner-Adapters (bash, http, cursor, cursor-cli, claude-code, codex, gemini), wntrmte integration, Auth-System (`patchbay auth` CLI, `RunnerAuth` with API key / subscription modes), and non-interactive `patchbay init --yes` for CLI delegation from wntrmte extension. Phase 7b (standalone Fastify server) is planned. See `PLAN.md` for details.
+Phases 1–7a complete. Phase 7b in progress. Schema, Orchestrator, Dashboard (Next.js + SWR + SSE), Runner-Adapters (bash, http, cursor, cursor-cli, claude-code, codex, gemini), wntrmte integration, Auth-System (`patchbay auth` CLI, `RunnerAuth` with API key / subscription modes), non-interactive `patchbay init --yes`. Standalone server (`@patchbay/server`): scaffolded with `GET /state` + `/health` + `patchbay serve` CLI command; remaining routes + SSE pending. See `PLAN.md` for details.
