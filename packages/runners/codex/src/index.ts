@@ -33,11 +33,11 @@ export class CodexRunner implements Runner {
             : process.env;
 
         return new Promise<RunnerOutput>((resolve) => {
+            const bin = process.platform === 'win32' ? 'codex.cmd' : 'codex';
             const args = ['exec', prompt];
-            const child = spawn('codex', args, {
+            const child = spawn(bin, args, {
                 cwd: input.repoPath,
                 env,
-                shell: true,
             });
 
             let firstLine: string | undefined;

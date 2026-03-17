@@ -507,6 +507,31 @@ Gefunden beim manuellen Testen des ersten Windows-Builds.
 
 ---
 
+## Phase G: Runner `shell: true` Regression Fix — DONE
+
+Phase F's `shell: true` introduced three regressions: DEP0190 deprecation warnings (Node.js flags passing args array to shell as security concern), prompt word-splitting in codex ("unexpected argument 'Project' found" — cmd.exe splits the joined prompt on spaces), and cursor-cli opening Cursor interactively instead of running headlessly.
+
+### G1: Remove `shell: true` — use `.cmd` suffix on Windows
+
+**Correct fix for Windows `.cmd` files:** Use explicit `.cmd` suffix in the binary name without `shell: true`. Node.js handles `.cmd` files internally by routing through `cmd.exe /d /s /c` while correctly passing individual arguments — no word-splitting, no DEP0190.
+
+```typescript
+const bin = process.platform === 'win32' ? 'claude.cmd' : 'claude';
+const child = spawn(bin, args, { cwd, env }); // no shell: true
+```
+
+- [x] `packages/runners/claude-code/src/index.ts` — `claude.cmd` on Windows
+- [x] `packages/runners/codex/src/index.ts` — `codex.cmd` on Windows
+- [x] `packages/runners/gemini/src/index.ts` — `gemini.cmd` on Windows
+
+### G2: cursor-cli — Immediate error (not headless)
+
+`cursor agent -p` opens Cursor interactively — there is no headless CLI mode. The runner now returns `status: 'failed'` immediately with a clear message instead of spawning a process.
+
+- [x] `packages/runners/cursor-cli/src/index.ts` — returns immediate `status: 'failed'` with hint to use `cursor` (file-based) or `claude-code` runner instead
+
+---
+
 ## Phase F: Runner Windows-Compat + Robustness — DONE
 
 Gefunden beim manuellen Testen auf Windows: CLI-Runner schlagen mit `spawn ENOENT` fehl, obwohl das Tool installiert ist (Node.js `spawn` ohne `shell: true` findet keine `.cmd`-Dateien). Außerdem kein Timeout bei hängenden Prozessen und unklare Fehlermeldungen bei falscher goal-Nutzung.

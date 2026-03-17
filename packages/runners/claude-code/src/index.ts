@@ -59,11 +59,11 @@ export class ClaudeCodeRunner implements Runner {
             : process.env;
 
         return new Promise<RunnerOutput>((resolve) => {
+            const bin = process.platform === 'win32' ? 'claude.cmd' : 'claude';
             const args = ['-p', prompt];
-            const child = spawn('claude', args, {
+            const child = spawn(bin, args, {
                 cwd: input.repoPath,
                 env,
-                shell: true,
             });
 
             let firstLine: string | undefined;

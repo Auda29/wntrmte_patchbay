@@ -33,11 +33,11 @@ export class GeminiRunner implements Runner {
             : process.env;
 
         return new Promise<RunnerOutput>((resolve) => {
+            const bin = process.platform === 'win32' ? 'gemini.cmd' : 'gemini';
             const args = ['-p', prompt];
-            const child = spawn('gemini', args, {
+            const child = spawn(bin, args, {
                 cwd: input.repoPath,
                 env,
-                shell: true,
             });
 
             let firstLine: string | undefined;
