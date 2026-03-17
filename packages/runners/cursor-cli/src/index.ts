@@ -1,9 +1,8 @@
 import { Runner, RunnerInput, RunnerOutput, RunnerAuth } from '@patchbay/core';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { spawn } from 'child_process';
 import { buildPrompt } from '@patchbay/runner-claude-code';
-
-const execAsync = promisify(exec);
 
 export class CursorCliRunner implements Runner {
     name = 'cursor-cli';
@@ -31,28 +30,56 @@ export class CursorCliRunner implements Runner {
             ? { ...process.env, CURSOR_API_KEY: this.auth.apiKey }
             : process.env;
 
-        try {
-            const { stdout, stderr } = await execAsync(
-                `cursor agent -p ${JSON.stringify(prompt)} --output-format text`,
-                { cwd: input.repoPath, maxBuffer: 10 * 1024 * 1024, env }
-            );
+        return new Promise<RunnerOutput>((resolve) => {
+            const args = ['agent', '-p', prompt, '--output-format', 'text'];
+            const child = spawn('cursor', args, {
+                cwd: input.repoPath,
+                env,
+            });
 
-            if (stderr) logs.push(`STDERR:\n${stderr}`);
-            if (stdout) logs.push(`OUTPUT:\n${stdout}`);
+            let firstLine: string | undefined;
 
-            return {
-                status: 'completed',
-                summary: stdout.split('\n').find(l => l.trim()) ?? 'Cursor CLI run completed.',
-                logs,
-            };
-        } catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            logs.push(`ERROR:\n${message}`);
-            return {
-                status: 'failed',
-                summary: `Cursor CLI run failed: ${message}`,
-                logs,
-            };
-        }
+            child.stdout?.on('data', (chunk: Buffer) => {
+                const text = chunk.toString();
+                process.stdout.write(text);
+                logs.push(text);
+                if (!firstLine) {
+                    firstLine = text.split('\n').find((line) => line.trim());
+                }
+            });
+
+            child.stderr?.on('data', (chunk: Buffer) => {
+                const text = chunk.toString();
+                process.stderr.write(text);
+                logs.push(text);
+            });
+
+            child.on('error', (error: Error) => {
+                const message = error.message;
+                logs.push(`ERROR:\n${message}`);
+                resolve({
+                    status: 'failed',
+                    summary: `Cursor CLI run failed: ${message}`,
+                    logs,
+                });
+            });
+
+            child.on('close', (code: number | null) => {
+                if (code === 0) {
+                    resolve({
+                        status: 'completed',
+                        summary: firstLine ?? 'Cursor CLI run completed.',
+                        logs,
+                    });
+                } else {
+                    logs.push(`EXIT CODE: ${code ?? 'null'}`);
+                    resolve({
+                        status: 'failed',
+                        summary: `Cursor CLI run failed with exit code ${code}`,
+                        logs,
+                    });
+                }
+            });
+        });
     }
 }
