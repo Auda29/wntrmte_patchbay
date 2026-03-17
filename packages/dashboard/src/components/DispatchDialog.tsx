@@ -38,11 +38,27 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, onDispatched 
         }
     }, [open]);
 
+    // Detect whether we are running inside a VS Code webview (embedded iframe).
+    // In that context we relay dispatch to the Extension Host via postMessage
+    // instead of making an HTTP call.
+    const isVsCodeWebview = typeof window !== 'undefined' && window.parent !== window;
+
     const handleDispatch = async () => {
         setError('');
         setErrorHint('');
         setErrorDetails('');
         setShowErrorDetails(false);
+
+        if (isVsCodeWebview) {
+            window.parent.postMessage(
+                { command: 'wntrmte.dispatchInTerminal', args: [taskId, runnerId] },
+                '*',
+            );
+            onDispatched();
+            onClose();
+            return;
+        }
+
         setLoading(true);
         try {
             const res = await fetch('/api/dispatch', {
