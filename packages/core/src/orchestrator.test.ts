@@ -34,6 +34,22 @@ const makeFailedRunner = (): Runner => ({
     }),
 });
 
+const makeSlowRunner = (output: RunnerOutput, delayMs: number): Runner => ({
+    name: 'slow',
+    execute: async (_input: RunnerInput): Promise<RunnerOutput> => {
+        await new Promise(r => setTimeout(r, delayMs));
+        return output;
+    },
+});
+
+const makeThrowingRunner = (delayMs: number): Runner => ({
+    name: 'thrower',
+    execute: async (_input: RunnerInput): Promise<RunnerOutput> => {
+        await new Promise(r => setTimeout(r, delayMs));
+        throw new Error('Runner exploded');
+    },
+});
+
 describe('Orchestrator', () => {
     let tmpDir: string;
     let store: Store;
@@ -107,5 +123,72 @@ describe('Orchestrator', () => {
         const doneTask = { ...task, status: 'done' as const };
         store.saveTask(doneTask);
         await expect(orchestrator.dispatchTask(task.id, 'mock')).rejects.toThrow('status');
+    });
+
+    describe('dispatchTaskAsync', () => {
+        it('returns a run immediately with status running', async () => {
+            orchestrator.registerRunner('slow', makeSlowRunner({ status: 'completed', summary: 'Done', logs: [] }, 20));
+            const task = store.createTask('Async task', 'Goal');
+            const run = await orchestrator.dispatchTaskAsync(task.id, 'slow');
+            expect(run.status).toBe('running');
+            expect(run.endTime).toBeUndefined();
+            await new Promise(r => setTimeout(r, 100)); // let background promise settle before cleanup
+        });
+
+        it('transitions task to in_progress synchronously', async () => {
+            orchestrator.registerRunner('slow', makeSlowRunner({ status: 'completed', summary: 'Done', logs: [] }, 20));
+            const task = store.createTask('Async task', 'Goal');
+            await orchestrator.dispatchTaskAsync(task.id, 'slow');
+            expect(store.getTask(task.id)?.status).toBe('in_progress');
+            await new Promise(r => setTimeout(r, 100)); // let background promise settle before cleanup
+        });
+
+        it('throws synchronously if task does not exist', async () => {
+            await expect(orchestrator.dispatchTaskAsync('TASK-NOPE', 'mock')).rejects.toThrow('not found');
+        });
+
+        it('throws synchronously if runner is not registered', async () => {
+            const task = store.createTask('Task', 'Goal');
+            await expect(orchestrator.dispatchTaskAsync(task.id, 'unknown-runner')).rejects.toThrow('not registered');
+        });
+
+        it('throws synchronously if task status is invalid', async () => {
+            const task = store.createTask('Task', 'Goal');
+            const doneTask = { ...task, status: 'done' as const };
+            store.saveTask(doneTask);
+            await expect(orchestrator.dispatchTaskAsync(task.id, 'mock')).rejects.toThrow('status');
+        });
+
+        it('background execution finalizes the run on success', async () => {
+            orchestrator.registerRunner('slow', makeSlowRunner({ status: 'completed', summary: 'Background done', logs: ['ok'] }, 50));
+            const task = store.createTask('Async task', 'Goal');
+            const run = await orchestrator.dispatchTaskAsync(task.id, 'slow');
+            await new Promise(r => setTimeout(r, 200));
+            const saved = store.listRuns().find(r => r.id === run.id);
+            expect(saved?.status).toBe('completed');
+            expect(saved?.endTime).toBeDefined();
+            expect(saved?.summary).toBe('Background done');
+            expect(store.getTask(task.id)?.status).toBe('review');
+        });
+
+        it('background execution sets run to failed on runner error', async () => {
+            orchestrator.registerRunner('thrower', makeThrowingRunner(50));
+            const task = store.createTask('Async task', 'Goal');
+            const run = await orchestrator.dispatchTaskAsync(task.id, 'thrower');
+            await new Promise(r => setTimeout(r, 200));
+            const saved = store.listRuns().find(r => r.id === run.id);
+            expect(saved?.status).toBe('failed');
+            expect(store.getTask(task.id)?.status).toBe('open');
+        });
+
+        it('background execution handles blocked runner', async () => {
+            orchestrator.registerRunner('slow-blocker', makeSlowRunner({ status: 'blocked', summary: 'Needs input', logs: [], blockers: ['Missing key'] }, 50));
+            const task = store.createTask('Async task', 'Goal');
+            const run = await orchestrator.dispatchTaskAsync(task.id, 'slow-blocker');
+            await new Promise(r => setTimeout(r, 200));
+            const saved = store.listRuns().find(r => r.id === run.id);
+            expect(saved?.status).toBe('completed');
+            expect(store.getTask(task.id)?.status).toBe('blocked');
+        });
     });
 });

@@ -23,8 +23,8 @@ export async function POST(request: Request) {
         }
 
         const orchestrator = createConfiguredOrchestrator(REPO_ROOT);
-        const run = await orchestrator.dispatchTask(taskId, runnerId);
-        return NextResponse.json(run);
+        const run = await orchestrator.dispatchTaskAsync(taskId, runnerId);
+        return NextResponse.json(run, { status: 202 });
     } catch (error) {
         const err = error instanceof Error ? error : new Error('Internal error');
         return NextResponse.json({

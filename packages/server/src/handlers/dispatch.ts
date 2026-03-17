@@ -22,8 +22,8 @@ export async function postDispatch(
     }
 
     try {
-        const run = await orchestrator.dispatchTask(taskId, runnerId);
-        sendJson(response, 200, run);
+        const run = await orchestrator.dispatchTaskAsync(taskId, runnerId);
+        sendJson(response, 202, run);
     } catch (error) {
         const err = error instanceof Error ? error : new Error('Internal error');
         sendJson(response, 500, { error: err.message });
