@@ -482,3 +482,27 @@ packages/server/
 - [ ] Ersten Publish aller scoped Packages mit `--access public`
 
 **Hinweis:** Sinnvoll erst wenn die API stabil ist. Der Clone/Build-Fallback in Wintermute funktioniert bis dahin.
+
+---
+
+## Phase C: Test-Infrastruktur — ausstehend
+
+Drei Schichten, eine pro Deployment-Artefakt. Kein bestehender Test-Code — alles neu.
+
+### Schicht 1: Patchbay Core + CLI (Vitest)
+
+- [ ] `vitest` als Root-devDependency + `"test": "vitest run"` Script in `patchbay/package.json`
+- [ ] `vitest.config.ts` im Patchbay-Root (include: `packages/*/src/**/*.test.ts`)
+- [ ] `packages/core/src/store.test.ts` — Store CRUD gegen `os.tmpdir()` Fixture
+- [ ] `packages/core/src/orchestrator.test.ts` — Task-State-Transitions
+- [ ] `packages/cli/src/init.test.ts` — `patchbay init --yes` via `execSync`, prüft alle 5 Subdirs
+- [ ] `packages/runners/bash/src/runner.test.ts` — BashRunner mit fixture command
+- [ ] CI: `npm test` Step in `.github/workflows/build.yml` (nach build)
+
+### Schicht 2: Dashboard E2E (Playwright)
+
+- [ ] `@playwright/test` in `packages/dashboard/` + `playwright.config.ts` (webServer: Next.js gegen Fixture)
+- [ ] `e2e/fixtures/.project-agents/` — Seeded Fixture-Workspace (project.yml + TASK-001.md)
+- [ ] `e2e/tests/board.spec.ts` — Kanban-Board rendert Tasks, Dispatch-Button sichtbar
+- [ ] `e2e/tests/dispatch.spec.ts` — Dispatch-Dialog: Runner wählen + abschicken
+- [ ] CI: Playwright-Install + `npm run test:e2e` in `build.yml` (nur Chromium)
