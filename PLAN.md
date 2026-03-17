@@ -466,3 +466,19 @@ packages/server/
 - [ ] Server von Node-`http` auf Fastify migrieren
 
 **Abgrenzung:** Dashboard bleibt unverändert. Standalone-Server ist für Clients ohne Dashboard (wntrmte Extension, CI, externe Tools).
+
+---
+
+### npm-Publish (`@patchbay/cli` + Dependencies) — ausstehend
+
+**Ziel:** `npm install -g @patchbay/cli` funktioniert ohne Repo-Clone (wird vom Wintermute Install-QuickPick als erste Option angeboten).
+
+**Voraussetzungen (müssen alle erfüllt sein):**
+
+- [ ] Alle internen Packages einzeln auf npm veröffentlichen — `@patchbay/core`, `@patchbay/server`, `@patchbay/runner-bash`, `@patchbay/runner-http`, `@patchbay/runner-cursor`, `@patchbay/runner-cursor-cli`, `@patchbay/runner-claude-code`, `@patchbay/runner-codex`, `@patchbay/runner-gemini` (~9 Packages vor `@patchbay/cli`)
+- [ ] Interne `"*"`-Versionen in allen `package.json` durch konkrete Versionsnummern ersetzen
+- [ ] Alle `package.json` um Pflichtfelder ergänzen: `"files"`, `"description"`, `"license"`, `"repository"`, `"engines"`
+- [ ] Versionsstrategie festlegen (manuell koordiniert oder Tool wie `changesets`)
+- [ ] Ersten Publish aller scoped Packages mit `--access public`
+
+**Hinweis:** Sinnvoll erst wenn die API stabil ist. Der Clone/Build-Fallback in Wintermute funktioniert bis dahin.
