@@ -63,9 +63,24 @@ export class ClaudeCodeRunner implements Runner {
             const child = spawn('claude', args, {
                 cwd: input.repoPath,
                 env,
+                shell: true,
             });
 
             let firstLine: string | undefined;
+            let settled = false;
+
+            const timeout = setTimeout(() => {
+                if (!settled) {
+                    settled = true;
+                    child.kill();
+                    logs.push('TIMEOUT: Process killed after 300s.');
+                    resolve({
+                        status: 'failed',
+                        summary: 'Claude Code run timed out after 300 seconds.',
+                        logs,
+                    });
+                }
+            }, 300_000);
 
             child.stdout?.on('data', (chunk: Buffer) => {
                 const text = chunk.toString();
@@ -83,6 +98,9 @@ export class ClaudeCodeRunner implements Runner {
             });
 
             child.on('error', (error: Error) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
                 const message = error.message;
                 logs.push(`ERROR:\n${message}`);
                 resolve({
@@ -93,6 +111,9 @@ export class ClaudeCodeRunner implements Runner {
             });
 
             child.on('close', (code: number | null) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
                 if (code === 0) {
                     resolve({
                         status: 'completed',

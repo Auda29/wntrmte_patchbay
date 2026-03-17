@@ -45,6 +45,7 @@ export class BashRunner implements Runner {
                     });
                 } else {
                     logs.push(`EXIT CODE: ${code ?? 'null'}`);
+                    logs.push('HINT: The Bash runner executes goal as a shell command. Make sure goal is a valid shell command, not natural language.');
                     resolve({
                         status: 'failed',
                         summary: `Command failed with code ${code}`,

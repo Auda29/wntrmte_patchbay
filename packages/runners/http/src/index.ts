@@ -6,8 +6,17 @@ export class HttpRunner implements Runner {
     async execute(input: RunnerInput): Promise<RunnerOutput> {
         const logs: string[] = [];
         try {
-            // In this simple iteration, we assume input.goal contains the URL to fetch.
+            // Validate that goal is a proper URL before attempting fetch
             const url = input.goal;
+            try {
+                new URL(url);
+            } catch {
+                return {
+                    status: 'failed',
+                    summary: 'Invalid URL: goal must be a valid URL (e.g. https://example.com).',
+                    logs: [`ERROR: "${url}" is not a valid URL. The HTTP runner expects goal to be a URL, not natural language.`],
+                };
+            }
 
             const response = await fetch(url);
             const text = await response.text();

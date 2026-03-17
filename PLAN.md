@@ -507,6 +507,41 @@ Gefunden beim manuellen Testen des ersten Windows-Builds.
 
 ---
 
+## Phase F: Runner Windows-Compat + Robustness — DONE
+
+Gefunden beim manuellen Testen auf Windows: CLI-Runner schlagen mit `spawn ENOENT` fehl, obwohl das Tool installiert ist (Node.js `spawn` ohne `shell: true` findet keine `.cmd`-Dateien). Außerdem kein Timeout bei hängenden Prozessen und unklare Fehlermeldungen bei falscher goal-Nutzung.
+
+### F1: Windows-Compat — `shell: true` in CLI-Runner-Spawns
+
+**Problem:** `spawn('cursor', args)` ohne `shell: true` findet `cursor.cmd` nicht, obwohl `exec('cursor --version')` (default: shell) es findet. Inkonsistenz führt zu ENOENT nach bestandenem Version-Check.
+
+**Fix:** `shell: true` zu den spawn-Optionen hinzufügen — identisch wie der Bash-Runner, der das bereits hat.
+
+- [x] `packages/runners/cursor-cli/src/index.ts` — `spawn('cursor', args, { cwd, env })` → `{ cwd, env, shell: true }`
+- [x] `packages/runners/codex/src/index.ts` — gleiche Ergänzung
+- [x] `packages/runners/gemini/src/index.ts` — gleiche Ergänzung
+- [x] `packages/runners/claude-code/src/index.ts` — gleiche Ergänzung
+
+### F2: Timeout in CLI-Runnern
+
+**Problem:** Hängt der Prozess (z.B. claude wartet auf Auth-Setup), resolved das Promise nie — Terminal blockiert unbegrenzt.
+
+**Fix:** `setTimeout(300_000)` + `child.kill()` im Timeout-Handler; `clearTimeout` in close/error-Handlern. `settled`-Flag verhindert doppeltes Resolven.
+
+- [x] `packages/runners/claude-code/src/index.ts` — Timeout hinzufügen
+- [x] `packages/runners/cursor-cli/src/index.ts` — Timeout hinzufügen
+- [x] `packages/runners/codex/src/index.ts` — Timeout hinzufügen
+- [x] `packages/runners/gemini/src/index.ts` — Timeout hinzufügen
+
+### F3: Klarere Fehlermeldungen
+
+**Problem:** HTTP-Runner gibt kryptisches `Failed to parse URL from <natural language goal>`. Bash-Runner gibt nur "Command failed with code 1" ohne Hinweis.
+
+- [x] `packages/runners/http/src/index.ts` — `new URL(goal)` Validierung vor `fetch()`; bei Fehler: `status: 'failed'` + Meldung dass goal eine gültige URL sein muss
+- [x] `packages/runners/bash/src/index.ts` — HINT-Log im close-Handler bei `code !== 0`: goal muss ein Shell-Kommando sein, keine natural language
+
+---
+
 ## Phase E: Runner Streaming + Server-Terminal — DONE
 
 ### E1: Runner-Output live streamen

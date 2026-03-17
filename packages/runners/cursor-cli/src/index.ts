@@ -37,9 +37,24 @@ export class CursorCliRunner implements Runner {
             const child = spawn('cursor', args, {
                 cwd: input.repoPath,
                 env,
+                shell: true,
             });
 
             let firstLine: string | undefined;
+            let settled = false;
+
+            const timeout = setTimeout(() => {
+                if (!settled) {
+                    settled = true;
+                    child.kill();
+                    logs.push('TIMEOUT: Process killed after 300s.');
+                    resolve({
+                        status: 'failed',
+                        summary: 'Cursor CLI run timed out after 300 seconds.',
+                        logs,
+                    });
+                }
+            }, 300_000);
 
             child.stdout?.on('data', (chunk: Buffer) => {
                 const text = chunk.toString();
@@ -57,6 +72,9 @@ export class CursorCliRunner implements Runner {
             });
 
             child.on('error', (error: Error) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
                 const message = error.message;
                 logs.push(`ERROR:\n${message}`);
                 resolve({
@@ -67,6 +85,9 @@ export class CursorCliRunner implements Runner {
             });
 
             child.on('close', (code: number | null) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
                 if (code === 0) {
                     resolve({
                         status: 'completed',
