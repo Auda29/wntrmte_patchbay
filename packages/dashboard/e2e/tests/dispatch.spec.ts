@@ -20,7 +20,7 @@ test.describe('Dispatch Dialog', () => {
 
     test('dispatch dialog shows Runner label', async ({ page }) => {
         await page.locator('button[title="Run task"]').first().click();
-        await expect(page.getByText('Runner')).toBeVisible();
+        await expect(page.getByText('Runner', { exact: true })).toBeVisible();
     });
 
     test('dispatch dialog has Start Run button', async ({ page }) => {

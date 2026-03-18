@@ -103,7 +103,7 @@ patchbay/
 | **Bash** | Executes shell commands, captures stdout/stderr |
 | **HTTP** | Makes HTTP requests, returns response body |
 | **Cursor** | Writes context to `current-focus.md`, returns `blocked` (manual handoff) |
-| **Cursor CLI** | Runs `cursor agent -p <prompt>` headless |
+| **Cursor CLI** | Returns immediate error — `cursor agent -p` is interactive only; use `cursor` (file-based) or `claude-code` runner instead |
 | **Claude Code** | Runs `claude -p <prompt>` with project context |
 | **Codex** | Runs `codex exec <prompt>` with project context |
 | **Gemini** | Runs `gemini -p <prompt>` with project context |
@@ -217,6 +217,9 @@ Patchbay thinks from the outside in (external dashboard). Wintermute thinks from
 - [x] Phase 7b: Standalone HTTP server (`@patchbay/server`) — all endpoints (GET + write + dispatch + SSE), runner-bootstrap centralized
 - [x] Phase C: Test infrastructure — Vitest (31 unit tests: Store, Orchestrator, CLI, BashRunner) + Playwright E2E (11 tests: board + dispatch dialog)
 - [x] Phase D: Non-blocking dispatch (`dispatchTaskAsync`, HTTP 202 — dialog closes immediately) + History page
+- [x] Phase E: Live runner output streaming — all 5 CLI runners migrated from `exec` to `spawn` with real-time stdout/stderr piping; Wintermute starts Patchbay dashboard in integrated terminal (no separate OS window)
+- [x] Phase F: Windows compatibility — `shell: true` in all CLI runner spawns (resolves `ENOENT` for `.cmd` files); 5-minute timeout with `settled`-flag in all CLI runners; URL validation in HTTP runner; hint messages in Bash runner
+- [x] Phase G: Runner regression fix — replaced `shell: true` with explicit `.cmd` suffix on Windows (eliminates DEP0190 warnings and prompt word-splitting); cursor-cli returns immediate `status: 'failed'` (no headless CLI mode exists)
 
 See [PLAN.md](PLAN.md) for the detailed technical roadmap.
 
