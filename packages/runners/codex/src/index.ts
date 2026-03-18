@@ -35,7 +35,7 @@ export class CodexRunner implements Runner {
 
         return new Promise<RunnerOutput>((resolve) => {
             const isWin = process.platform === 'win32';
-            const bin = isWin ? 'codex.cmd' : 'codex';
+            const bin = 'codex';
             const child = spawn(bin, ['exec'], {
                 cwd: input.repoPath,
                 env,

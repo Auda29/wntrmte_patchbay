@@ -61,7 +61,9 @@ export class ClaudeCodeRunner implements Runner {
 
         return new Promise<RunnerOutput>((resolve) => {
             const isWin = process.platform === 'win32';
-            const bin = isWin ? 'claude.cmd' : 'claude';
+            // With shell:true on Windows, cmd.exe resolves extensions automatically — no .cmd suffix needed.
+            // Without shell on Linux/macOS, spawn finds the binary directly.
+            const bin = 'claude';
             // On Windows, .cmd files require shell:true. Pass prompt via stdin
             // to avoid cmd.exe word-splitting the prompt when passed as an argument.
             const child = spawn(bin, ['-p'], {

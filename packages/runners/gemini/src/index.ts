@@ -35,7 +35,7 @@ export class GeminiRunner implements Runner {
 
         return new Promise<RunnerOutput>((resolve) => {
             const isWin = process.platform === 'win32';
-            const bin = isWin ? 'gemini.cmd' : 'gemini';
+            const bin = 'gemini';
             const child = spawn(bin, ['-p'], {
                 cwd: input.repoPath,
                 env,
