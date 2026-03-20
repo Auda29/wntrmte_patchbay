@@ -445,6 +445,7 @@ packages/server/
       agents.ts         # GET /agents
       artifacts.ts      # GET /artifacts
       dispatch.ts       # POST /dispatch
+      reply.ts          # POST /reply
       events.ts         # GET /events (SSE)
 ```
 
@@ -459,11 +460,11 @@ packages/server/
 - `GET /agents` — Agent-Profile aus `.project-agents/agents/`
 - `GET /artifacts` — Context-Dateien + Run-Diff-Referenzen
 - `POST /dispatch` — Task über registrierten Runner ausführen
+- `POST /reply` — bestehende Runner-Konversation fortsetzen
 - `GET /events` — SSE `change`-Events bei Store-Änderungen
 
 **Offen:**
 
-- [ ] `POST /reply` — `postReply(orchestrator, request, response)` in `src/handlers/reply.ts`: ruft `orchestrator.continueConversation(conversationId, message, runnerId)` auf. Route in `server.ts` registrieren. Aktuell nur im Dashboard (Next.js `/api/reply`) vorhanden — Feature-Parität mit Dashboard fehlt.
 - [ ] *(optional)* Server von Node-`http` auf Fastify migrieren
 
 **Abgrenzung:** Dashboard bleibt unverändert. Standalone-Server ist für Clients ohne Dashboard (wntrmte Extension, CI, externe Tools).

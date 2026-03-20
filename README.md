@@ -83,8 +83,9 @@ patchbay/
 - `patchbay init` — project setup (interactive or `--yes` for non-interactive), creates `.project-agents/` structure
 - `patchbay task create|list|status` — task management
 - `patchbay run <taskId> <runnerId>` — dispatch a task to a runner
+- `patchbay reply <conversationId> <message>` — continue a multi-turn runner conversation
 - `patchbay auth set|list|clear` — manage runner authentication (API keys or subscription mode)
-- `patchbay serve [--port 3001] [--repo-root .]` — start standalone HTTP server (all endpoints + SSE)
+- `patchbay serve [--port 3001] [--repo-root .]` — start standalone HTTP server (all endpoints incl. reply + SSE)
 
 **Dashboard** — Next.js web application:
 - Project overview with stats and recent activity
