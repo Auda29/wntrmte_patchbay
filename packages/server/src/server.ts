@@ -9,6 +9,7 @@ import { getDecisions, postDecision } from './handlers/decisions';
 import { getAgents } from './handlers/agents';
 import { getArtifacts } from './handlers/artifacts';
 import { postDispatch } from './handlers/dispatch';
+import { postReply } from './handlers/reply';
 import { getEvents } from './handlers/events';
 import { createConfiguredOrchestrator } from './runtime';
 import { sendJson, parseQueryString } from './utils';
@@ -82,6 +83,11 @@ export async function createServer(opts: CreateServerOptions): Promise<Server> {
 
             if (method === 'POST' && urlPath === '/dispatch') {
                 await postDispatch(orchestrator, request, response);
+                return;
+            }
+
+            if (method === 'POST' && urlPath === '/reply') {
+                await postReply(orchestrator, request, response);
                 return;
             }
 

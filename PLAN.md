@@ -461,9 +461,10 @@ packages/server/
 - `POST /dispatch` — Task über registrierten Runner ausführen
 - `GET /events` — SSE `change`-Events bei Store-Änderungen
 
-**Offen (explizit optional):**
+**Offen:**
 
-- [ ] Server von Node-`http` auf Fastify migrieren
+- [ ] `POST /reply` — `postReply(orchestrator, request, response)` in `src/handlers/reply.ts`: ruft `orchestrator.continueConversation(conversationId, message, runnerId)` auf. Route in `server.ts` registrieren. Aktuell nur im Dashboard (Next.js `/api/reply`) vorhanden — Feature-Parität mit Dashboard fehlt.
+- [ ] *(optional)* Server von Node-`http` auf Fastify migrieren
 
 **Abgrenzung:** Dashboard bleibt unverändert. Standalone-Server ist für Clients ohne Dashboard (wntrmte Extension, CI, externe Tools).
 
