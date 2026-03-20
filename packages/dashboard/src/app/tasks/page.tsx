@@ -53,12 +53,12 @@ export default function TasksBoard() {
                 </button>
             </header>
 
-            <div className="flex-1 flex gap-6 overflow-x-auto pb-4">
+            <div className="flex-1 overflow-y-auto pr-1 space-y-5">
                 {columns.map(col => {
                     const colTasks = tasks.filter(t => t.status === col.id);
                     return (
-                        <div key={col.id} className="w-80 flex-shrink-0 flex flex-col gap-4">
-                            <div className="flex items-center justify-between">
+                        <section key={col.id} className="glass-card rounded-xl border border-surface-800/70 p-4 md:p-5">
+                            <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full border-2 ${col.color} bg-background`} />
                                     <h3 className="font-medium text-surface-200">{col.title}</h3>
@@ -68,7 +68,7 @@ export default function TasksBoard() {
                                 </span>
                             </div>
 
-                            <div className="flex-1 space-y-3">
+                            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                                 {colTasks.map(task => (
                                     <div key={task.id} className="glass-card rounded-lg p-4 border border-surface-800/50 hover:border-surface-600 transition-colors group relative">
                                         <div className="absolute top-0 left-0 w-1 h-full bg-brand-500/0 group-hover:bg-brand-500/50 transition-colors" />
@@ -135,12 +135,12 @@ export default function TasksBoard() {
                                 ))}
 
                                 {colTasks.length === 0 && (
-                                    <div className="border border-dashed border-surface-800 rounded-lg h-24 flex items-center justify-center">
+                                    <div className="border border-dashed border-surface-800 rounded-lg h-24 flex items-center justify-center md:col-span-2 xl:col-span-3">
                                         <p className="text-xs text-surface-600">No tasks</p>
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </section>
                     );
                 })}
             </div>
