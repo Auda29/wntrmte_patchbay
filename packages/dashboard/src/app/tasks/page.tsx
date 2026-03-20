@@ -2,7 +2,7 @@
 import useSWR from 'swr';
 import { Task } from '@patchbay/core';
 import { Play, ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { NewTaskModal } from '@/components/NewTaskModal';
 import { DispatchDialog } from '@/components/DispatchDialog';
 
@@ -23,6 +23,7 @@ export default function TasksBoard() {
     const [statusMenu, setStatusMenu] = useState<string | null>(null);
     const [statusMenuPlacement, setStatusMenuPlacement] = useState<'bottom' | 'top'>('bottom');
     const statusButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+    const estimatedMenuHeight = Math.max((columns.length - 1) * 34 + 8, 140);
 
     const changeStatus = async (taskId: string, newStatus: string) => {
         setStatusMenu(null);
@@ -34,27 +35,29 @@ export default function TasksBoard() {
         mutate();
     };
 
-    useEffect(() => {
-        if (!statusMenu) {
+    const toggleStatusMenu = (taskId: string) => {
+        if (statusMenu === taskId) {
+            setStatusMenu(null);
             setStatusMenuPlacement('bottom');
             return;
         }
 
-        const trigger = statusButtonRefs.current[statusMenu];
+        const trigger = statusButtonRefs.current[taskId];
         if (!trigger) {
             setStatusMenuPlacement('bottom');
+            setStatusMenu(taskId);
             return;
         }
 
         const rect = trigger.getBoundingClientRect();
-        const estimatedMenuHeight = Math.max((columns.length - 1) * 34 + 8, 140);
         const spaceBelow = window.innerHeight - rect.bottom;
         const spaceAbove = rect.top;
 
         setStatusMenuPlacement(
             spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow ? 'top' : 'bottom'
         );
-    }, [statusMenu, columns.length]);
+        setStatusMenu(taskId);
+    };
 
     if (isLoading) return <div className="p-8 text-surface-400">Loading tasks...</div>;
     if (error) return <div className="p-8 text-red-400">Error connecting to backend</div>;
@@ -133,7 +136,7 @@ export default function TasksBoard() {
                                                         ref={(element) => {
                                                             statusButtonRefs.current[task.id] = element;
                                                         }}
-                                                        onClick={() => setStatusMenu(statusMenu === task.id ? null : task.id)}
+                                                        onClick={() => toggleStatusMenu(task.id)}
                                                         className="p-1.5 rounded-md text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors"
                                                         title="Change status"
                                                     >
