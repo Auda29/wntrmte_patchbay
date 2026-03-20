@@ -11,7 +11,7 @@ const fetcher = (url: string) => fetch(url).then(res => res.json());
 export default function TasksBoard() {
     const { data, error, isLoading, mutate } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
     const [showNewTask, setShowNewTask] = useState(false);
-    const [dispatchTarget, setDispatchTarget] = useState<{ id: string; title: string } | null>(null);
+    const [dispatchTarget, setDispatchTarget] = useState<{ id: string; title: string; status: string } | null>(null);
     const [statusMenu, setStatusMenu] = useState<string | null>(null);
 
     if (isLoading) return <div className="p-8 text-surface-400">Loading tasks...</div>;
@@ -22,6 +22,7 @@ export default function TasksBoard() {
     const columns = [
         { id: 'open', title: 'Open', color: 'border-surface-600' },
         { id: 'in_progress', title: 'In Progress', color: 'border-blue-500' },
+        { id: 'awaiting_input', title: 'Awaiting Reply', color: 'border-purple-500' },
         { id: 'blocked', title: 'Blocked', color: 'border-red-500' },
         { id: 'review', title: 'Review', color: 'border-yellow-500' },
         { id: 'done', title: 'Done', color: 'border-green-500' },
@@ -92,12 +93,12 @@ export default function TasksBoard() {
                                         <div className="flex justify-between items-center text-xs text-surface-500">
                                             <span>{task.affectedFiles?.length || 0} files</span>
                                             <div className="flex gap-1.5">
-                                                {/* Dispatch button - only for open/blocked tasks */}
-                                                {(task.status === 'open' || task.status === 'blocked') && (
+                                                {/* Dispatch/Reply button */}
+                                                {(task.status === 'open' || task.status === 'blocked' || task.status === 'awaiting_input') && (
                                                     <button
-                                                        onClick={() => setDispatchTarget({ id: task.id, title: task.title })}
+                                                        onClick={() => setDispatchTarget({ id: task.id, title: task.title, status: task.status })}
                                                         className="p-1.5 rounded-md text-brand-400 hover:bg-brand-950/50 hover:text-brand-300 transition-colors"
-                                                        title="Run task"
+                                                        title={task.status === 'awaiting_input' ? 'Reply to runner' : 'Run task'}
                                                     >
                                                         <Play className="w-3.5 h-3.5" />
                                                     </button>
@@ -156,6 +157,7 @@ export default function TasksBoard() {
                     onClose={() => setDispatchTarget(null)}
                     taskId={dispatchTarget.id}
                     taskTitle={dispatchTarget.title}
+                    taskStatus={dispatchTarget.status}
                     onDispatched={() => mutate()}
                 />
             )}

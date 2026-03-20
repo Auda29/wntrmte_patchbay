@@ -554,11 +554,11 @@ if (!available) {
 }
 ```
 
-- [ ] `packages/core/src/runner.ts` — `RunnerOutput` um optionales `installHint?: string`-Feld erweitern
-- [ ] `packages/runners/claude-code/src/index.ts` — Binary-Check; `installHint: 'npm install -g @anthropic-ai/claude-code'`
-- [ ] `packages/runners/codex/src/index.ts` — Binary-Check; `installHint: 'npm install -g @openai/codex'`
-- [ ] `packages/runners/gemini/src/index.ts` — Binary-Check; `installHint: 'npm install -g @google/gemini-cli'`
-- [ ] `packages/runners/cursor-cli/src/index.ts` — Binary-Check; `installHint: 'https://cursor.com/download'` (kein npm-Package)
+- [x] `packages/core/src/runner.ts` — `RunnerOutput` um optionales `installHint?: string`-Feld erweitern
+- [x] `packages/runners/claude-code/src/index.ts` — Binary-Check; `installHint: 'npm install -g @anthropic-ai/claude-code'`
+- [x] `packages/runners/codex/src/index.ts` — Binary-Check; `installHint: 'npm install -g @openai/codex'`
+- [x] `packages/runners/gemini/src/index.ts` — Binary-Check; `installHint: 'npm install -g @google/gemini-cli'`
+- [x] `packages/runners/cursor-cli/src/index.ts` — Binary-Check; `installHint: 'https://cursor.com/download'` (kein npm-Package)
 
 ### H2: Install-Prompt in Wintermute
 
@@ -566,16 +566,16 @@ if (!available) {
 
 **Fix:** Run-Result auf `installHint` prüfen; bei Treffer `window.showErrorMessage` mit Button "In Terminal installieren" anzeigen.
 
-- [ ] `extensions/wntrmte-workflow/src/extension.ts` — nach `patchbay run` Abschluss: Run-JSON aus `.project-agents/runs/` lesen, `installHint` auswerten
-- [ ] Bei `installHint`: `window.showErrorMessage('<runner> ist nicht installiert', 'In Terminal installieren')` — Klick öffnet Terminal mit `installHint`-Kommando
+- [x] `extensions/wntrmte-workflow/src/extension.ts` — nach `patchbay run` Abschluss: Run-JSON aus `.project-agents/runs/` lesen, `installHint` auswerten
+- [x] Bei `installHint`: `window.showErrorMessage('<runner> ist nicht installiert', 'In Terminal installieren')` — Klick öffnet Terminal mit `installHint`-Kommando
 
 ### H3: Install-Hinweis im Dashboard
 
 **Problem:** Run-Viewer zeigt bei `status: 'failed'` nur die Logs — `installHint` wird nicht gesondert hervorgehoben.
 
-- [ ] `packages/dashboard/src/app/runs/[id]/page.tsx` (oder Run-Viewer Komponente) — `installHint` als hervorgehobenen Code-Block mit Copy-Button rendern wenn vorhanden
-- [ ] `packages/dashboard/src/app/api/agents/route.ts` — Availability-Check pro Runner (`which`/`where`) in den Response einbauen (`available: boolean`)
-- [ ] `packages/dashboard/src/components/DispatchDialog.tsx` — Runner mit `available: false` als deaktiviert + Warnung mit `installHint` anzeigen
+- [x] `packages/dashboard/src/app/runs/[id]/page.tsx` (oder Run-Viewer Komponente) — `installHint` als hervorgehobenen Code-Block mit Copy-Button rendern wenn vorhanden
+- [x] `packages/dashboard/src/app/api/agents/route.ts` — Availability-Check pro Runner (`which`/`where`) in den Response einbauen (`available: boolean`)
+- [x] `packages/dashboard/src/components/DispatchDialog.tsx` — Runner mit `available: false` als deaktiviert + Warnung mit `installHint` anzeigen
 
 ---
 
@@ -672,3 +672,45 @@ Gefunden beim manuellen Testen auf Windows: CLI-Runner schlagen mit `spawn ENOEN
 - [x] `e2e/tests/board.spec.ts` — Kanban-Board rendert Tasks, Dispatch-Button sichtbar (6 Tests)
 - [x] `e2e/tests/dispatch.spec.ts` — Dispatch-Dialog: öffnen, Felder prüfen, schließen (5 Tests)
 - [x] CI: Playwright-Install + `npm run test:e2e` in `build.yml` (nur Chromium)
+
+---
+
+## Phase J: Multi-Turn Runner Conversations — DONE
+
+Wenn ein CLI-Runner eine Rückfrage stellt, endete der Run bisher sofort — der Nutzer hatte keine Möglichkeit zu antworten. Phase J ermöglicht mehrstufige Konversationen zwischen Nutzer und Agenten über alle Eingabekanäle (CLI, Wintermute, Dashboard).
+
+### J1: Core Data Model
+
+- [x] `packages/core/src/runner.ts` — `ConversationTurn`-Interface (`role`, `content`, `timestamp`); `RunnerInput` um `conversationId`, `resumeSessionId`, `previousTurns` erweitert; `RunnerOutput` um `awaiting_input`-Status, `sessionId`, `question` erweitert
+- [x] `packages/core/src/types.ts` — `Run` um `conversationId`, `sessionId`, `turnIndex` erweitert; Task-Status-Enum um `awaiting_input` ergänzt
+- [x] `schema/run.schema.json` + `packages/core/schema/run.schema.json` — `conversationId`, `sessionId`, `turnIndex`-Felder ergänzt
+- [x] `schema/task.schema.json` + `packages/core/schema/task.schema.json` — `awaiting_input` im Status-Enum ergänzt
+
+### J2: Claude Code Runner — Session Resume + Fragen-Erkennung
+
+- [x] `packages/runners/claude-code/src/index.ts` — `detectQuestion(output)`-Heuristik (Länge, Fragezeichen, Keywords); `--resume <sessionId>` bei `input.resumeSessionId`; `--session-id <uuid>` für neue Runs; Prompt via stdin; `buildPrompt()` injiziert `previousTurns` als Konversations-Kontext
+- [x] `packages/runners/codex/src/index.ts` — erbt `previousTurns`-Kontext über `buildPrompt()` aus `@patchbay/runner-claude-code`
+- [x] `packages/runners/gemini/src/index.ts` — gleiche Fallback-Kontext-Injektion
+
+### J3: Orchestrator — Konversations-Threading
+
+- [x] `packages/core/src/orchestrator.ts` — `continueConversation(conversationId, userReply, runnerId)`: findet Thread-Runs, baut `RunnerInput` mit `resumeSessionId` + `previousTurns`, führt Runner aus, persistiert
+- [x] `packages/core/src/orchestrator.ts` — `buildConversationHistory(runs)`: baut `ConversationTurn[]` aus Run-History
+- [x] `packages/core/src/orchestrator.ts` — `preflight()` erlaubt `awaiting_input`-Status; `dispatchTask()` generiert `conversationId` + `turnIndex: 0`; `finalize()` setzt `task.status = 'awaiting_input'` bei `output.status === 'awaiting_input'`
+
+### J4: CLI — `patchbay reply` + Interaktive Follow-up-Loop
+
+- [x] `packages/cli/src/index.ts` — `patchbay reply <conversationId> "<message>"` Command; interaktive Follow-up-Loop in `patchbay run` (TTY-Check, `askReply()` Helper, Loop bis `completed`/`failed` oder Nutzer skippt)
+
+### J5: Wintermute Extension — Reply UX
+
+- [x] `extensions/wntrmte-workflow/src/store/types.ts` — `awaiting_input` in `TaskStatus`; `conversationId`, `sessionId`, `turnIndex` in `Run`
+- [x] `extensions/wntrmte-workflow/src/store/FileStore.ts` — bewahrt neue Felder beim Lesen von Run-JSONs
+- [x] `extensions/wntrmte-workflow/src/providers/TaskTreeProvider.ts` — `awaiting_input` mit Icon `comment-discussion` und Label "Awaiting Reply"
+- [x] `extensions/wntrmte-workflow/src/extension.ts` — `scheduleInstallHintCheck` → `schedulePostRunCheck`: erkennt auch `awaiting_input`-Runs, zeigt `showInputBox` mit Frage des Runners, öffnet Terminal mit `patchbay reply <conversationId> "<reply>"`, kettet weiteren Check für Folge-Runs
+
+### J6: Dashboard — Reply-Modus + Kanban-Spalte
+
+- [x] `packages/dashboard/src/app/api/reply/route.ts` — neuer Endpoint `POST /api/reply`: ruft `orchestrator.continueConversation()` auf
+- [x] `packages/dashboard/src/components/DispatchDialog.tsx` — Reply-Modus wenn `taskStatus === 'awaiting_input'`: zeigt Frage des Runners, Textarea für Antwort, "Send Reply"-Button; ruft `/api/reply` auf (oder sendet postMessage im VS Code Webview-Kontext)
+- [x] `packages/dashboard/src/app/tasks/page.tsx` — neue Kanban-Spalte "Awaiting Reply" (lila); Dispatch-Button auch für `awaiting_input`-Tasks sichtbar; `taskStatus` an `DispatchDialog` übergeben

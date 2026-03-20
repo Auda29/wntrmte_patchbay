@@ -67,7 +67,7 @@ patchbay/
 ```
 
 **Task lifecycle:**
-`open` → `in_progress` → `review` → `done` (or `blocked` at any point)
+`open` → `in_progress` → `review` → `done` (or `blocked` / `awaiting_input` at any point)
 
 **Run lifecycle:**
 `running` → `completed` | `failed` | `cancelled`
@@ -220,6 +220,9 @@ Patchbay thinks from the outside in (external dashboard). Wintermute thinks from
 - [x] Phase E: Live runner output streaming — all 5 CLI runners migrated from `exec` to `spawn` with real-time stdout/stderr piping; Wintermute starts Patchbay dashboard in integrated terminal (no separate OS window)
 - [x] Phase F: Windows compatibility — `shell: true` in all CLI runner spawns (resolves `ENOENT` for `.cmd` files); 5-minute timeout with `settled`-flag in all CLI runners; URL validation in HTTP runner; hint messages in Bash runner
 - [x] Phase G: Runner regression fix — replaced `shell: true` with explicit `.cmd` suffix on Windows (eliminates DEP0190 warnings and prompt word-splitting); cursor-cli returns immediate `status: 'failed'` (no headless CLI mode exists)
+- [x] Phase H: Runner install-on-demand — `installHint` in all CLI runners, binary availability check, "Install in Terminal" in DispatchDialog and Wintermute error dialog
+- [x] Phase I: Windows runner spawn fix — `shell: true` + stdin piping on Windows (no `.cmd` suffix, cmd.exe resolves automatically); `.yml` task file support in Wintermute FileStore
+- [x] Phase J: Multi-turn runner conversations — `awaiting_input` status, `continueConversation()` in Orchestrator, `--resume` session in claude-code runner, `patchbay reply` CLI command, reply UX in Wintermute (InputBox) and Dashboard (DispatchDialog reply mode, "Awaiting Reply" Kanban column), `/api/reply` endpoint
 
 See [PLAN.md](PLAN.md) for the detailed technical roadmap.
 
