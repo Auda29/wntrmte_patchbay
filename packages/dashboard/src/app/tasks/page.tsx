@@ -2,7 +2,7 @@
 import useSWR from 'swr';
 import { Task } from '@patchbay/core';
 import { Play, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NewTaskModal } from '@/components/NewTaskModal';
 import { DispatchDialog } from '@/components/DispatchDialog';
 
@@ -13,6 +13,8 @@ export default function TasksBoard() {
     const [showNewTask, setShowNewTask] = useState(false);
     const [dispatchTarget, setDispatchTarget] = useState<{ id: string; title: string; status: string } | null>(null);
     const [statusMenu, setStatusMenu] = useState<string | null>(null);
+    const [statusMenuPlacement, setStatusMenuPlacement] = useState<'bottom' | 'top'>('bottom');
+    const statusButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
     if (isLoading) return <div className="p-8 text-surface-400">Loading tasks...</div>;
     if (error) return <div className="p-8 text-red-400">Error connecting to backend</div>;
@@ -38,6 +40,28 @@ export default function TasksBoard() {
         mutate();
     };
 
+    useEffect(() => {
+        if (!statusMenu) {
+            setStatusMenuPlacement('bottom');
+            return;
+        }
+
+        const trigger = statusButtonRefs.current[statusMenu];
+        if (!trigger) {
+            setStatusMenuPlacement('bottom');
+            return;
+        }
+
+        const rect = trigger.getBoundingClientRect();
+        const estimatedMenuHeight = Math.max((columns.length - 1) * 34 + 8, 140);
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+
+        setStatusMenuPlacement(
+            spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow ? 'top' : 'bottom'
+        );
+    }, [statusMenu, columns.length]);
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500 h-full flex flex-col">
             <header className="flex justify-between items-end">
@@ -56,8 +80,9 @@ export default function TasksBoard() {
             <div className="flex-1 overflow-y-auto pr-1 space-y-5">
                 {columns.map(col => {
                     const colTasks = tasks.filter(t => t.status === col.id);
+                    const hasOpenMenu = colTasks.some(task => task.id === statusMenu);
                     return (
-                        <section key={col.id} className="glass-card rounded-xl border border-surface-800/70 p-4 md:p-5">
+                        <section key={col.id} className={`relative glass-card rounded-xl border border-surface-800/70 p-4 md:p-5 ${hasOpenMenu ? 'z-20' : 'z-0'}`}>
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full border-2 ${col.color} bg-background`} />
@@ -70,7 +95,7 @@ export default function TasksBoard() {
 
                             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                                 {colTasks.map(task => (
-                                    <div key={task.id} className="glass-card rounded-lg p-4 border border-surface-800/50 hover:border-surface-600 transition-colors group relative">
+                                    <div key={task.id} className={`glass-card rounded-lg p-4 border border-surface-800/50 hover:border-surface-600 transition-colors group relative ${statusMenu === task.id ? 'z-30' : 'z-0'}`}>
                                         <div className="absolute top-0 left-0 w-1 h-full bg-brand-500/0 group-hover:bg-brand-500/50 transition-colors" />
                                         <div className="flex justify-between items-start mb-2">
                                             <span className="text-xs font-mono text-surface-400 bg-surface-900/50 px-1.5 py-0.5 rounded">
@@ -106,6 +131,9 @@ export default function TasksBoard() {
                                                 {/* Status change menu */}
                                                 <div className="relative">
                                                     <button
+                                                        ref={(element) => {
+                                                            statusButtonRefs.current[task.id] = element;
+                                                        }}
                                                         onClick={() => setStatusMenu(statusMenu === task.id ? null : task.id)}
                                                         className="p-1.5 rounded-md text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors"
                                                         title="Change status"
@@ -113,7 +141,7 @@ export default function TasksBoard() {
                                                         <ChevronDown className="w-3.5 h-3.5" />
                                                     </button>
                                                     {statusMenu === task.id && (
-                                                        <div className="absolute right-0 top-8 z-50 min-w-[140px] glass-card rounded-lg border border-surface-700 py-1 shadow-xl">
+                                                        <div className={`absolute right-0 z-[70] min-w-[140px] glass-card rounded-lg border border-surface-700 py-1 shadow-xl ${statusMenuPlacement === 'top' ? 'bottom-8' : 'top-8'}`}>
                                                             {columns
                                                                 .filter(c => c.id !== task.status)
                                                                 .map(c => (

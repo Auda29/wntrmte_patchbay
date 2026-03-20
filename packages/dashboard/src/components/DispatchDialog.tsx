@@ -20,6 +20,24 @@ interface DispatchDialogProps {
     onDispatched: () => void;
 }
 
+const preferredRunnerOrder = ['claude-code', 'codex', 'gemini', 'cursor-cli', 'cursor'];
+
+function sortAgentsByPreference(items: AgentInfo[]): AgentInfo[] {
+    return [...items].sort((a, b) => {
+        const aIndex = preferredRunnerOrder.indexOf(a.id);
+        const bIndex = preferredRunnerOrder.indexOf(b.id);
+
+        const normalizedA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+        const normalizedB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+
+        if (normalizedA !== normalizedB) {
+            return normalizedA - normalizedB;
+        }
+
+        return a.id.localeCompare(b.id);
+    });
+}
+
 export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, onDispatched }: DispatchDialogProps) {
     const isAwaitingInput = taskStatus === 'awaiting_input';
     const [runnerId, setRunnerId] = useState('bash');
@@ -47,9 +65,10 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                 .then(r => r.json())
                 .then(data => {
                     if (data.agents?.length) {
-                        setAgents(data.agents);
-                        const firstAvailable = data.agents.find((a: AgentInfo) => a.available !== false);
-                        setRunnerId((firstAvailable ?? data.agents[0]).id);
+                        const sortedAgents = sortAgentsByPreference(data.agents);
+                        setAgents(sortedAgents);
+                        const firstAvailable = sortedAgents.find((a: AgentInfo) => a.available !== false);
+                        setRunnerId((firstAvailable ?? sortedAgents[0]).id);
                     }
                 })
                 .catch(() => {});
