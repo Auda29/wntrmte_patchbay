@@ -50,7 +50,7 @@ describe('CodexRunner', () => {
 
         expect(spawnMock).toHaveBeenCalledWith(
             'codex',
-            ['exec', '--skip-git-repo-check'],
+            ['exec', '--full-auto', '--skip-git-repo-check'],
             expect.objectContaining({
                 cwd: '/tmp/repo',
                 stdio: ['pipe', 'pipe', 'pipe'],
