@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__mcp-server-github__get_me",
+      "mcp__mcp-server-github__create_repository",
+      "mcp__mcp-server-github__get_latest_release",
+      "mcp__mcp-server-github__get_tag",
+      "mcp__mcp-server-github__get_commit",
+      "mcp__mcp-server-github__get_file_contents",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(node --version)",
+      "Bash(npm --version)",
+      "Bash(jq --version)",
+      "Bash(git --version)",
+      "Bash(cmd.exe /c \"where jq\")",
+      "Bash(cmd.exe /c \"where jq 2>&1\")",
+      "Bash(export PATH=\"/c/Users/NiklasW/AppData/Local/Microsoft/WinGet/Packages/jqlang.jq_Microsoft.Winget.Source_8wekyb3d8bbwe:$PATH\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(node -e \":*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(git -C \"C:/Users/wecke/Projects/wntrmte_patchbay/wntrmte\" show --stat ee672c5)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:code.visualstudio.com)"
+    ]
+  }
+}
