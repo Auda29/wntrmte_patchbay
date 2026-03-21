@@ -2,19 +2,24 @@
 
 ## What is this project?
 
-Patchbay is a lightweight control plane for AI-assisted software development. It orchestrates existing tools (Cursor, Claude Code, Codex, Bash, HTTP) as coordinated workers via a central dashboard.
+Patchbay is the **agent orchestration app** inside Wintermute. It provides the dashboard UI, the orchestrator backend, and the provider connectors that let users interact with AI coding agents (Claude Code, Codex, Gemini, and others) from within the IDE.
+
+Together with Wintermute, it forms an open-source, IDE-native, model-agnostic agent orchestration platform — comparable to ZenFlow or Codex App, but integrated into the editor. See `../VISION.md` for the full product vision.
 
 ## Companion: Wintermute
 
-Wintermute (`wntrmte`) is a minimalist VS Code distribution and the native, first-class client for Patchbay. Its extension is designed as a Patchbay client from day one.
+Wintermute (`wntrmte`) is a minimalist VS Code distribution that serves as the **host** for Patchbay. It embeds the Patchbay Dashboard as a Webview panel, provides the IDE context (workspace, terminal, file system), and relays commands via postMessage.
 
 - wntrmte repo: `../wntrmte/`
 - Shared vision: `../VISION.md`
 - wntrmte plan: `../wntrmte/PLAN.md`
 
-### Key rule
+### Key rules
 
-Patchbay **owns** the orchestration logic and the `.project-agents/` schema. The wntrmte extension (`../wntrmte/extensions/wntrmte-workflow/`) is a consumer of that schema — not a competing orchestrator.
+1. Patchbay **owns** the orchestration logic, the `.project-agents/` schema, and the Dashboard UI.
+2. The Dashboard is the **primary app surface** — Agent Chat, Kanban, Dispatch, Streaming, Approvals all live here.
+3. Wintermute embeds the Dashboard as an iframe. It does **not** build its own orchestration UI.
+4. The `.project-agents/` file format is the integration contract between repos.
 
 ## Project structure
 
@@ -22,35 +27,37 @@ Patchbay **owns** the orchestration logic and the `.project-agents/` schema. The
 patchbay/
 ├── schema/           # .project-agents/ JSON Schemas
 ├── packages/
-│   ├── core/         # Orchestrator, Store (ajv-validated), Runner interface, Types
-│   ├── cli/          # patchbay init (interactive + --yes), task create/list/status, run, status, auth, serve
-│   ├── dashboard/    # Next.js + Tailwind + SWR dashboard
-│   │   └── src/app/api/  # API routes: state, dispatch, artifacts, tasks, runs, agents, events (SSE)
-│   ├── server/       # Standalone HTTP server (@patchbay/server, patchbay serve) — DONE
-│   │   └── src/      # createServer(), all routes: GET/POST/PATCH + dispatch + SSE + EventBus
+│   ├── core/         # Orchestrator, Store (ajv-validated), Runner + AgentConnector interfaces, Types
+│   ├── cli/          # patchbay init, task, run, reply, auth, serve
+│   ├── dashboard/    # Next.js + Tailwind dashboard (THE APP)
+│   │   └── src/app/api/  # API routes: state, dispatch, reply, agents, events (SSE)
+│   ├── server/       # Standalone HTTP server (@patchbay/server)
+│   │   └── src/      # createServer(), all routes including streaming endpoints
 │   └── runners/
-│       ├── bash/         # Shell command execution
-│       ├── http/         # GET URL fetch
-│       ├── cursor/       # File-based handoff (Stage 1)
-│       ├── cursor-cli/   # cursor agent -p wrapper
-│       ├── claude-code/  # claude -p wrapper
-│       ├── codex/        # codex exec wrapper
-│       └── gemini/       # gemini -p wrapper
+│       ├── bash/         # Shell command execution (batch)
+│       ├── http/         # GET URL fetch (batch)
+│       ├── cursor/       # File-based handoff (batch)
+│       ├── cursor-cli/   # cursor agent wrapper (batch)
+│       ├── claude-code/  # Claude Code runner (batch) + connector (streaming)
+│       ├── codex/        # Codex runner (batch) + connector (streaming, planned)
+│       └── gemini/       # Gemini runner (batch) + connector (streaming, planned)
 ├── PLAN.md           # Implementation roadmap
 └── README.md
 ```
 
+## Architecture: Two execution models
+
+**Batch Runner** — `execute(): Promise<RunnerOutput>`. Fire-and-forget. For bash, http, cursor, simple one-shot tasks.
+
+**Agent Connector** — `connect(): AgentSession`. Event-based, session-oriented. Streams messages, handles permissions, accepts replies in a live session. For Claude Code, Codex, Gemini and future providers. Provider-agnostic: the `AgentConnector` interface is generic, each provider implements its own connector.
+
 ## Principles
 
-- **Dashboard-first** — the dashboard is the control center
+- **Dashboard-first** — the dashboard is the app, not decoration
+- **Provider-agnostic** — any AI agent is an interchangeable worker, no vendor lock-in
 - **Repo-first** — state in `.project-agents/`, git-versioned, no cloud required
-- **CLI-first** — CLI as the robust integration layer
-- **Tool-agnostic** — no lock-in to any specific AI tool
-
-## Data model
-
-Core objects: Project, Task, Run, Decision, Artifact, Agent/Runner Profile. All stored in `.project-agents/` as YAML/JSON/Markdown files. Validated via ajv against JSON Schemas in `packages/core/schema/`.
+- **Open source** — community can build custom connectors for any provider
 
 ## Current status
 
-Phases 1–7b + C + D + E + F + G + H + I + J complete. Schema, Orchestrator, Dashboard (Next.js + SWR + SSE), Runner-Adapters (bash, http, cursor, cursor-cli, claude-code, codex, gemini), wntrmte integration, Auth-System, non-interactive `patchbay init --yes`, Standalone server (`@patchbay/server`) with all endpoints and centralized runner-bootstrap, non-blocking `dispatchTaskAsync` (HTTP 202), History page, Test infrastructure (Vitest 31 unit tests + Playwright 11 E2E tests), live runner output streaming via `spawn` in all 5 CLI runners, Windows-compat (platform-aware `shell: true` + stdin piping, no `.cmd` suffix — cmd.exe resolves automatically), 5-minute timeout with `settled`-flag in all CLI runners, URL validation in HTTP runner, hint messages in Bash runner, cursor-cli returns immediate error (not headless), `installHint` in `RunnerOutput`/`Run` + binary check in claude-code/codex/gemini runners, Dashboard Run-Viewer + DispatchDialog show `installHint`, agents endpoint returns `available: boolean` + `installHint` (Dashboard + Standalone Server), "Install in Terminal" button in DispatchDialog (VS Code webview: postMessage, browser: clipboard), `.yml` task files supported in Wintermute FileStore alongside `.md`. Phase J adds full multi-turn conversational support: `awaiting_input` task status, `ConversationTurn` type, `continueConversation()` in Orchestrator, `--resume` session flag in claude-code runner, question-detection heuristic, `patchbay reply` CLI command with interactive follow-up loop, `schedulePostRunCheck` in Wintermute (InputBox reply prompt), reply mode in DispatchDialog, "Awaiting Reply" Kanban column, `/api/reply` endpoint (Dashboard + Standalone Server — full feature parity). Post-J improvements: task IDs now use slugified title + UUID suffix for readability (`my-task-abc123`), Codex runner adds noise filtering + summary extraction from raw output, Codex uses `--full-auto` flag, DispatchDialog sorts agents by preference and places status menus dynamically. Phase K: `detectProjectMeta()` + `bootstrapContextFiles()` in `packages/cli/src/init-meta.ts` — `patchbay init` auto-detects project name/tech-stack from `package.json`/`pyproject.toml`/`Cargo.toml`/`go.mod`, bootstraps `context/architecture.md` from README and `context/conventions.md` from CI config. See `PLAN.md` for details.
+Phases A–K complete. Phase L (Agent Connector Architecture) is the next milestone — introduces live agent interaction with streaming events, permission dialogs, and provider-agnostic connector interface. Includes monorepo consolidation (L5) merging wntrmte + patchbay into one repository. See `PLAN.md` Phase L for details.

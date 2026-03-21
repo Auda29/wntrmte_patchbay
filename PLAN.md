@@ -744,3 +744,77 @@ Bestehende Projekte können aktuell nur manuell per `patchbay init` initialisier
 ### K3: Wintermute — "Initialize"-Command im Start Panel
 
 - [x] `extensions/wntrmte-workflow/src/extension.ts` — `wntrmte.initializePatchbay` Command: Guard wenn `.project-agents/` schon vorhanden; startet `patchbay init --yes` mit auto-detected Werten im integrierten Terminal; "Initialize Patchbay Workflow"-Button im Start Panel
+
+---
+
+## Phase L: Agent Connector Architecture — Live Agent Interaction
+
+Das Herzstück der neuen Produktvision (vgl. `VISION.md`): Live Agent Interaction im Dashboard statt Batch-Runner mit Text-Heuristik. Provider-agnostisch — die Architektur ist generisch, Connectors sind austauschbar.
+
+**Vorbild:** ZenFlow, Codex App, T3 Code — eigenständige Coding-Orchestration mit Streaming, Approvals, Multi-Turn. Aber: IDE-nativ, open-source, model-agnostisch.
+
+**Strategie:** Das Patchbay Dashboard ist die primäre App-UI. Wintermute bettet es als Webview-Panel ein — Agent Chat, Streaming, Approvals laufen im Dashboard und sind automatisch in Wintermute verfügbar.
+
+### L1: Core Types — Provider-agnostisches Connector-Interface
+
+- [ ] `packages/core/src/connector.ts` — `AgentConnector`, `AgentSession`, `AgentEvent` Interfaces (generisch, nicht an Provider gebunden)
+- [ ] `packages/core/src/connector.ts` — Event-Typen: `session:started`, `agent:message`, `agent:tool_use`, `agent:permission`, `agent:question`, `session:completed`, `session:failed`
+- [ ] `packages/core/src/connector.ts` — `ConnectorRegistry` (dynamische Registrierung) + `BaseConnector` (gemeinsame Session-Lifecycle-Logik)
+- [ ] `packages/core/src/index.ts` — re-export Connector-Types
+
+### L2: Provider Connectors
+
+#### L2a: Claude Code Connector (erster PoC)
+
+- [ ] `packages/runners/claude-code/src/connector.ts` — `ClaudeCodeConnector` spawnt `claude -p --output-format stream-json --session-id <uuid>`
+- [ ] `packages/runners/claude-code/src/stream-parser.ts` — NDJSON → AgentEvent Mapping (init → started, content_block_delta → message, tool_use → tool_use, result → completed/question)
+- [ ] Vorab evaluieren: Welche Events liefert `stream-json` bei Permission-Requests? stdin-basierte Approval möglich?
+
+#### L2b: Codex Connector
+
+- [ ] `packages/runners/codex/src/connector.ts` — `CodexConnector`; evaluieren ob Codex CLI strukturierte Events unterstützt, Fallback auf stdout-Parsing
+
+#### L2c: Gemini Connector
+
+- [ ] `packages/runners/gemini/src/connector.ts` — `GeminiConnector`; evaluieren ob Gemini CLI Streaming-Output bietet
+
+#### L2d: Connector-Erweiterbarkeit
+
+- [ ] Dokumentation: "How to build a custom Connector" — Interface-Contract, Event-Mapping, Beispiel
+- [ ] Perspektivisch: Connectors für lokale Modelle (Ollama, LM Studio), HTTP-basierte Agents (OpenRouter)
+
+### L3: Orchestrator — Connector-Support
+
+- [ ] `packages/core/src/orchestrator.ts` — `registerConnector()`, `connectAgent()`, `sendInput()`, `approveSession()`, `cancelSession()`, `listConnectors()`
+- [ ] Session-Map für aktive AgentSessions; Event-Listener für Store-Updates bei Session-Events
+- [ ] Bestehende `dispatchTask()`, `continueConversation()` bleiben für Batch-Runner unverändert
+
+### L4: Server — Streaming Endpoints
+
+- [ ] `packages/server/src/handlers/connect.ts` — `POST /connect { taskId, connectorId }` → `{ sessionId }` (202)
+- [ ] `packages/server/src/handlers/agent-events.ts` — `GET /agent-events/:sessionId` → SSE-Stream (gleiches Format für alle Provider)
+- [ ] `packages/server/src/handlers/agent-input.ts` — `POST /agent-input/:sessionId`, `POST /agent-approve/:sessionId`, `POST /agent-cancel/:sessionId`
+- [ ] `packages/server/src/server.ts` — `GET /connectors` → Liste verfügbarer Connectors mit Capabilities
+- [ ] `packages/server/src/runtime.ts` — Connectors registrieren
+- [ ] Dashboard API Routes: `/api/connect`, `/api/agent-input`, `/api/connectors`
+
+### L5: Monorepo-Konsolidierung
+
+Vor dem Dashboard-Umbau: wntrmte + patchbay in ein Repository zusammenführen. Ab hier arbeiten Dashboard und Extension auf denselben Types.
+
+- [ ] Monorepo-Struktur: `packages/` (core, dashboard, cli, server, runners) + `ide/` (build, extensions, patches)
+- [ ] Shared Types: duplizierte Interfaces durch Imports aus `@patchbay/core` ersetzen
+- [ ] `extension.ts` aufteilen: `CliManager`, `AuthService`, `TerminalOrchestrator` extrahieren
+
+### L6: Dashboard — Agent Chat
+
+- [ ] `packages/dashboard/src/components/AgentChat.tsx` — Streaming Messages, Tool-Use-Anzeige, Permission-Dialoge, inline Replies, Cancel. Provider-agnostisch.
+- [ ] `packages/dashboard/src/components/DispatchDialog.tsx` — Provider-Auswahl: Connectors + Batch-Runner, "Interactive Session" vs "Start Run"
+- [ ] `packages/dashboard/src/app/tasks/page.tsx` — AgentChat als Sliding Panel
+- [ ] Wintermute `DashboardPanel.ts` — postMessage-Relay für `wntrmte.connectAgent`, `wntrmte.sendAgentInput`, `wntrmte.approveAgent`, `wntrmte.cancelAgent`
+
+### L7: Backward Compatibility
+
+- [ ] `/agents` Endpoint um `supportsConnector: boolean` und `connectorCapabilities` erweitern
+- [ ] Bestehende Batch-Runner, `/dispatch`, `/reply` bleiben unverändert
+- [ ] Provider ohne Connector fallen automatisch auf Batch-Runner zurück
