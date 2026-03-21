@@ -106,10 +106,21 @@ color="text-blue-400"
                 runs.slice(0, 5).map(run => (
                   <div key={run.id} className="glass border border-surface-900/50 rounded-lg p-4 flex items-center justify-between group hover:bg-surface-900/30 transition-colors">
                     <div className="flex items-center gap-4">
-                      <div className={`w-2 h-2 rounded-full ${run.status === 'completed' ? 'bg-green-500' : run.status === 'failed' ? 'bg-red-500' : 'bg-blue-500'}`} />
+                      <div className={`w-2 h-2 rounded-full ${
+                        run.status === 'completed'
+                          ? 'bg-green-500'
+                          : run.status === 'failed'
+                            ? 'bg-red-500'
+                            : run.status === 'awaiting_input'
+                              ? 'bg-purple-400'
+                              : 'bg-blue-500'
+                      }`} />
                       <div>
                         <h4 className="text-sm font-medium text-surface-200">{run.taskId}</h4>
-                        <p className="text-xs text-surface-500">{new Date(run.startTime).toLocaleString()}</p>
+                        <p className="text-xs text-surface-500">
+                          {new Date(run.startTime).toLocaleString()}
+                          {run.status === 'awaiting_input' ? ' • Awaiting reply' : ''}
+                        </p>
                       </div>
                     </div>
                     <span className="text-xs font-mono text-brand-400 bg-brand-950/50 px-2 py-1 rounded border border-brand-900/50">

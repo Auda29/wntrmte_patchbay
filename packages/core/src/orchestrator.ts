@@ -77,7 +77,7 @@ export class Orchestrator {
 
     private finalize(run: Run, task: Task, output: RunnerOutput) {
         if (output.status === 'awaiting_input') {
-            run.status = 'completed';
+            run.status = 'awaiting_input';
             task.status = 'awaiting_input';
         } else if (output.status === 'blocked') {
             run.status = 'completed';
@@ -90,6 +90,7 @@ export class Orchestrator {
         run.endTime = new Date().toISOString();
         run.logs = output.logs;
         run.summary = output.summary;
+        run.question = output.question;
         run.diffRef = output.diffRef;
         run.blockers = output.blockers;
         run.suggestedNextSteps = output.suggestedNextSteps;

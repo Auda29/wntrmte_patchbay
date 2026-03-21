@@ -18,6 +18,13 @@ function formatDuration(start: string, end?: string): string {
 
 function StatusBadge({ status }: { status: string }) {
     switch (status) {
+        case 'awaiting_input':
+            return (
+                <span className="flex items-center gap-1.5 text-purple-400">
+                    <AlertCircle className="w-4 h-4" />
+                    awaiting reply
+                </span>
+            );
         case 'completed':
             return (
                 <span className="flex items-center gap-1.5 text-green-400">
@@ -111,6 +118,12 @@ export default function HistoryPage() {
                                         }
                                     </td>
                                     <td className="px-4 py-3">
+                                        {run.status === 'awaiting_input' && run.question && (
+                                            <span className="inline-flex items-center gap-1.5 text-xs text-purple-300" title={run.question}>
+                                                <AlertCircle className="w-3.5 h-3.5" />
+                                                {run.question.length > 72 ? `${run.question.slice(0, 72)}…` : run.question}
+                                            </span>
+                                        )}
                                         {run.status === 'failed' && run.installHint && (
                                             <span className="inline-flex items-center gap-1.5 text-xs text-yellow-400" title={`Install: ${run.installHint}`}>
                                                 <Download className="w-3.5 h-3.5" />

@@ -19,6 +19,7 @@ export default function RunsViewer() {
             case 'completed': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
             case 'failed': return <XCircle className="w-5 h-5 text-red-500" />;
             case 'running': return <Clock className="w-5 h-5 text-blue-500 animate-pulse" />;
+            case 'awaiting_input': return <AlertCircle className="w-5 h-5 text-purple-400" />;
             default: return <AlertCircle className="w-5 h-5 text-yellow-500" />;
         }
     };
@@ -57,7 +58,9 @@ export default function RunsViewer() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <span className="text-sm text-surface-300 capitalize hidden sm:inline-block">{run.status}</span>
+                                    <span className="text-sm text-surface-300 capitalize hidden sm:inline-block">
+                                        {run.status === 'awaiting_input' ? 'awaiting reply' : run.status}
+                                    </span>
                                     <div className="w-6 h-6 rounded-full bg-surface-800 flex items-center justify-center group-open:rotate-180 transition-transform">
                                         <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -71,6 +74,15 @@ export default function RunsViewer() {
                                     <div>
                                         <h4 className="text-xs font-medium text-surface-500 uppercase tracking-wider mb-2">Summary</h4>
                                         <p className="text-sm text-surface-200 leading-relaxed">{run.summary}</p>
+                                    </div>
+                                )}
+
+                                {run.status === 'awaiting_input' && run.question && (
+                                    <div>
+                                        <h4 className="text-xs font-medium text-purple-400 uppercase tracking-wider mb-2">Runner Question</h4>
+                                        <p className="text-sm text-purple-100 bg-purple-950/20 border border-purple-900/40 rounded-md px-3 py-2 leading-relaxed">
+                                            {run.question}
+                                        </p>
                                     </div>
                                 )}
 

@@ -5,6 +5,15 @@ import { spawn } from 'child_process';
 import { buildPrompt } from '@patchbay/runner-claude-code';
 
 const execAsync = promisify(exec);
+const DEFAULT_RUNNER_TIMEOUT_MS = 900_000;
+
+function getRunnerTimeoutMs(): number {
+    const raw = process.env.PATCHBAY_RUNNER_TIMEOUT_MS;
+    if (!raw) return DEFAULT_RUNNER_TIMEOUT_MS;
+
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_RUNNER_TIMEOUT_MS;
+}
 
 export class GeminiRunner implements Runner {
     name = 'gemini';
@@ -36,6 +45,7 @@ export class GeminiRunner implements Runner {
         return new Promise<RunnerOutput>((resolve) => {
             const isWin = process.platform === 'win32';
             const bin = 'gemini';
+            const timeoutMs = getRunnerTimeoutMs();
             const child = spawn(bin, ['-p'], {
                 cwd: input.repoPath,
                 env,
@@ -47,24 +57,37 @@ export class GeminiRunner implements Runner {
 
             let firstLine: string | undefined;
             let settled = false;
+            let sawOutput = false;
+            let lastOutputAt = Date.now();
 
             const timeout = setTimeout(() => {
                 if (!settled) {
                     settled = true;
                     child.kill();
-                    logs.push('TIMEOUT: Process killed after 300s.');
+                    const quietSeconds = Math.max(0, Math.floor((Date.now() - lastOutputAt) / 1000));
+                    const timeoutSeconds = Math.floor(timeoutMs / 1000);
+                    logs.push(`TIMEOUT: Process killed after ${timeoutSeconds}s.`);
+                    if (!sawOutput) {
+                        logs.push('HINT: Gemini produced no output before timing out. It may be waiting for auth or another interactive prerequisite.');
+                    } else {
+                        logs.push(`HINT: Gemini stopped producing output for the last ${quietSeconds}s before timeout.`);
+                    }
                     resolve({
                         status: 'failed',
-                        summary: 'Gemini run timed out after 300 seconds.',
+                        summary: !sawOutput
+                            ? `Gemini run timed out after ${timeoutSeconds} seconds without producing output.`
+                            : `Gemini run timed out after ${timeoutSeconds} seconds.`,
                         logs,
                     });
                 }
-            }, 300_000);
+            }, timeoutMs);
 
             child.stdout?.on('data', (chunk: Buffer) => {
                 const text = chunk.toString();
                 process.stdout.write(text);
                 logs.push(text);
+                sawOutput = true;
+                lastOutputAt = Date.now();
                 if (!firstLine) {
                     firstLine = text.split('\n').find((line) => line.trim());
                 }
@@ -74,6 +97,8 @@ export class GeminiRunner implements Runner {
                 const text = chunk.toString();
                 process.stderr.write(text);
                 logs.push(text);
+                sawOutput = true;
+                lastOutputAt = Date.now();
             });
 
             child.on('error', (error: Error) => {

@@ -33,9 +33,10 @@ export interface Run {
     runner: string;
     startTime: string;
     endTime?: string;
-    status: 'running' | 'completed' | 'failed' | 'cancelled';
+    status: 'running' | 'completed' | 'failed' | 'cancelled' | 'awaiting_input';
     logs?: string[];
     summary?: string;
+    question?: string;
     diffRef?: string;
     blockers?: string[];
     suggestedNextSteps?: string[];

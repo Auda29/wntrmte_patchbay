@@ -5,6 +5,7 @@ import { spawn } from 'child_process';
 import { buildPrompt } from '@patchbay/runner-claude-code';
 
 const execAsync = promisify(exec);
+const DEFAULT_RUNNER_TIMEOUT_MS = 900_000;
 const codexNoisePatterns = [
     /^reading prompt from stdin/i,
     /^openai codex\b/i,
@@ -21,6 +22,14 @@ const codexNoisePatterns = [
     /^verzeichnis:/i,
     /^(mode|----)\b/i,
 ];
+
+function getRunnerTimeoutMs(): number {
+    const raw = process.env.PATCHBAY_RUNNER_TIMEOUT_MS;
+    if (!raw) return DEFAULT_RUNNER_TIMEOUT_MS;
+
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_RUNNER_TIMEOUT_MS;
+}
 
 function isCodexNoiseLine(line: string): boolean {
     const trimmed = line.trim();
@@ -85,6 +94,7 @@ export class CodexRunner implements Runner {
             const isWin = process.platform === 'win32';
             const bin = 'codex';
             const args = ['exec', '--full-auto', '--skip-git-repo-check'];
+            const timeoutMs = getRunnerTimeoutMs();
             const child = spawn(bin, args, {
                 cwd: input.repoPath,
                 env,
@@ -96,24 +106,37 @@ export class CodexRunner implements Runner {
 
             let firstLine: string | undefined;
             let settled = false;
+            let sawOutput = false;
+            let lastOutputAt = Date.now();
 
             const timeout = setTimeout(() => {
                 if (!settled) {
                     settled = true;
                     child.kill();
-                    logs.push('TIMEOUT: Process killed after 300s.');
+                    const quietSeconds = Math.max(0, Math.floor((Date.now() - lastOutputAt) / 1000));
+                    const timeoutSeconds = Math.floor(timeoutMs / 1000);
+                    logs.push(`TIMEOUT: Process killed after ${timeoutSeconds}s.`);
+                    if (!sawOutput) {
+                        logs.push('HINT: Codex produced no output before timing out. It may be waiting for auth or another interactive prerequisite.');
+                    } else {
+                        logs.push(`HINT: Codex stopped producing output for the last ${quietSeconds}s before timeout.`);
+                    }
                     resolve({
                         status: 'failed',
-                        summary: 'Codex run timed out after 300 seconds.',
+                        summary: !sawOutput
+                            ? `Codex run timed out after ${timeoutSeconds} seconds without producing output.`
+                            : `Codex run timed out after ${timeoutSeconds} seconds.`,
                         logs,
                     });
                 }
-            }, 300_000);
+            }, timeoutMs);
 
             child.stdout?.on('data', (chunk: Buffer) => {
                 const text = chunk.toString();
                 process.stdout.write(text);
                 logs.push(text);
+                sawOutput = true;
+                lastOutputAt = Date.now();
                 if (!firstLine) {
                     firstLine = text.split('\n').find((line) => line.trim());
                 }
@@ -123,6 +146,8 @@ export class CodexRunner implements Runner {
                 const text = chunk.toString();
                 process.stderr.write(text);
                 logs.push(text);
+                sawOutput = true;
+                lastOutputAt = Date.now();
             });
 
             child.on('error', (error: Error) => {

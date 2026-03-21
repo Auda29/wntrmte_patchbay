@@ -34,6 +34,17 @@ const makeFailedRunner = (): Runner => ({
     }),
 });
 
+const makeAwaitingInputRunner = (): Runner => ({
+    name: 'asker',
+    execute: async (_input: RunnerInput): Promise<RunnerOutput> => ({
+        status: 'awaiting_input',
+        summary: 'Need permission to edit .gitignore.',
+        question: 'May I update `.gitignore` to include `.project-agents/`?',
+        logs: ['Need permission to edit .gitignore.'],
+        sessionId: 'session-123',
+    }),
+});
+
 const makeSlowRunner = (output: RunnerOutput, delayMs: number): Runner => ({
     name: 'slow',
     execute: async (_input: RunnerInput): Promise<RunnerOutput> => {
@@ -63,6 +74,7 @@ describe('Orchestrator', () => {
         orchestrator.registerRunner('mock', makeCompletedRunner());
         orchestrator.registerRunner('blocker', makeBlockedRunner());
         orchestrator.registerRunner('failer', makeFailedRunner());
+        orchestrator.registerRunner('asker', makeAwaitingInputRunner());
     });
 
     afterEach(() => {
@@ -107,6 +119,15 @@ describe('Orchestrator', () => {
         const run = await orchestrator.dispatchTask(task.id, 'mock');
         expect(run.logs).toContain('step 1');
         expect(run.summary).toBe('All done');
+    });
+
+    it('marks the run and task as awaiting_input and persists the question', async () => {
+        const task = store.createTask('Permission task', 'Goal');
+        const run = await orchestrator.dispatchTask(task.id, 'asker');
+        expect(run.status).toBe('awaiting_input');
+        expect(run.question).toBe('May I update `.gitignore` to include `.project-agents/`?');
+        expect(run.sessionId).toBe('session-123');
+        expect(store.getTask(task.id)?.status).toBe('awaiting_input');
     });
 
     it('throws if task does not exist', async () => {

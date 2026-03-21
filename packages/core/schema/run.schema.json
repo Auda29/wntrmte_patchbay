@@ -32,7 +32,8 @@
                 "running",
                 "completed",
                 "failed",
-                "cancelled"
+                "cancelled",
+                "awaiting_input"
             ],
             "description": "Current status of the execution"
         },
@@ -46,6 +47,10 @@
         "summary": {
             "type": "string",
             "description": "Short summary of what happened"
+        },
+        "question": {
+            "type": "string",
+            "description": "The specific follow-up question from the runner when awaiting input"
         },
         "diffRef": {
             "type": "string",

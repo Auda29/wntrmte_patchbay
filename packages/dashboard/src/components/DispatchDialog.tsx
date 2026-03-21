@@ -78,12 +78,12 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                 fetch(`/api/runs?taskId=${encodeURIComponent(taskId)}`)
                     .then(r => r.json())
                     .then(data => {
-                        const runs: Array<{ conversationId?: string; summary?: string; turnIndex?: number; runner?: string }> = data.runs ?? data ?? [];
+                        const runs: Array<{ conversationId?: string; summary?: string; question?: string; turnIndex?: number; runner?: string }> = data.runs ?? data ?? [];
                         const threadRuns = runs.filter(r => r.conversationId);
                         if (threadRuns.length === 0) { return; }
                         const latest = threadRuns.sort((a, b) => (b.turnIndex ?? 0) - (a.turnIndex ?? 0))[0];
                         setConversationId(latest.conversationId ?? null);
-                        setRunnerQuestion(latest.summary ?? 'The runner is asking for more information.');
+                        setRunnerQuestion(latest.question ?? latest.summary ?? 'The runner is asking for more information.');
                         if (latest.runner) { setRunnerId(latest.runner); }
                     })
                     .catch(() => {});
