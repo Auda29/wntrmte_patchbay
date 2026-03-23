@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project",
+  "description": "Definition of a Patchbay managed project",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name of the project"
+    },
+    "repoPath": {
+      "type": "string",
+      "description": "Absolute or relative path to the repository root"
+    },
+    "goal": {
+      "type": "string",
+      "description": "The current high-level goal of the project"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "General rules and conventions for the project"
+    },
+    "techStack": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The technologies, frameworks, and languages used in the project"
+    }
+  },
+  "required": ["name", "goal"],
+  "additionalProperties": false
+}

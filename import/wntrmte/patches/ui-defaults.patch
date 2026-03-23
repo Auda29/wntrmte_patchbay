@@ -1,0 +1,178 @@
+diff --git a/src/vs/editor/common/config/editorOptions.ts b/src/vs/editor/common/config/editorOptions.ts
+index 34cdd09..4e7761f 100644
+--- a/src/vs/editor/common/config/editorOptions.ts
++++ b/src/vs/editor/common/config/editorOptions.ts
+@@ -3430,7 +3430,7 @@ class EditorMinimap extends BaseEditorOption<EditorOption.minimap, IEditorMinima
+ 			{
+ 				'editor.minimap.enabled': {
+ 					type: 'boolean',
+-					default: defaults.enabled,
++					default: false,
+ 					description: nls.localize('minimap.enabled', "Controls whether the minimap is shown.")
+ 				},
+ 				'editor.minimap.autohide': {
+diff --git a/src/vs/platform/window/common/window.ts b/src/vs/platform/window/common/window.ts
+index 291648b..d647f9b 100644
+--- a/src/vs/platform/window/common/window.ts
++++ b/src/vs/platform/window/common/window.ts
+@@ -293,7 +293,7 @@ export function getWindowControlsStyle(configurationService: IConfigurationServi
+ 	return WindowControlsStyle.NATIVE; // default to native on all OS
+ }
+ 
+-export const DEFAULT_CUSTOM_TITLEBAR_HEIGHT = 35; // includes space for command center
++export const DEFAULT_CUSTOM_TITLEBAR_HEIGHT = 28;
+ 
+ export function useWindowControlsOverlay(configurationService: IConfigurationService): boolean {
+ 	if (isWeb) {
+diff --git a/src/vs/workbench/browser/part.ts b/src/vs/workbench/browser/part.ts
+index 50776ac..5db49d8 100644
+--- a/src/vs/workbench/browser/part.ts
++++ b/src/vs/workbench/browser/part.ts
+@@ -201,8 +201,8 @@ export abstract class Part<MementoType extends object = object> extends Componen
+ 
+ class PartLayout {
+ 
+-	private static readonly HEADER_HEIGHT = 35;
+-	private static readonly TITLE_HEIGHT = 35;
++	private static readonly HEADER_HEIGHT = 28;
++	private static readonly TITLE_HEIGHT = 28;
+ 	private static readonly Footer_HEIGHT = 35;
+ 
+ 	private headerVisible: boolean = false;
+diff --git a/src/vs/workbench/browser/parts/editor/breadcrumbs.ts b/src/vs/workbench/browser/parts/editor/breadcrumbs.ts
+index 2daec62..f3bb0b3 100644
+--- a/src/vs/workbench/browser/parts/editor/breadcrumbs.ts
++++ b/src/vs/workbench/browser/parts/editor/breadcrumbs.ts
+@@ -125,7 +125,7 @@ Registry.as<IConfigurationRegistry>(Extensions.Configuration).registerConfigurat
+ 		'breadcrumbs.enabled': {
+ 			description: localize('enabled', "Enable/disable navigation breadcrumbs."),
+ 			type: 'boolean',
+-			default: true
++			default: false
+ 		},
+ 		'breadcrumbs.filePath': {
+ 			description: localize('filepath', "Controls whether and how file paths are shown in the breadcrumbs view."),
+diff --git a/src/vs/workbench/browser/parts/media/paneCompositePart.css b/src/vs/workbench/browser/parts/media/paneCompositePart.css
+index fe0f2ad..2b578b0 100644
+--- a/src/vs/workbench/browser/parts/media/paneCompositePart.css
++++ b/src/vs/workbench/browser/parts/media/paneCompositePart.css
+@@ -67,7 +67,7 @@
+ 
+ .monaco-workbench .pane-composite-part > .title > .composite-bar-container > .composite-bar > .monaco-action-bar,
+ .monaco-workbench .pane-composite-part > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar {
+-	line-height: 27px; /* matches panel titles in settings */
++	line-height: 22px; /* matches compact Wintermute headers */
+ }
+ 
+ .monaco-workbench .pane-composite-part > .title > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item,
+@@ -83,7 +83,7 @@
+ 
+ .monaco-workbench .pane-composite-part > .title > .composite-bar-container >.composite-bar > .monaco-action-bar .action-item.icon,
+ .monaco-workbench .pane-composite-part > .header-or-footer > .composite-bar-container >.composite-bar > .monaco-action-bar .action-item.icon {
+-	height: 35px; /* matches height of composite container */
++	height: 28px; /* matches compact composite container */
+ 	padding: 0 3px;
+ }
+ 
+diff --git a/src/vs/workbench/browser/parts/titlebar/titlebarPart.ts b/src/vs/workbench/browser/parts/titlebar/titlebarPart.ts
+index 98895a3..7dff54f 100644
+--- a/src/vs/workbench/browser/parts/titlebar/titlebarPart.ts
++++ b/src/vs/workbench/browser/parts/titlebar/titlebarPart.ts
+@@ -226,7 +226,7 @@ export class BrowserTitlebarPart extends Part implements ITitlebarPart {
+ 
+ 	get minimumHeight(): number {
+ 		const wcoEnabled = isWeb && isWCOEnabled();
+-		let value = this.isCommandCenterVisible || wcoEnabled ? DEFAULT_CUSTOM_TITLEBAR_HEIGHT : 30;
++		let value = this.isCommandCenterVisible || wcoEnabled ? DEFAULT_CUSTOM_TITLEBAR_HEIGHT : 28;
+ 		if (wcoEnabled) {
+ 			value = Math.max(value, getWCOTitlebarAreaRect(getWindow(this.element))?.height ?? 0);
+ 		}
+diff --git a/src/vs/workbench/browser/workbench.contribution.ts b/src/vs/workbench/browser/workbench.contribution.ts
+index 058693c..613b373 100644
+--- a/src/vs/workbench/browser/workbench.contribution.ts
++++ b/src/vs/workbench/browser/workbench.contribution.ts
+@@ -67,7 +67,7 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
+ 					localize('workbench.editor.showTabs.none', "The editor title area is not displayed."),
+ 				],
+ 				'description': localize('showEditorTabs', "Controls whether opened editors should show as individual tabs, one single large tab or if the title area should not be shown."),
+-				'default': 'multiple'
++				'default': 'multiple'
+ 			},
+ 			[LayoutSettings.EDITOR_ACTIONS_LOCATION]: {
+ 				'type': 'string',
+@@ -591,7 +591,7 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
+ 			'workbench.secondarySideBar.defaultVisibility': {
+ 				'type': 'string',
+ 				'enum': ['hidden', 'visibleInWorkspace', 'visible', 'maximizedInWorkspace', 'maximized'],
+-				'default': 'visibleInWorkspace',
++				'default': 'hidden',
+ 				'description': localize('secondarySideBarDefaultVisibility', "Controls the default visibility of the secondary side bar in workspaces or empty windows that are opened for the first time. Can be overridden by the agent sessions startup editor setting."),
+ 				'enumDescriptions': [
+ 					localize('workbench.secondarySideBar.defaultVisibility.hidden', "The secondary side bar is hidden by default."),
+@@ -829,7 +829,7 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
+ 			},
+ 			[LayoutSettings.COMMAND_CENTER]: {
+ 				type: 'boolean',
+-				default: true,
++				default: false,
+ 				markdownDescription: isWeb ?
+ 					localize('window.commandCenterWeb', "Show command launcher together with the window title.") :
+ 					localize({ key: 'window.commandCenter', comment: ['{0}, {1} is a placeholder for a setting identifier.'] }, "Show command launcher together with the window title. This setting only has an effect when {0} is not set to {1}.", '`#window.customTitleBarVisibility#`', '`never`')
+diff --git a/src/vs/workbench/contrib/welcomeGettingStarted/browser/gettingStarted.contribution.ts b/src/vs/workbench/contrib/welcomeGettingStarted/browser/gettingStarted.contribution.ts
+index f6e28df..ee7f3ba 100644
+--- a/src/vs/workbench/contrib/welcomeGettingStarted/browser/gettingStarted.contribution.ts
++++ b/src/vs/workbench/contrib/welcomeGettingStarted/browser/gettingStarted.contribution.ts
+@@ -327,7 +327,7 @@ configurationRegistry.registerConfiguration({
+ 				localize({ comment: ['This is the description for a setting. Values surrounded by single quotes are not to be translated.'], key: 'workbench.startupEditor.terminal' }, "Open a new terminal in the editor area."),
+ 				localize({ comment: ['This is the description for a setting. Values surrounded by single quotes are not to be translated.'], key: 'workbench.startupEditor.agentSessionsWelcomePage' }, "Open the Agent Sessions Welcome page. Will override the workbench secondary side bar visibility settings."),
+ 			],
+-			'default': 'welcomePage',
++			'default': 'none',
+ 			'description': localize('workbench.startupEditor', "Controls which editor is shown at startup, if none are restored from the previous session."),
+ 			'experiment': { mode: 'auto' }
+ 		},
+diff --git a/src/vs/workbench/browser/media/part.css b/src/vs/workbench/browser/media/part.css
+--- a/src/vs/workbench/browser/media/part.css
++++ b/src/vs/workbench/browser/media/part.css
+@@ -30,6 +30,6 @@
+ .monaco-workbench .part > .title,
+ .monaco-workbench .part > .header-or-footer {
+-	height: 35px;
++	height: 28px;
+ 	display: flex;
+ 	box-sizing: border-box;
+ 	overflow: hidden;
+@@ -43,5 +43,5 @@
+ .monaco-workbench .part > .title > .title-label {
+-	line-height: 35px;
++	line-height: 28px;
+ 	white-space: nowrap;
+ 	overflow: hidden;
+ 	text-overflow: ellipsis;
+@@ -70,5 +70,5 @@
+ .monaco-workbench .part > .title > .title-actions {
+-	height: 35px;
++	height: 28px;
+ 	flex: 1;
+ 	padding-left: 5px;
+ }
+@@ -93,5 +93,5 @@
+ 	position: absolute;
+ 	left: 0;
+-	top: 33px; /* at the bottom of the 35px height title container */
++	top: 26px; /* at the bottom of the 28px height title container */
+ 	z-index: 5; /* on top of things */
+ }
+diff --git a/src/vs/workbench/services/themes/common/workbenchThemeService.ts b/src/vs/workbench/services/themes/common/workbenchThemeService.ts
+index a214818..eb66e64 100644
+--- a/src/vs/workbench/services/themes/common/workbenchThemeService.ts
++++ b/src/vs/workbench/services/themes/common/workbenchThemeService.ts
+@@ -39,7 +39,7 @@ export enum ThemeSettings {
+ }
+ 
+ export enum ThemeSettingDefaults {
+-	COLOR_THEME_DARK = 'Default Dark Modern',
++	COLOR_THEME_DARK = 'Wintermute Dark',
+ 	COLOR_THEME_LIGHT = 'Default Light Modern',
+ 	COLOR_THEME_HC_DARK = 'Default High Contrast',
+ 	COLOR_THEME_HC_LIGHT = 'Default High Contrast Light',

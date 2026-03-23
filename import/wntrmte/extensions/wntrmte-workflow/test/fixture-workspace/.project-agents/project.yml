@@ -1,0 +1,4 @@
+name: fixture-project
+goal: Exercise extension activation in VS Code integration tests
+techStack:
+  - TypeScript

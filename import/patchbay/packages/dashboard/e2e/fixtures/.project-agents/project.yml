@@ -1,0 +1,9 @@
+name: E2E Test Project
+goal: Verify the Patchbay dashboard works end-to-end
+rules:
+  - Follow TDD
+  - Keep code clean
+techStack:
+  - TypeScript
+  - Node.js
+  - Next.js

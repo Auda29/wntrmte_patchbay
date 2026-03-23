@@ -1,0 +1,46 @@
+{
+  "nameShort": "Wintermute",
+  "nameLong": "Wintermute",
+  "applicationName": "wntrmte",
+  "dataFolderName": ".wntrmte",
+  "quality": "stable",
+  "urlProtocol": "wntrmte",
+  "serverApplicationName": "wntrmte-server",
+  "serverDataFolderName": ".wntrmte-server",
+  "tunnelApplicationName": "wntrmte-tunnel",
+  "darwinBundleIdentifier": "com.wintermute.wntrmte",
+  "win32AppId": "{E080436D-A739-4FDB-98A4-632F5C378AA0}",
+  "win32x64AppId": "{7A04D8FC-3D49-4090-A7EF-CCE3A735BC13}",
+  "win32arm64AppId": "{F5BEEF08-3D00-4E02-A168-6F94771DEDF1}",
+  "reportIssueUrl": "https://github.com/Auda29/wntrmte/issues/new",
+  "licenseUrl": "https://github.com/Auda29/wntrmte/blob/main/LICENSE",
+  "extensionsGallery": {
+    "serviceUrl": "https://open-vsx.org/vscode/gallery",
+    "itemUrl": "https://open-vsx.org/vscode/item",
+    "latestUrlTemplate": "https://open-vsx.org/vscode/gallery/{publisher}/{name}/latest",
+    "controlUrl": "https://raw.githubusercontent.com/EclipseFdn/publish-extensions/refs/heads/master/extension-control/extensions.json"
+  },
+  "linkProtectionTrustedDomains": [
+    "https://open-vsx.org"
+  ],
+  "disableAIFeatures": true,
+  "configurationDefaults": {
+    "workbench.colorTheme": "Wintermute Dark",
+    "editor.fontFamily": "'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace",
+    "editor.fontLigatures": true
+  },
+  "win32MutexName": "wntrmte",
+  "win32DirName": "Wintermute",
+  "win32NameVersion": "Wintermute",
+  "win32RegValueName": "Wintermute",
+  "win32AppUserModelId": "Wintermute.wntrmte",
+  "win32ShellNameShort": "W&intermute",
+  "win32ContextMenu": {
+    "x64": {
+      "clsid": "{A2F8D1B7-0B4F-4C5B-8C3E-3D6DB9FA6F31}"
+    },
+    "arm64": {
+      "clsid": "{8A5D9C44-0F14-46AB-9F65-53D8E4CB7E61}"
+    }
+  }
+}

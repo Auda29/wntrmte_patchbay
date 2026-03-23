@@ -1,0 +1,54 @@
+diff --git a/build/gulpfile.vscode.ts b/build/gulpfile.vscode.ts
+index 8eb8c02b549..5c28bb8cd0b 100644
+--- a/build/gulpfile.vscode.ts
++++ b/build/gulpfile.vscode.ts
+@@ -642,30 +642,35 @@ function patchWin32DependenciesTask(destinationFolderName: string) {
+ 	const cwd = path.join(path.dirname(root), destinationFolderName);
+ 
+ 	return async () => {
+-		const deps = (await Promise.all([
++		const packageJson = JSON.parse(await fs.promises.readFile(path.join(cwd, versionedResourcesFolder, 'resources', 'app', 'package.json'), 'utf8'));
++		const product = JSON.parse(await fs.promises.readFile(path.join(cwd, versionedResourcesFolder, 'resources', 'app', 'product.json'), 'utf8'));
++		const mainExecutable = `${product.nameShort}.exe`;
++		const deps = [
++			mainExecutable,
++			...(await Promise.all([
+ 			glob('**/*.node', { cwd, ignore: 'extensions/node_modules/@parcel/watcher/**' }),
+ 			glob('**/rg.exe', { cwd }),
+ 			glob('**/*explorer_command*.dll', { cwd }),
+-		])).flatMap(o => o);
+-		const packageJson = JSON.parse(await fs.promises.readFile(path.join(cwd, versionedResourcesFolder, 'resources', 'app', 'package.json'), 'utf8'));
+-		const product = JSON.parse(await fs.promises.readFile(path.join(cwd, versionedResourcesFolder, 'resources', 'app', 'product.json'), 'utf8'));
++			])).flatMap(o => o)
++		];
+ 		const baseVersion = packageJson.version.replace(/-.*$/, '');
+ 
+ 		const patchPromises = deps.map<Promise<unknown>>(async dep => {
+ 			const basename = path.basename(dep);
++			const versionStrings = {
++				'CompanyName': 'Wintermute',
++				'FileDescription': product.nameLong,
++				'FileVersion': packageJson.version,
++				'InternalName': basename,
++				'LegalCopyright': 'Copyright (C) 2026 Wintermute contributors',
++				'OriginalFilename': basename,
++				'ProductName': product.nameLong,
++				'ProductVersion': packageJson.version,
++			};
+ 
+ 			await rcedit(path.join(cwd, dep), {
+ 				'file-version': baseVersion,
+-				'version-string': {
+-					'CompanyName': 'Microsoft Corporation',
+-					'FileDescription': product.nameLong,
+-					'FileVersion': packageJson.version,
+-					'InternalName': basename,
+-					'LegalCopyright': 'Copyright (C) 2026 Microsoft. All rights reserved',
+-					'OriginalFilename': basename,
+-					'ProductName': product.nameLong,
+-					'ProductVersion': packageJson.version,
+-				}
++				'version-string': versionStrings
+ 			});
+ 		});
+ 

@@ -1,0 +1,4 @@
+id: TASK-001
+title: Write unit tests
+goal: Cover core functionality with tests
+status: open

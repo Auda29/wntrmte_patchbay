@@ -1,0 +1,27 @@
+# VS Code source — wird bei jedem Build frisch geklont
+vscode/
+
+# Lokale Patches (nicht für alle)
+patches/user/
+
+# Build-Outputs
+VSCode-*/
+*.vsix
+*.zip
+*.tar.gz
+
+# Node
+node_modules/
+extensions/*/node_modules/
+extensions/*/.vscode-test/
+extensions/*/out/
+extensions/*/dist/
+
+# Source icon (keep generated icons in icons/)
+icon_v1.png
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db

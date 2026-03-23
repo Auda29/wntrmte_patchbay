@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(grep -rn \"dispatch\\\\|Dispatch\\\\|task-card\\\\|TaskCard\\\\|runner\\\\|Runner\" /c/Users/wecke/Projects/wntrmte_patchbay/patchbay/packages/dashboard/src/components/ --include=*.tsx -l)",
+      "Bash(npm test:*)",
+      "Bash(npx playwright:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "mcp__claude_ai_Context7__resolve-library-id"
+    ]
+  }
+}

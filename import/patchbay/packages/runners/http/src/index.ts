@@ -1,0 +1,45 @@
+export { HttpConnector } from './connector';
+export type { HttpConnectorConfig } from './connector';
+
+import { Runner, RunnerInput, RunnerOutput } from '@patchbay/core';
+
+export class HttpRunner implements Runner {
+    name = 'http';
+
+    async execute(input: RunnerInput): Promise<RunnerOutput> {
+        const logs: string[] = [];
+        try {
+            // Validate that goal is a proper URL before attempting fetch
+            const url = input.goal;
+            try {
+                new URL(url);
+            } catch {
+                return {
+                    status: 'failed',
+                    summary: 'Invalid URL: goal must be a valid URL (e.g. https://example.com).',
+                    logs: [`ERROR: "${url}" is not a valid URL. The HTTP runner expects goal to be a URL, not natural language.`],
+                };
+            }
+
+            const response = await fetch(url);
+            const text = await response.text();
+
+            logs.push(`Fetched URL: ${url}`);
+            logs.push(`Status: ${response.status} ${response.statusText}`);
+
+            return {
+                status: response.ok ? 'completed' : 'failed',
+                summary: `HTTP GET ${response.ok ? 'successful' : 'failed'}`,
+                logs: [...logs, text.substring(0, 1000)] // Store beginning of body as log
+            };
+        } catch (err: any) {
+            logs.push(`ERROR:\n${err.message}`);
+
+            return {
+                status: 'failed',
+                summary: `HTTP Request failed: ${err.message}`,
+                logs
+            };
+        }
+    }
+}
