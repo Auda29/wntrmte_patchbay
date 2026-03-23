@@ -105,6 +105,21 @@ interface AgentSession {
 }
 ```
 
+### Provider-Schichten (Referenz)
+
+Patchbay bleibt **transport- und anbieter-agnostisch**: Connectors übersetzen jeweils die **beste verfügbare** Schicht des Anbieters in einheitliche `AgentEvent`s. Kurzüberblick (Stand Doku/Landschaft):
+
+| Anbieter | Typische „reichste“ Schicht für Live/Struktur | Hinweis |
+|----------|-----------------------------------------------|---------|
+| **OpenAI Codex** | `codex app-server` — JSON-RPC-ähnlich, stdio/JSONL (optional WebSocket), Auth, Threads (`thread/start`, `thread/resume`, `thread/fork`), **serverseitige Approvals**, gestreamte Agent-Events | Offiziell die Deep-Integration-Klasse ([Codex App Server](https://developers.openai.com/codex/app-server)); Implementierung offen im [Codex-Repo](https://github.com/openai/codex). |
+| **Anthropic Claude Code** | CLI: **`--input-format stream-json`**, **`--output-format stream-json`** — NDJSON/stream-json für Maschinenintegration; **kein** einzelnes Paket wie der gesamte Codex-App-Server | Multi-Turn/Sessions zusätzlich über **Anthropic Agent SDK**-Konzepte ergänzen; nicht 1:1 mit Codex-Thread-Semantik. |
+| **Google Gemini CLI** | **Headless**-Modus — Text/JSON, stdin/Piping, stabile Exit-Codes; Projekt **Open Source** | Eher CLI/Headless als JSON-RPC-App-Server ([Headless](https://google-gemini.github.io/gemini-cli/docs/cli/headless.html), [Repo](https://github.com/google-gemini/gemini-cli)). |
+| **Lokal (Ollama, LM Studio, …)** | **HTTP/REST** (z. B. Ollama `/api/chat`) | Kein eingebauter Codex-artiger Agent-Server — **Adapter + dokumentierte Capabilities**. |
+| **HTTP / OpenAI-kompatible APIs** | Für neue Integrationen oft **Responses API**; klassisch auch Chat-Completions | Reine Chat-/Tool-HTTP ersetzt **nicht** automatisch einen vorgefertigten Agent-/Approval-Loop — den baut man oder nutzt App-Server-ähnliche Schichten. |
+| **Cursor** | **ACP (Agent Client Protocol)** — z. B. `agent acp`, Custom Client über **stdio** mit **JSON-RPC**; u. a. **`session/request_permission`** | Strukturiert wie ein Agent-Protokoll (näher an Codex als reines Log-Parsing), aber **ACP**, nicht Codex App Server; **Produkt bleibt proprietär**. |
+
+**Kosten/Lizenzen:** Connector-Code kann auf **Open-Source-CLIs** (z. B. Codex, Gemini CLI) aufsetzen; **Modell- und Kontonutzung** (OpenAI, Anthropic, Google, …) bleibt Sache des Nutzers — das ist keine „Patchbay-Lizenz“, aber oft **nicht kostenlos** im Betrieb.
+
 ---
 
 ## Das Datenmodell — `.project-agents/`
@@ -221,19 +236,22 @@ Details: `patchbay/PLAN.md`, `wntrmte/PLAN.md`, `TODO.md`
 
 Das Herzstück der neuen Vision. Live Agent Interaction im Dashboard:
 - **AgentConnector-Interface** — event-basiert, session-orientiert (statt Batch)
-- **Claude Code Connector** — nutzt `--output-format stream-json` für strukturierte Events
+- **Claude Code Connector** — CLI **`stream-json`** (Input/Output), NDJSON → `AgentEvent`; ergänzend Session-Konzepte über **Anthropic Agent SDK** wo sinnvoll
+- **Codex Connector** — bevorzugt **`codex app-server`** (JSON-RPC, stdio, Approvals, Threads); Fallback bestehender Batch-Runner
+- **Gemini Connector** — **Headless**/JSON-CLI; Mapping auf dieselbe Event-Schicht
 - **Streaming Endpoints** — SSE für Live-Events, REST für Input/Approval
 - **Agent Chat im Dashboard** — Streaming Messages, Tool-Use-Anzeige, Permission-Dialoge, inline Replies
 - **Automatisch in Wintermute** — weil das Dashboard als iframe eingebettet ist
+- **Perspektivisch** — Cursor **ACP**, lokale HTTP-Backends (Ollama), OpenAI-kompatible APIs (**Responses API** wo passend)
 
-Details: `patchbay/PLAN.md` Phase L
+Details: `patchbay/PLAN.md` Phase L, Provider-Tabelle oben in dieser Datei
 
 ### Darüber hinaus (Evaluierung)
 
 - **Multi-Agent-Workflows** — mehrere Agents parallel an einem Task, Cross-Verification (ZenFlow-Stil)
 - **Agent-Sandboxing** — isolierte Umgebungen pro Agent-Session (Git-Worktrees oder Container)
 - **Workflow-Templates** — vordefinierte Abläufe (Plan → Implement → Test → Review)
-- **Codex/Gemini Connectors** — sobald deren CLIs Streaming-Formate unterstützen
+- **Weitere Connectors** — Cursor ACP, Community-HTTP, lokale Modelle (siehe Provider-Schichten)
 - **Monorepo-Konsolidierung** — Wintermute + Patchbay in ein Repository zusammenführen
 - **npm-Publish** — `@patchbay/cli` öffentlich verfügbar machen
 

@@ -10,7 +10,22 @@
 
 ## Nächster Meilenstein: Phase L — Agent Connector Architecture
 
-Das Herzstück der neuen Vision: Live Agent Interaction im Dashboard statt Batch-Runner mit Text-Heuristik. Provider-agnostisch — die Architektur ist generisch, Connectors sind austauschbar (Claude Code, Codex, Gemini, lokale Modelle, ...).
+Das Herzstück der neuen Vision: Live Agent Interaction im Dashboard statt Batch-Runner mit Text-Heuristik. Provider-agnostisch — die Architektur ist generisch, Connectors sind austauschbar (Claude Code, Codex, Gemini, lokale Modelle, …).
+
+### Provider-Integrations-Referenz (für L2)
+
+Connectors mappen die **jeweils beste verfügbare** Anbieter-Schicht auf einheitliche `AgentEvent`s (Details auch in `VISION.md`):
+
+| Provider | Bevorzugte Schicht | Kurz |
+|----------|---------------------|------|
+| **OpenAI Codex** | `codex app-server` (JSON-RPC, stdio/JSONL, Threads, serverinitiierte Approvals, gestreamte Events) | Deep-Integration wie VS-Code-Extension; [App Server](https://developers.openai.com/codex/app-server) |
+| **Anthropic Claude Code** | CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON) | Kein vollständiges Codex-App-Server-Äquivalent in einem Paket; Multi-Turn zusätzlich Agent SDK |
+| **Google Gemini CLI** | Headless, JSON/Text, stdin ([Headless](https://google-gemini.github.io/gemini-cli/docs/cli/headless.html)) | Open Source; kein JSON-RPC-App-Server wie Codex |
+| **Lokal (Ollama, …)** | HTTP (`/api/chat` u. a.) | Adapter + Capabilities |
+| **HTTP / kompatible APIs** | OpenAI: eher **Responses API** für Neues; Chat Completions weiter möglich | Kein fertiger Agent-/Approval-Loop — ggf. selbst bauen |
+| **Cursor** | **ACP** — `agent acp`, stdio JSON-RPC, z. B. `session/request_permission` | Strukturiert, proprietäres Produkt |
+
+**Hinweis Kosten:** OSS-CLIs ≠ kostenlose Modellnutzung — API/Abos bleiben beim Nutzer.
 
 ### L1: Core Types — Provider-agnostisches Connector-Interface
 
@@ -21,28 +36,29 @@ Das Herzstück der neuen Vision: Live Agent Interaction im Dashboard statt Batch
 
 ### L2: Provider Connectors
 
-Jeder Provider bekommt seinen eigenen Connector. Claude Code zuerst (reichste API), dann Codex + Gemini parallel. Architektur erlaubt Community-Connectors für weitere Provider.
+Jeder Provider bekommt seinen eigenen Connector. **Reihenfolge:** Claude Code als PoC (stream-json), **Codex** bevorzugt über **`codex app-server`** (nicht nur `exec`), Gemini über Headless/JSON. Architektur erlaubt Community-Connectors für weitere Provider.
 
 #### L2a: Claude Code Connector (erster Proof-of-Concept)
 
-- [ ] `[p]` `ClaudeCodeConnector` in `packages/runners/claude-code/src/connector.ts` — spawnt `claude -p --output-format stream-json`
+- [ ] `[p]` `ClaudeCodeConnector` in `packages/runners/claude-code/src/connector.ts` — CLI mit `--input-format stream-json` / `--output-format stream-json` (NDJSON-Workflow)
 - [ ] `[p]` Stream-Parser in `packages/runners/claude-code/src/stream-parser.ts` — NDJSON → AgentEvent Mapping
-- [ ] `[p]` Vorab klären: Welche Events liefert `stream-json` bei Permission-Requests? Ist stdin-basierte Approval möglich?
+- [ ] `[p]` Vorab klären: Welche Events liefert `stream-json` bei Permission-Requests? Ist stdin-basierte Approval möglich? Wo sinnvoll: Anthropic **Agent SDK**-Session-Konzepte für Multi-Turn ergänzen
 
 #### L2b: Codex Connector
 
-- [ ] `[p]` `CodexConnector` in `packages/runners/codex/src/connector.ts` — evaluieren ob Codex CLI strukturierte Events unterstützt, Fallback auf stdout-Parsing
-- [ ] `[p]` Codex-spezifische Event-Mappings (Noise-Filtering bereits vorhanden)
+- [ ] `[p]` **Bevorzugt:** `CodexConnector` an **`codex app-server`** — JSON-RPC über stdio (JSONL), Thread-APIs, serverinitiierte Approvals → AgentEvent ([Doku](https://developers.openai.com/codex/app-server)); optional: `codex app-server generate-ts` für Typen
+- [ ] `[p]` **Fallback:** bestehender Batch-Runner / `codex exec` + Log-Parsing bleibt für Non-Interactive-Fälle; Noise-Filter bereits vorhanden
 
 #### L2c: Gemini Connector
 
-- [ ] `[p]` `GeminiConnector` in `packages/runners/gemini/src/connector.ts` — evaluieren ob Gemini CLI Streaming-Output bietet
+- [ ] `[p]` `GeminiConnector` in `packages/runners/gemini/src/connector.ts` — **Headless**-Modus (JSON/Text, stdin), kein JSON-RPC-App-Server wie Codex — gezieltes Mapping auf AgentEvents
 - [ ] `[p]` Gemini-spezifische Event-Mappings
 
 #### L2d: Connector-Erweiterbarkeit
 
 - [ ] `[p]` Dokumentation: "How to build a custom Connector" — Interface-Contract, Event-Mapping, Beispiel-Implementierung
-- [ ] `[p]` Perspektivisch: Connectors für lokale Modelle (Ollama, LM Studio), HTTP-basierte Agents (OpenRouter, eigene APIs)
+- [ ] `[p]` HTTP-Backends: OpenAI-kompatible APIs — für Neuentwicklung **Responses API** prüfen (Chat Completions nur wo nötig); lokale **Ollama**/LM Studio über REST + Capabilities
+- [ ] `[p]` Perspektivisch: **Cursor ACP** (`agent acp`, stdio JSON-RPC, Permission-Flows) — proprietär, aber offizielle strukturierte Schnittstelle
 
 ### L3: Orchestrator
 
@@ -89,7 +105,7 @@ Vor dem Dashboard-Umbau zusammenführen — ab hier arbeiten Dashboard (patchbay
 - [ ] `[p]` Multi-Agent-Workflows — mehrere Agents parallel an einem Task, Cross-Verification
 - [ ] `[p]` Agent-Sandboxing — isolierte Umgebungen pro Session (Git-Worktrees oder Container)
 - [ ] `[p]` Workflow-Templates — vordefinierte Abläufe (Plan → Implement → Test → Review)
-- [ ] `[p]` Community-Connectors — Ollama, LM Studio, OpenRouter, eigene HTTP-APIs
+- [ ] `[p]` Community-Connectors — Ollama/LM Studio (HTTP), OpenRouter & eigene APIs (OpenAI-kompatibel, ggf. Responses API), Cursor ACP
 
 ### Distribution
 
@@ -115,7 +131,7 @@ Phase L            ⬜ next (Agent Connector Architecture — Live Agent Interac
         → L5 Monorepo-Konsolidierung (+ extension.ts Refactoring)
           → L6 Dashboard Agent Chat (+ Wintermute postMessage-Relay)
 Multi-Agent          ⬜ nach Phase L
-Community Connectors ⬜ nach Connector-Docs (Ollama, LM Studio, OpenRouter, ...)
+Community Connectors ⬜ nach Connector-Docs (Ollama, HTTP/Responses API, Cursor ACP, …)
 npm Publish          ⬜ nach stabiler API
 ```
 
