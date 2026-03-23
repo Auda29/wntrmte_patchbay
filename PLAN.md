@@ -247,7 +247,7 @@ Ruft externe APIs oder Dokumentation ab.
 ### 4.4 Claude Code Runner
 
 - CLI-Wrapper um `claude -p` falls CLI verfügbar
-- Prompt aus Task-Goal + Kontext zusammensetzen
+- Prompt aus Task-Goal + Kontext zusammensetzen (shared `buildPrompt()` in `@patchbay/core` / `runner.ts`)
 - Output parsen und als RunnerOutput zurückgeben
 - Graceful fallback wenn `claude` nicht im PATH
 
@@ -261,14 +261,14 @@ Ruft externe APIs oder Dokumentation ab.
 ### 4.6 Codex Runner
 
 - CLI-Wrapper um `codex exec "<prompt>"`
-- Prompt aus Task-Goal + Kontext zusammensetzen (shared `buildPrompt()`)
+- Prompt aus Task-Goal + Kontext zusammensetzen (shared `buildPrompt()` in `@patchbay/core` / `runner.ts`)
 - Env Var `OPENAI_API_KEY` bei apiKey-Auth injizieren
 - Graceful fallback wenn `codex` nicht im PATH
 
 ### 4.7 Gemini Runner
 
 - CLI-Wrapper um `gemini -p "<prompt>"`
-- Prompt aus Task-Goal + Kontext zusammensetzen (shared `buildPrompt()`)
+- Prompt aus Task-Goal + Kontext zusammensetzen (shared `buildPrompt()` in `@patchbay/core` / `runner.ts`)
 - Env Var `GEMINI_API_KEY` bei apiKey-Auth injizieren
 - Graceful fallback wenn `gemini` nicht im PATH
 
@@ -690,9 +690,9 @@ Wenn ein CLI-Runner eine Rückfrage stellt, endete der Run bisher sofort — der
 
 ### J2: Claude Code Runner — Session Resume + Fragen-Erkennung
 
-- [x] `packages/runners/claude-code/src/index.ts` — `detectQuestion(output)`-Heuristik (Länge, Fragezeichen, Keywords); `--resume <sessionId>` bei `input.resumeSessionId`; `--session-id <uuid>` für neue Runs; Prompt via stdin; `buildPrompt()` injiziert `previousTurns` als Konversations-Kontext
-- [x] `packages/runners/codex/src/index.ts` — erbt `previousTurns`-Kontext über `buildPrompt()` aus `@patchbay/runner-claude-code`
-- [x] `packages/runners/gemini/src/index.ts` — gleiche Fallback-Kontext-Injektion
+- [x] `packages/runners/claude-code/src/index.ts` — `detectQuestion(output)`-Heuristik (Länge, Fragezeichen, Keywords); `--resume <sessionId>` bei `input.resumeSessionId`; `--session-id <uuid>` für neue Runs; Prompt via stdin; Konversations-Kontext via `buildPrompt()` aus `@patchbay/core`
+- [x] `packages/runners/codex/src/index.ts` — `previousTurns` über `buildPrompt()` aus `@patchbay/core` (wie Claude Code)
+- [x] `packages/runners/gemini/src/index.ts` — gleiche `buildPrompt()`-Nutzung aus `@patchbay/core`
 
 ### J3: Orchestrator — Konversations-Threading
 
@@ -818,7 +818,7 @@ Vor dem Dashboard-Umbau: wntrmte + patchbay in ein Repository zusammenführen. A
 - [ ] `packages/dashboard/src/components/AgentChat.tsx` — Streaming Messages, Tool-Use-Anzeige, Permission-Dialoge, inline Replies, Cancel. Provider-agnostisch.
 - [ ] `packages/dashboard/src/components/DispatchDialog.tsx` — Provider-Auswahl: Connectors + Batch-Runner, "Interactive Session" vs "Start Run"
 - [ ] `packages/dashboard/src/app/tasks/page.tsx` — AgentChat als Sliding Panel
-- [ ] Wintermute `DashboardPanel.ts` — postMessage-Relay für `wntrmte.connectAgent`, `wntrmte.sendAgentInput`, `wntrmte.approveAgent`, `wntrmte.cancelAgent`
+- [ ] Wintermute `DashboardPanel.ts` — postMessage-Relay für `wntrmte.connectAgent`, `wntrmte.sendAgentInput`, `wntrmte.approveAgent`, `wntrmte.denyAgent`, `wntrmte.cancelAgent`
 
 ### L7: Backward Compatibility
 

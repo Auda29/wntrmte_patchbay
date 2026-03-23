@@ -31,6 +31,7 @@ patchbay/
 ├── packages/
 │   ├── core/         # Orchestrator, Store (ajv-validated), Runner + AgentConnector interfaces, Types
 │   │   └── src/
+│   │       ├── runner.ts     # Runner types + shared `buildPrompt()` (CLI runners + connectors)
 │   │       ├── connector.ts  # AgentConnector, AgentSession, AgentEvent, ConnectorRegistry, BaseSession
 │   │       └── ...
 │   ├── cli/          # patchbay init, task, run, reply, auth, serve
@@ -65,4 +66,4 @@ patchbay/
 
 ## Current status
 
-Phases A–K complete. Phase L (Agent Connector Architecture) in progress — L1–L4 done (core types, all provider connectors, orchestrator connector support, server streaming endpoints + dashboard API routes). Remaining: L5 (monorepo consolidation), L6 (dashboard Agent Chat UI), L7 (backward compatibility). See `PLAN.md` Phase L for details.
+Phases A–K complete. Phase L in progress — **L1–L4 done** (core types, Claude/Codex/Gemini/`HttpConnector`, orchestrator incl. approve/deny, server + dashboard API routes, `docs/custom-connector.md`). **Remaining:** L5 (monorepo), L6 (Agent Chat UI + Wintermute relay with `denyAgent`), L7 (`/agents` capabilities). See `PLAN.md` Phase L.
