@@ -1,0 +1,14 @@
+diff --git a/src/tsconfig.json b/src/tsconfig.json
+index 9b34d6e..59d15c0 100644
+--- a/src/tsconfig.json
++++ b/src/tsconfig.json
+@@ -17,6 +17,10 @@
+ 			"trusted-types",
+ 			"winreg",
+ 			"wicg-file-system-access"
++		],
++		"typeRoots": [
++			"../node_modules/@types"
+ 		],
+ 		"plugins": [
+ 			{

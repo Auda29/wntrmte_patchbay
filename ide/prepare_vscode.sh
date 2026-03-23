@@ -63,7 +63,14 @@ fi
 # --- Build wntrmte-workflow extension ---
 if [[ -d "../extensions/wntrmte-workflow" ]]; then
   echo "=== Building wntrmte-workflow extension ==="
-  (cd ../extensions/wntrmte-workflow && npm ci && npm run compile)
+  # Install the built-in extension in standalone mode so npm doesn't treat the
+  # monorepo root as a workspace and hoist @types/vscode into an ancestor
+  # node_modules directory that TypeScript can see from vscode/src.
+  (
+    cd ../extensions/wntrmte-workflow &&
+    npm ci --workspaces=false &&
+    npm run compile --workspaces=false
+  )
 fi
 
 # --- Apply patches ---
@@ -108,6 +115,10 @@ for i in {1..5}; do
   echo "npm ci failed (attempt $i), retrying..."
   sleep $(( 15 * (i + 1) ))
 done
+
+# Remove any ancestor @types/vscode packages that may have been created by
+# workspace-aware npm commands before compiling the upstream VS Code sources.
+rm -rf ../node_modules/@types/vscode ../node_modules/@types ../../node_modules/@types/vscode 2>/dev/null || true
 
 
 cd ..

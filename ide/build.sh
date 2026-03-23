@@ -53,6 +53,9 @@ cd vscode
 
 export NODE_OPTIONS="--max-old-space-size=8192"
 
+echo "=== TypeScript type root diagnostics ==="
+find .. -path '*/node_modules/@types/vscode*' -print 2>/dev/null || true
+
 npm run gulp compile-build-without-mangling
 npm run gulp compile-extension-media
 npm run gulp compile-extensions-build
