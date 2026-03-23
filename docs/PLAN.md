@@ -16,7 +16,7 @@ Viele Entwickler arbeiten parallel mit Cursor, Claude Code, Codex, Bash und weit
 - CLI-first — CLI als robuste, logbare Integrationsschicht
 - Tool-agnostisch — kein Lock-in auf ein bestimmtes AI-Tool
 
-**Zusammenspiel mit wntrmte:** Patchbay denkt von außen nach innen (externes Dashboard), wntrmte von innen nach außen (native IDE). Zusammen bilden sie einen kohärenten Abstraktions-Layer. wntrmte ist der First-Class-Client, nicht der einzige. Siehe `VISION.md`.
+**Zusammenspiel mit wntrmte:** Patchbay denkt von außen nach innen (externes Dashboard), wntrmte von innen nach außen (native IDE). Zusammen bilden sie einen kohärenten Abstraktions-Layer. wntrmte ist der First-Class-Client, nicht der einzige. Siehe `./VISION.md`.
 
 ---
 
@@ -55,7 +55,10 @@ patchbay/
 │       ├── claude-code/
 │       ├── codex/
 │       └── gemini/
-├── PLAN.md
+├── docs/
+│   ├── README.md
+│   ├── PLAN.md
+│   └── VISION.md
 ├── CLAUDE.md
 ├── LICENSE
 └── package.json                     # Workspace Root
@@ -749,13 +752,13 @@ Bestehende Projekte können aktuell nur manuell per `patchbay init` initialisier
 
 ## Phase L: Agent Connector Architecture — Live Agent Interaction
 
-Das Herzstück der neuen Produktvision (vgl. `VISION.md`): Live Agent Interaction im Dashboard statt Batch-Runner mit Text-Heuristik. Provider-agnostisch — die Architektur ist generisch, Connectors sind austauschbar.
+Das Herzstück der neuen Produktvision (vgl. `./VISION.md`): Live Agent Interaction im Dashboard statt Batch-Runner mit Text-Heuristik. Provider-agnostisch — die Architektur ist generisch, Connectors sind austauschbar.
 
 **Vorbild:** ZenFlow, Codex App, T3 Code — eigenständige Coding-Orchestration mit Streaming, Approvals, Multi-Turn. Aber: IDE-nativ, open-source, model-agnostisch.
 
 **Strategie:** Das Patchbay Dashboard ist die primäre App-UI. Wintermute bettet es als Webview-Panel ein — Agent Chat, Streaming, Approvals laufen im Dashboard und sind automatisch in Wintermute verfügbar.
 
-**Provider-Integrations-Referenz** (Details: `VISION.md`): Connectors mappen die jeweils beste Anbieter-Schicht auf einheitliche `AgentEvent`s — **Codex:** `codex app-server` (JSON-RPC, stdio, Threads, serverseitige Approvals); **Claude Code:** CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON), ergänzend Anthropic Agent SDK wo sinnvoll; **Gemini CLI:** Headless/JSON; **lokal:** HTTP (z. B. Ollama); **HTTP APIs:** OpenAI-kompatible Integrationen eher **Responses API**; **Cursor / ACP:** **`CursorAcpConnector`** bzw. generischer **`AcpConnector`** — [Agent Client Protocol](https://agentclientprotocol.com) (JSON-RPC/stdio, `cursor agent acp`); siehe `docs/custom-connector.md` § ACP.
+**Provider-Integrations-Referenz** (Details: `./VISION.md`): Connectors mappen die jeweils beste Anbieter-Schicht auf einheitliche `AgentEvent`s — **Codex:** `codex app-server` (JSON-RPC, stdio, Threads, serverseitige Approvals); **Claude Code:** CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON), ergänzend Anthropic Agent SDK wo sinnvoll; **Gemini CLI:** Headless/JSON; **lokal:** HTTP (z. B. Ollama); **HTTP APIs:** OpenAI-kompatible Integrationen eher **Responses API**; **Cursor / ACP:** **`CursorAcpConnector`** bzw. generischer **`AcpConnector`** — [Agent Client Protocol](https://agentclientprotocol.com) (JSON-RPC/stdio, `cursor agent acp`); siehe `./custom-connector.md` § ACP.
 
 ### L1: Core Types — Provider-agnostisches Connector-Interface — DONE
 
@@ -830,3 +833,12 @@ Wintermute + Patchbay liegen in **einem Monorepo** (Root-`package.json` mit Work
 - [x] `/agents` Endpoint um `supportsConnector: boolean` und `connectorCapabilities` erweitern
 - [x] Bestehende Batch-Runner, `/dispatch`, `/reply` bleiben unverändert
 - [x] Provider ohne Connector fallen automatisch auf Batch-Runner zurück
+
+### L8: Vision Alignment — offen
+
+Die erste komplette Live-Agent-Version ist funktional, weicht aber an einigen Produktkanten noch von der Zielvision ab.
+
+- [ ] Persistenter Agent Chat: strukturierte Event-/Message-Historie statt nur Live-Stream im lokalen Component-State (`AgentChat.tsx`, `packages/core/src/types.ts`)
+- [ ] Connector-first UX: Connector-Sessions als eigene chat-zentrierte Interaktion statt primär als Modus im runner-zentrierten `DispatchDialog.tsx`
+- [ ] Klarerer Connector-Vertrag im UI: Connector-Datenquelle konsequent modellieren, statt den Dialog primär über `/api/agents` mit ergänzten Connector-Metadaten zu speisen
+- [ ] Doku-Drift vermeiden: `docs/VISION.md`, `docs/PLAN.md` und `ide/PLAN.md` bei weiteren Phase-L-Änderungen gemeinsam fortschreiben

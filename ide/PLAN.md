@@ -10,7 +10,7 @@ Ziel ist eine eigene IDE, die minimalistisch wie Zed aussieht, aber AI-Agent-Wor
 - Datenordner: `.wntrmte`
 - Konfigurierbar über `APP_NAME` / `BINARY_NAME` in `utils.sh`
 
-**Zusammenspiel mit Patchbay:** wntrmte ist der native, tiefst-integrierte Client für Patchbay — das externe Orchestrierungs-Dashboard. wntrmte denkt von innen nach außen (IDE-Integration), Patchbay von außen nach innen (Dashboard-Steuerung). Die Phase-3-Extension wird von Anfang an als Patchbay-Client designed. Patchbay bleibt tool-agnostisch — wntrmte ist der First-Class-Client, nicht der einzige. Siehe `VISION.md` und `patchbay/PLAN.md`.
+**Zusammenspiel mit Patchbay:** wntrmte ist der native, tiefst-integrierte Client für Patchbay — das externe Orchestrierungs-Dashboard. wntrmte denkt von innen nach außen (IDE-Integration), Patchbay von außen nach innen (Dashboard-Steuerung). Die Phase-3-Extension wird von Anfang an als Patchbay-Client designed. Patchbay bleibt tool-agnostisch — wntrmte ist der First-Class-Client, nicht der einzige. Siehe `../docs/VISION.md` und `../docs/PLAN.md`.
 
 ---
 
@@ -426,7 +426,7 @@ bash build.sh                        # Full Build
 
 CLI-Delegation wenn verfügbar, erweiterter lokaler Fallback wenn nicht.
 
-**Abhängigkeit:** `patchbay init --yes` Flag (siehe `patchbay/PLAN.md` Phase 7a) — implementiert
+**Abhängigkeit:** `patchbay init --yes` Flag (siehe `../docs/PLAN.md` Phase 7a) — implementiert
 
 - [x] `initViaCli(workspaceRoot, name, goal, techStack): Promise<boolean>` in `src/services/SetupInspector.ts`
   - Spawnt `patchbay init --name "..." --goal "..." --tech-stack "..." --yes` im Workspace-Root
@@ -525,8 +525,8 @@ Mehrere UX- und Plattform-Fixes aus realem Test-Workspace-Feedback.
 - Das Setup-Panel soll Statusänderungen automatisch widerspiegeln statt den Nutzer auf manuelle Refreshes zu zwingen
 - [x] Endnutzer-CLI-Installer ohne Repo-Clone — npm-Option als erste Wahl im Install-QuickPick (`npm install -g @patchbay/cli`). Greift automatisch, sobald `@patchbay/cli` auf dem npm-Registry veröffentlicht wird. Fallback auf bestehende Clone-/Checkout-Flows bleibt erhalten.
 
-**npm-Publish Voraussetzungen** (liegt in `patchbay/PLAN.md`):
-~9 interne Packages müssen zuerst veröffentlicht werden, `"*"`-Versionen durch konkrete Nummern ersetzen, `package.json`-Pflichtfelder ergänzen, Versionsstrategie festlegen, ersten Publish mit `--access public`. Sinnvoll erst wenn API stabil — siehe `patchbay/PLAN.md`.
+**npm-Publish Voraussetzungen** (liegt in `../docs/PLAN.md`):
+~9 interne Packages müssen zuerst veröffentlicht werden, `"*"`-Versionen durch konkrete Nummern ersetzen, `package.json`-Pflichtfelder ergänzen, Versionsstrategie festlegen, ersten Publish mit `--access public`. Sinnvoll erst wenn API stabil — siehe `../docs/PLAN.md`.
 
 **Bekannter Restpunkt**
 
@@ -647,11 +647,11 @@ Gefunden beim manuellen Testen: nach dem Dispatch-Dialog gibt es kein Live-Feedb
 
 ## Phase L: Agent Connector Architecture — Wintermute-Anteil
 
-**Abhängigkeit:** Phase **L1–L5** sind im Monorepo umgesetzt (`packages/` Connector-Backend, **L5** Root-Workspace + `@patchbay/core` in der Extension). **Offen:** Agent-Chat-UI + Relay (L6), `/agents`-Erweiterung (L7). Siehe `../PLAN.md` Phase L.
+**Abhängigkeit:** Phase **L1–L7** sind im Monorepo umgesetzt (`packages/` Connector-Backend, Agent Chat im Dashboard, Wintermute-Relay, `/agents`-Capabilities, Root-Workspace + `@patchbay/core` in der Extension). Siehe `../docs/PLAN.md` Phase L.
 
 **Kontext:** Das Patchbay Dashboard wird zur vollwertigen Agent-Orchestration-App (Agent Chat, Streaming, Approvals). Wintermute bettet es als Webview-Panel ein. Die Dashboard-Funktionalität wird unter `packages/dashboard` gebaut — Wintermute stellt den Host und das postMessage-Relay.
 
-**Provider-Schichten:** Die konkrete Anbindung pro Anbieter liegt in **`packages/`** (Runners/Connectors) — siehe `../VISION.md` (Provider-Referenz). Wintermute ändert daran nichts; es leitet nur Commands weiter.
+**Provider-Schichten:** Die konkrete Anbindung pro Anbieter liegt in **`packages/`** (Runners/Connectors) — siehe `../docs/VISION.md` (Provider-Referenz). Wintermute ändert daran nichts; es leitet nur Commands weiter.
 
 ### L5: Monorepo-Konsolidierung — DONE
 
@@ -665,3 +665,9 @@ Gefunden beim manuellen Testen: nach dem Dispatch-Dialog gibt es kein Live-Feedb
 - [x] Extension-Commands relayen die eingebetteten Connector-Aktionen an `/api/connect` und `/api/agent-input`
 - [x] Agent Chat läuft im eingebetteten Dashboard-iframe — keine eigene Webview-UI in der Extension nötig
 - [x] `schedulePostRunCheck` bleibt für Batch-Runner; Connector-Sessions werden live über Dashboard/SSE gehandelt
+
+### L8: Vision Alignment — Host-Anteil offen
+
+- [ ] Wintermute bleibt beim weiteren Ausbau strikt Host + Glue Layer; keine zweite Connector-/Chat-UX neben dem Dashboard aufbauen
+- [ ] Eingebettete Connector-Sessions weiter am Dashboard orientieren, damit eine künftige connector-first UX nicht wieder runner-zentriert in der Extension landet
+- [ ] Doku-Referenzen zu `../docs/VISION.md` und `../docs/PLAN.md` konsistent halten

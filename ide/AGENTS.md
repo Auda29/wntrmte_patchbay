@@ -4,15 +4,15 @@
 
 Wintermute (`wntrmte`) is a minimalist VS Code distribution that serves as the **host** for the Patchbay agent orchestration app. It is **not** a hard fork — it clones a pinned VS Code commit and applies curated patches at build time.
 
-Together with Patchbay, it forms an open-source, IDE-native, model-agnostic agent orchestration platform — comparable to ZenFlow or Codex App, but integrated into the editor. See `../VISION.md` for the full product vision.
+Together with Patchbay, it forms an open-source, IDE-native, model-agnostic agent orchestration platform — comparable to ZenFlow or Codex App, but integrated into the editor. See `../docs/VISION.md` for the full product vision.
 
 ## Companion: Patchbay
 
 Patchbay is the **agent orchestration app** that lives inside Wintermute. It provides the Dashboard UI, the Orchestrator backend, and the provider Connectors.
 
 - Patchbay packages: `../packages/`
-- Shared vision: `../VISION.md`
-- Root plan: `../PLAN.md`
+- Shared vision: `../docs/VISION.md`
+- Root plan: `../docs/PLAN.md`
 
 ### Key rules
 
@@ -69,7 +69,7 @@ bash build.sh    # auto-detects OS/arch
 
 ## Current status
 
-Phases 1–5 + C + D + E + H + J + K complete. **Patchbay** has implemented Phase **L1–L4** (connector types, provider connectors including `HttpConnector` and **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), orchestrator session API with approve/deny, server routes and dashboard API proxies). **Wintermute:** Phase **L5** is now reflected in the monorepo layout and shared-type imports from `@patchbay/core`. Still needs **L6** — postMessage relay for `connectAgent`, `sendAgentInput`, `approveAgent`, **`denyAgent`**, `cancelAgent` — and **L7** `/agents` capabilities (see `../PLAN.md`, `../VISION.md`).
+Phases 1–5 + C + D + E + H + J + K complete. **Patchbay** has implemented Phase **L1–L7** (connector types, provider connectors including `HttpConnector` and **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), orchestrator session API with approve/deny, server routes, dashboard API proxies, Agent Chat UI, Wintermute relay, `/agents` capabilities). **Wintermute:** the embedded host integration for Phase L is in place. Open next: **L8** Vision Alignment (persistent chat model, connector-first UX, cleaner connector contract, doc discipline) — see `../docs/PLAN.md`, `../docs/VISION.md`.
 
 ## Monorepo (Phase L5 — done)
 

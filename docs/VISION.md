@@ -226,20 +226,20 @@ Fast alle Konkurrenten sind closed source (ZenFlow, Cursor, T3 Code, Codex App) 
 
 ### Aktueller Stand
 
-**Phasen A–K (abgeschlossen):** Schema, Orchestrator, Dashboard, Runner, Extension, Multi-Turn (J), Projekt-Import (K) — siehe jeweilige `PLAN.md`.
+**Phasen A–K (abgeschlossen):** Schema, Orchestrator, Dashboard, Runner, Extension, Multi-Turn (J), Projekt-Import (K) — siehe jeweilige `./PLAN.md`.
 
-**Phase L — Backend + Monorepo (L1–L5, abgeschlossen):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`**, **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`) und Dashboard-API-Routen, Doku `docs/custom-connector.md` (inkl. ACP-Mapping). **L5 Monorepo-Konsolidierung** abgeschlossen — ein Repo, Shared Types aus `@patchbay/core`, Extension-Split.
+**Phase L (L1–L7, umgesetzt):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`**, **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`), Dashboard-API-Routen, Agent Chat im Dashboard, Wintermute postMessage-Relay und `/agents`-Capabilities. Die Dashboard-Connector-Routen teilen sich eine Runtime-Orchestrator-Instanz, damit Live-Sessions über `/connect`, `/agent-input` und `/agent-events` konsistent bleiben.
 
-**Phase L — noch offen:** **Agent-Chat-UI** im Dashboard + **Wintermute** postMessage (L6, inkl. `denyAgent`) sowie `/agents`-Capabilities (L7).
+**Phase L8 (offen):** Vision-Alignment nach dem ersten End-to-End-Live-Chat-Stand. Ziel ist nicht mehr der Connector-Unterbau, sondern die konsequente Produktform.
 
-Details: `PLAN.md` Phase L, Provider-Tabelle oben.
+Details: `./PLAN.md` Phase L, Provider-Tabelle oben.
 
-### Nächster Schritt (Phase L — Rest)
+### Nächster Schritt (Phase L8)
 
-- **L6** — `AgentChat.tsx`, Dispatch-Erweiterung, Wintermute-Relay (`connectAgent`, `sendAgentInput`, `approveAgent`, **`denyAgent`**, `cancelAgent`)
-- **L7** — `/agents` um Connector-Capabilities erweitern; Batch-Fallback bleibt
-
-Bereits vorhanden im Backend: Live-Sessions über Server/Dashboard-APIs; die **Chat-Oberfläche** und **IDE-Relay** fehlen noch.
+- **Persistenter Agent Chat** — Konversationen und strukturierte Events nicht nur live streamen, sondern als dauerhafte primäre Oberfläche modellieren
+- **Connector-first UX** — Connector-Sessions nicht nur als Modus im Runner-Dialog, sondern als eigene, chat-zentrierte Interaktion präsentieren
+- **Klarerer Connector-Vertrag im UI** — Connector-Auswahl und Capabilities konsequent über einen Connector-Layer statt über angereicherte Runner-Metadaten
+- **Doku-Disziplin** — Vision, Pläne und Implementierung ohne Drift weiterführen
 
 ### Darüber hinaus (Evaluierung)
 
@@ -260,7 +260,12 @@ repo-root/
 ├── packages/                 ← Orchestrator, Dashboard, CLI, Runner, Connectors
 ├── schema/                   ← .project-agents Schema-Definitionen
 ├── docs/                     ← gemeinsame Dokumentation
+│   ├── README.md
+│   ├── PLAN.md
+│   ├── VISION.md
+│   └── custom-connector.md
 ├── ide/                      ← VS Code Build-Pipeline, Host-Extensions, Patches
+├── AGENTS.md                 ← Repo-Instruktionen für Agents
 └── wintermute-patchbay.code-workspace
 ```
 

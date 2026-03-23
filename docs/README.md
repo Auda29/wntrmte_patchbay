@@ -87,6 +87,9 @@ wintermute-patchbay/
 │       └── gemini/        # Batch runner + GeminiConnector (streaming)
 ├── schema/                # .project-agents/ JSON Schema definitions
 ├── docs/
+│   ├── README.md             # Project overview + getting started
+│   ├── PLAN.md               # Patchbay implementation roadmap
+│   ├── VISION.md             # Product vision + market positioning
 │   └── custom-connector.md   # How to build a custom Connector (incl. ACP)
 ├── ide/                   # Wintermute: build pipeline, patches, icons, extensions
 │   ├── upstream/          # Pinned VS Code commit + tag
@@ -97,9 +100,7 @@ wintermute-patchbay/
 │   ├── product.json       # Branding + Open VSX marketplace
 │   ├── build.sh           # Full build orchestration
 │   └── PLAN.md            # Wintermute build roadmap
-├── PLAN.md                # Patchbay implementation roadmap
-├── VISION.md              # Product vision + market positioning
-├── AGENTS.md              # AI agent context
+├── AGENTS.md              # Repo-level AI agent context
 ├── vitest.config.ts       # Shared test config
 └── package.json           # npm workspaces root
 ```
@@ -190,7 +191,7 @@ Binary: `wntrmte` | Data folder: `.wntrmte`
 | `Wintermute: Set Task Status` | Change task status from tree view |
 | `Wintermute: Switch Connection Mode` | Toggle auto/offline/connected |
 
-See [`ide/README.md`](./ide/README.md) for full build instructions and extension details.
+See [`ide/README.md`](../ide/README.md) for full build instructions and extension details.
 
 ---
 

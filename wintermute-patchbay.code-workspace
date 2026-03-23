@@ -1,7 +1,5 @@
 {
   "folders": [
     { "name": "root", "path": "./" },
-    { "name": "packages", "path": "./packages" },
-    { "name": "ide", "path": "./ide" }
   ]
 }
