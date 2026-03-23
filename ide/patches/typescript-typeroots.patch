@@ -11,7 +11,7 @@ index 9b34d6e..f0d33e1 100644
 +		],
 +		"typeRoots": [
 +			"../node_modules/@types",
-+			"../node_modules/@webgpu"
++			"../node_modules"
  		],
  		"plugins": [
  			{
