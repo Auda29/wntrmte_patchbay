@@ -114,6 +114,25 @@ sync_custom_extensions() {
   fi
 }
 
+find_packaged_extensions_dir() {
+  local result=""
+
+  if [[ "${OS_NAME}" == "osx" ]]; then
+    result="$(find .. -path "*/VSCode-darwin-${VSCODE_ARCH}/*.app/Contents/Resources/app/extensions" -type d | head -n 1)"
+  elif [[ "${OS_NAME}" == "windows" ]]; then
+    result="$(find .. -path "*/VSCode-win32-${VSCODE_ARCH}/resources/app/extensions" -type d | head -n 1)"
+  else
+    result="$(find .. -path "*/VSCode-linux-${VSCODE_ARCH}/resources/app/extensions" -type d | head -n 1)"
+  fi
+
+  if [[ -n "${result}" ]]; then
+    printf '%s\n' "${result#../}"
+    return 0
+  fi
+
+  return 1
+}
+
 if [[ "${OS_NAME}" == "osx" ]]; then
   npm run gulp "vscode-darwin-${VSCODE_ARCH}-min-ci"
 elif [[ "${OS_NAME}" == "windows" ]]; then
@@ -122,13 +141,7 @@ else
   npm run gulp "vscode-linux-${VSCODE_ARCH}-min-ci"
 fi
 
-if [[ "${OS_NAME}" == "osx" ]]; then
-  packaged_extensions_dir="$(find "VSCode-darwin-${VSCODE_ARCH}" -path '*/Contents/Resources/app/extensions' -type d | head -n 1)"
-elif [[ "${OS_NAME}" == "windows" ]]; then
-  packaged_extensions_dir="VSCode-win32-${VSCODE_ARCH}/resources/app/extensions"
-else
-  packaged_extensions_dir="VSCode-linux-${VSCODE_ARCH}/resources/app/extensions"
-fi
+packaged_extensions_dir="$(find_packaged_extensions_dir || true)"
 
 sync_custom_extensions "${packaged_extensions_dir}"
 unset packaged_extensions_dir
