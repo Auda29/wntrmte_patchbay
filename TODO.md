@@ -10,7 +10,7 @@
 
 ## Phase L — Agent Connector Architecture
 
-**Stand:** In **patchbay** sind **L1–L4 umgesetzt** (Core-Types, alle Provider-Connectors inkl. `HttpConnector`, Orchestrator inkl. `denySession` / Session-Liste, Server + Dashboard-APIs). **Offen:** L5–L7, **L6** (Agent-Chat-UI + **Wintermute** postMessage inkl. Deny). Details: `patchbay/PLAN.md` Phase L.
+**Stand:** In **patchbay** sind **L1–L4 umgesetzt** (Core-Types, alle Provider-Connectors inkl. `HttpConnector` und **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. `denySession` / Session-Liste, Server + Dashboard-APIs). **Offen:** L5–L7, **L6** (Agent-Chat-UI + **Wintermute** postMessage inkl. Deny). Details: `patchbay/PLAN.md` Phase L.
 
 Das Herzstück der Vision: Live Agent Interaction im Dashboard statt Batch-Runner mit Text-Heuristik. Provider-agnostisch — Connectors sind austauschbar (Claude Code, Codex, Gemini, HTTP, lokale Modelle, …).
 
@@ -25,7 +25,7 @@ Connectors mappen die **jeweils beste verfügbare** Anbieter-Schicht auf einheit
 | **Google Gemini CLI** | Headless, JSON/Text, stdin ([Headless](https://google-gemini.github.io/gemini-cli/docs/cli/headless.html)) | Open Source; kein JSON-RPC-App-Server wie Codex |
 | **Lokal (Ollama, …)** | HTTP (`/api/chat` u. a.) | In patchbay: `HttpConnector` (`packages/runners/http`) + Capabilities |
 | **HTTP / kompatible APIs** | OpenAI: eher **Responses API** für Neues; Chat Completions weiter möglich | Kein fertiger Agent-/Approval-Loop — ggf. selbst bauen |
-| **Cursor** | **ACP** — `agent acp`, stdio JSON-RPC, z. B. `session/request_permission` | Strukturiert, proprietäres Produkt |
+| **Cursor / ACP** | [Agent Client Protocol](https://agentclientprotocol.com) — JSON-RPC/stdio (`cursor agent acp`); `session/request_permission`, … | In patchbay: `CursorAcpConnector`, generisch `AcpConnector` (`@patchbay/runner-cursor-cli`); Cursor-Produkt bleibt proprietär |
 
 **Hinweis Kosten:** OSS-CLIs ≠ kostenlose Modellnutzung — API/Abos bleiben beim Nutzer.
 
@@ -52,9 +52,9 @@ Connectors mappen die **jeweils beste verfügbare** Anbieter-Schicht auf einheit
 
 #### L2d: Connector-Erweiterbarkeit
 
-- [x] `[p]` `docs/custom-connector.md` — Custom Connector Guide
+- [x] `[p]` `docs/custom-connector.md` — Custom Connector Guide (inkl. **ACP**-Abschnitt, Mapping & Lifecycle)
 - [x] `[p]` `packages/runners/http/src/connector.ts` — `HttpConnector` (OpenAI-kompatible APIs, Ollama, OpenRouter, …)
-- [ ] `[p]` Perspektivisch: **Cursor ACP** — in Doku erwähnt; Implementierung folgt
+- [x] `[p]` `packages/runners/cursor-cli/src/connector.ts` + `acp-parser.ts` — **`CursorAcpConnector`** / **`AcpConnector`** ([ACP](https://agentclientprotocol.com)); Server registriert `CursorAcpConnector` in `runtime.ts`
 
 ### L3: Orchestrator — done `[p]`
 
@@ -97,7 +97,7 @@ Vor dem Dashboard-Umbau zusammenführen — ab hier arbeiten Dashboard (patchbay
 - [ ] `[p]` Multi-Agent-Workflows — mehrere Agents parallel an einem Task, Cross-Verification
 - [ ] `[p]` Agent-Sandboxing — isolierte Umgebungen pro Session (Git-Worktrees oder Container)
 - [ ] `[p]` Workflow-Templates — vordefinierte Abläufe (Plan → Implement → Test → Review)
-- [ ] `[p]` Community-Connectors — Ollama/LM Studio (HTTP), OpenRouter & eigene APIs (OpenAI-kompatibel, ggf. Responses API), Cursor ACP
+- [ ] `[p]` Community-Connectors — Ollama/LM Studio (HTTP), OpenRouter & eigene APIs (OpenAI-kompatibel, ggf. Responses API); weitere ACP-Agents via `AcpConnector`
 
 ### Distribution
 
@@ -113,7 +113,7 @@ Vor dem Dashboard-Umbau zusammenführen — ab hier arbeiten Dashboard (patchbay
 
 ```
 Phase A–K          ✅ done
-Phase L (patchbay) ✅ L1–L4 (Core, Connectors inkl. Http, Orchestrator, Server + Dashboard APIs)
+Phase L (patchbay) ✅ L1–L4 (Core, Connectors inkl. Http + Cursor ACP, Orchestrator, Server + Dashboard APIs)
 Phase L (rest)     ⬜ L5 Monorepo → L6 Agent Chat UI + Wintermute Relay (inkl. denyAgent) → L7 /agents Capabilities
 Multi-Agent        ⬜ nach Phase L
 npm Publish        ⬜ nach stabiler API (L6/L7)
@@ -249,6 +249,6 @@ npm Publish        ⬜ nach stabiler API (L6/L7)
 
 ### Patchbay Phase L — L1–L4 (Connector-Backend)
 
-- [x] `[p]` Core `connector.ts`, alle Provider-Connectors (claude-code, codex app-server, gemini, http), Orchestrator-Session-API, Server-Routes + Dashboard-Proxies, `docs/custom-connector.md`
+- [x] `[p]` Core `connector.ts`, alle Provider-Connectors (claude-code, codex app-server, gemini, http, **cursor-cli ACP**), Orchestrator-Session-API, Server-Routes + Dashboard-Proxies, `docs/custom-connector.md` (inkl. ACP)
 
 </details>

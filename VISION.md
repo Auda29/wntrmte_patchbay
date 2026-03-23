@@ -116,7 +116,7 @@ Patchbay bleibt **transport- und anbieter-agnostisch**: Connectors übersetzen j
 | **Google Gemini CLI** | **Headless**-Modus — Text/JSON, stdin/Piping, stabile Exit-Codes; Projekt **Open Source** | Eher CLI/Headless als JSON-RPC-App-Server ([Headless](https://google-gemini.github.io/gemini-cli/docs/cli/headless.html), [Repo](https://github.com/google-gemini/gemini-cli)). |
 | **Lokal (Ollama, LM Studio, …)** | **HTTP/REST** (z. B. Ollama `/api/chat`) | Kein eingebauter Codex-artiger Agent-Server — **Adapter + dokumentierte Capabilities**. |
 | **HTTP / OpenAI-kompatible APIs** | Für neue Integrationen oft **Responses API**; klassisch auch Chat-Completions | Reine Chat-/Tool-HTTP ersetzt **nicht** automatisch einen vorgefertigten Agent-/Approval-Loop — den baut man oder nutzt App-Server-ähnliche Schichten. |
-| **Cursor** | **ACP (Agent Client Protocol)** — z. B. `agent acp`, Custom Client über **stdio** mit **JSON-RPC**; u. a. **`session/request_permission`** | Strukturiert wie ein Agent-Protokoll (näher an Codex als reines Log-Parsing), aber **ACP**, nicht Codex App Server; **Produkt bleibt proprietär**. |
+| **Cursor / ACP** | **ACP** ([Agent Client Protocol](https://agentclientprotocol.com)) — JSON-RPC über **stdio** (z. B. `cursor agent acp`); u. a. **`session/request_permission`** | In Patchbay: **`CursorAcpConnector`** / generischer **`AcpConnector`** (`runner-cursor-cli`). Protokoll ist offen dokumentiert; **Cursor** als Produkt bleibt proprietär. |
 
 **Kosten/Lizenzen:** Connector-Code kann auf **Open-Source-CLIs** (z. B. Codex, Gemini CLI) aufsetzen; **Modell- und Kontonutzung** (OpenAI, Anthropic, Google, …) bleibt Sache des Nutzers — das ist keine „Patchbay-Lizenz“, aber oft **nicht kostenlos** im Betrieb.
 
@@ -228,7 +228,7 @@ Fast alle Konkurrenten sind closed source (ZenFlow, Cursor, T3 Code, Codex App) 
 
 **Phasen A–K (abgeschlossen):** Schema, Orchestrator, Dashboard, Runner, Extension, Multi-Turn (J), Projekt-Import (K) — siehe `TODO.md` / jeweilige `PLAN.md`.
 
-**Phase L — Patchbay-Backend (L1–L4, umgesetzt):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`** (OpenAI-kompatible APIs, Ollama, …), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`) und Dashboard-API-Routen, Doku `patchbay/docs/custom-connector.md`.
+**Phase L — Patchbay-Backend (L1–L4, umgesetzt):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`**, **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`) und Dashboard-API-Routen, Doku `patchbay/docs/custom-connector.md` (inkl. ACP-Mapping).
 
 **Phase L — noch offen:** Monorepo (L5), **Agent-Chat-UI** im Dashboard + **Wintermute** postMessage (L6, inkl. `denyAgent`), `/agents`-Capabilities (L7).
 
@@ -247,7 +247,7 @@ Bereits vorhanden im Backend: Live-Sessions über Server/Dashboard-APIs; die **C
 - **Multi-Agent-Workflows** — mehrere Agents parallel an einem Task, Cross-Verification (ZenFlow-Stil)
 - **Agent-Sandboxing** — isolierte Umgebungen pro Agent-Session (Git-Worktrees oder Container)
 - **Workflow-Templates** — vordefinierte Abläufe (Plan → Implement → Test → Review)
-- **Weitere Connectors** — Cursor ACP, Community-HTTP, lokale Modelle (siehe Provider-Schichten)
+- **Weitere Connectors** — weitere ACP-kompatible Agents (`AcpConnector`), Community-HTTP, lokale Modelle (siehe Provider-Schichten)
 - **Monorepo-Konsolidierung** — Wintermute + Patchbay in ein Repository zusammenführen
 - **npm-Publish** — `@patchbay/cli` öffentlich verfügbar machen
 
