@@ -5,6 +5,8 @@ import { promisify } from 'util';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as yaml from 'yaml';
+import { createConfiguredOrchestrator } from '@patchbay/server';
+import type { ConnectorCapabilities } from '@patchbay/core';
 
 const execAsync = promisify(exec);
 
@@ -40,7 +42,12 @@ export async function GET() {
         }
 
         const project = store.getProject();
-        const agentsDir = path.join(project.repoPath || process.cwd(), '.project-agents', 'agents');
+        const repoRoot = project.repoPath || process.cwd();
+        const agentsDir = path.join(repoRoot, '.project-agents', 'agents');
+        const orchestrator = createConfiguredOrchestrator(repoRoot);
+        const connectorMap = new Map<string, ConnectorCapabilities>(
+            orchestrator.listConnectors().map((connector) => [connector.id, connector.capabilities])
+        );
 
         let agents: { id: string; role: string; toolType: string }[] = [];
         if (fs.existsSync(agentsDir)) {
@@ -77,15 +84,27 @@ export async function GET() {
         // Check availability of CLI-based runners in parallel
         const availabilityChecks = agents.map(async (agent) => {
             const bin = cliBinaries[agent.id];
+            const connectorCapabilities = connectorMap.get(agent.id);
+            const supportsConnector = connectorCapabilities !== undefined;
             if (!bin) {
                 // bash, http, cursor (file-based) are always available
-                return { ...agent, available: true, installHint: undefined };
+                return {
+                    ...agent,
+                    available: true,
+                    installHint: undefined,
+                    supportsConnector,
+                    connectorId: supportsConnector ? agent.id : undefined,
+                    connectorCapabilities,
+                };
             }
             const available = await checkBinary(bin);
             return {
                 ...agent,
                 available,
                 installHint: available ? undefined : installHints[agent.id],
+                supportsConnector,
+                connectorId: supportsConnector ? agent.id : undefined,
+                connectorCapabilities,
             };
         });
 

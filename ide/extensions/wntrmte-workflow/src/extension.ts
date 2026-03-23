@@ -42,6 +42,12 @@ import { configureRunnerAuth, openRunnerAuthTerminal } from './services/AuthServ
 const ALL_STATUSES: TaskStatus[] = ['open', 'in_progress', 'blocked', 'review', 'done'];
 const PANEL_AUTO_REFRESH_MS = 3000;
 
+interface DashboardAgentActionPayload {
+  sessionId: string;
+  text?: string;
+  permissionId?: string;
+}
+
 export function activate(ctx: vscode.ExtensionContext): void {
   const outputChannel = vscode.window.createOutputChannel('Patchbay');
   const dashboardPanel = new DashboardPanel();
@@ -205,6 +211,33 @@ export function activate(ctx: vscode.ExtensionContext): void {
 
   const getSetupStatus = async (): Promise<SetupStatus> => latestSetupStatus ?? refreshPanel(false);
 
+  const requestDashboardApi = async <T>(
+    endpoint: string,
+    init?: RequestInit,
+  ): Promise<T> => {
+    const setupStatus = await getSetupStatus();
+    if (!setupStatus.dashboard.reachable) {
+      throw new Error(`Patchbay dashboard is not reachable at ${setupStatus.dashboard.url}.`);
+    }
+
+    const url = new URL(endpoint, `${setupStatus.dashboard.url}/`).toString();
+    const response = await fetch(url, init);
+    if (!response.ok) {
+      let message = `${response.status} ${response.statusText}`;
+      try {
+        const data = await response.json() as { error?: unknown };
+        if (typeof data.error === 'string') {
+          message = data.error;
+        }
+      } catch {
+        // Ignore JSON parse failures and fall back to the HTTP status.
+      }
+      throw new Error(message);
+    }
+
+    return response.json() as Promise<T>;
+  };
+
   const promptCliInstall = async (): Promise<void> => {
     await vscode.commands.executeCommand('wntrmte.showPatchbayCliInstall');
   };
@@ -286,6 +319,78 @@ export function activate(ctx: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand('wntrmte.refreshDashboardPanel', async () => {
       await refreshPanel(dashboardPanel.isOpen());
+    }),
+    vscode.commands.registerCommand('wntrmte.connectAgent', async (taskId: string, connectorId: string) => {
+      try {
+        await requestDashboardApi('/api/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId, connectorId }),
+        });
+        scheduleDelayedPanelRefresh(1500, 4000, 8000);
+        scheduleDelayedStoreInitialize(1500, 4000, 8000);
+      } catch (error) {
+        void vscode.window.showErrorMessage(`Failed to start interactive session: ${String(error)}`);
+      }
+    }),
+    vscode.commands.registerCommand('wntrmte.sendAgentInput', async (payload: DashboardAgentActionPayload) => {
+      try {
+        await requestDashboardApi('/api/agent-input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: payload.sessionId,
+            action: 'input',
+            text: payload.text,
+          }),
+        });
+      } catch (error) {
+        void vscode.window.showErrorMessage(`Failed to send agent input: ${String(error)}`);
+      }
+    }),
+    vscode.commands.registerCommand('wntrmte.approveAgent', async (payload: DashboardAgentActionPayload) => {
+      try {
+        await requestDashboardApi('/api/agent-input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: payload.sessionId,
+            action: 'approve',
+            permissionId: payload.permissionId,
+          }),
+        });
+      } catch (error) {
+        void vscode.window.showErrorMessage(`Failed to approve agent action: ${String(error)}`);
+      }
+    }),
+    vscode.commands.registerCommand('wntrmte.denyAgent', async (payload: DashboardAgentActionPayload) => {
+      try {
+        await requestDashboardApi('/api/agent-input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: payload.sessionId,
+            action: 'deny',
+            permissionId: payload.permissionId,
+          }),
+        });
+      } catch (error) {
+        void vscode.window.showErrorMessage(`Failed to deny agent action: ${String(error)}`);
+      }
+    }),
+    vscode.commands.registerCommand('wntrmte.cancelAgent', async (payload: DashboardAgentActionPayload) => {
+      try {
+        await requestDashboardApi('/api/agent-input', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: payload.sessionId,
+            action: 'cancel',
+          }),
+        });
+      } catch (error) {
+        void vscode.window.showErrorMessage(`Failed to cancel agent session: ${String(error)}`);
+      }
     }),
     vscode.commands.registerCommand('wntrmte.openPatchbayDashboardExternal', async () => {
       const setupStatus = await getSetupStatus();

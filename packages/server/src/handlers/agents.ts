@@ -5,6 +5,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { ServerResponse } from 'http';
 import { sendJson } from '../utils';
+import { createConfiguredOrchestrator } from '../runtime';
+import type { ConnectorCapabilities } from '@patchbay/core';
 
 const execAsync = promisify(exec);
 
@@ -34,6 +36,11 @@ async function checkBinary(name: string): Promise<boolean> {
 
 export async function getAgents(agentsDir: string, response: ServerResponse) {
     const agentProfilesDir = path.join(agentsDir, 'agents');
+    const repoRoot = path.dirname(agentsDir);
+    const orchestrator = createConfiguredOrchestrator(repoRoot);
+    const connectorMap = new Map<string, ConnectorCapabilities>(
+        orchestrator.listConnectors().map((connector) => [connector.id, connector.capabilities])
+    );
 
     let agents: { id: string; role?: string; toolType?: string; [key: string]: unknown }[] = [];
 
@@ -67,14 +74,25 @@ export async function getAgents(agentsDir: string, response: ServerResponse) {
     // Check availability of CLI-based runners in parallel
     const enriched = await Promise.all(agents.map(async (agent) => {
         const bin = cliBinaries[agent.id];
+        const connectorCapabilities = connectorMap.get(agent.id);
+        const supportsConnector = connectorCapabilities !== undefined;
         if (!bin) {
-            return { ...agent, available: true };
+            return {
+                ...agent,
+                available: true,
+                supportsConnector,
+                connectorId: supportsConnector ? agent.id : undefined,
+                connectorCapabilities,
+            };
         }
         const available = await checkBinary(bin);
         return {
             ...agent,
             available,
             installHint: available ? undefined : installHints[agent.id],
+            supportsConnector,
+            connectorId: supportsConnector ? agent.id : undefined,
+            connectorCapabilities,
         };
     }));
 

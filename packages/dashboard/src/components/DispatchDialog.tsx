@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { AlertTriangle, ChevronDown, ChevronUp, Loader2, Play, Terminal } from 'lucide-react';
+import type { ConnectorCapabilities } from '@patchbay/core';
 
 interface AgentInfo {
     id: string;
@@ -9,6 +10,9 @@ interface AgentInfo {
     toolType: string;
     available?: boolean;
     installHint?: string;
+    supportsConnector?: boolean;
+    connectorId?: string;
+    connectorCapabilities?: ConnectorCapabilities;
 }
 
 interface DispatchDialogProps {
@@ -41,6 +45,7 @@ function sortAgentsByPreference(items: AgentInfo[]): AgentInfo[] {
 export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, onDispatched }: DispatchDialogProps) {
     const isAwaitingInput = taskStatus === 'awaiting_input';
     const [runnerId, setRunnerId] = useState('bash');
+    const [dispatchMode, setDispatchMode] = useState<'run' | 'interactive'>('run');
     const [agents, setAgents] = useState<AgentInfo[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -53,6 +58,9 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
     const [runnerQuestion, setRunnerQuestion] = useState('');
 
     const selectedAgent = agents.find(a => a.id === runnerId);
+    const canStartInteractiveSession = !isAwaitingInput
+        && selectedAgent?.supportsConnector === true
+        && selectedAgent.available !== false;
 
     useEffect(() => {
         if (open) {
@@ -61,6 +69,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
             setErrorDetails('');
             setShowErrorDetails(false);
             setReplyText('');
+            setDispatchMode('run');
             fetch('/api/agents')
                 .then(r => r.json())
                 .then(data => {
@@ -150,6 +159,40 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
         setErrorDetails('');
         setShowErrorDetails(false);
 
+        if (dispatchMode === 'interactive') {
+            if (isVsCodeWebview) {
+                const connectorId = selectedAgent?.connectorId ?? runnerId;
+                window.parent.postMessage(
+                    { command: 'wntrmte.connectAgent', args: [taskId, connectorId] },
+                    '*',
+                );
+                onDispatched();
+                onClose();
+                return;
+            }
+
+            setLoading(true);
+            try {
+                const connectorId = selectedAgent?.connectorId ?? runnerId;
+                const res = await fetch('/api/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ taskId, connectorId }),
+                });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(typeof data.error === 'string' ? data.error : 'Interactive session failed');
+                }
+                onDispatched();
+                onClose();
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Interactive session failed');
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
         if (isVsCodeWebview) {
             window.parent.postMessage(
                 { command: 'wntrmte.dispatchInTerminal', args: [taskId, runnerId] },
@@ -232,6 +275,67 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                                 </option>
                             ))}
                         </select>
+                        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <button
+                                type="button"
+                                onClick={() => setDispatchMode('run')}
+                                className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                                    dispatchMode === 'run'
+                                        ? 'border-brand-500 bg-brand-950/40 text-surface-50'
+                                        : 'border-surface-800 bg-surface-950/40 text-surface-300 hover:border-surface-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 text-sm font-medium">
+                                    <Play className="h-4 w-4" />
+                                    Start Run
+                                </div>
+                                <p className="mt-1 text-xs text-surface-400">
+                                    Existing batch flow via `patchbay run`.
+                                </p>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (canStartInteractiveSession) {
+                                        setDispatchMode('interactive');
+                                    }
+                                }}
+                                disabled={!canStartInteractiveSession}
+                                className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                                    dispatchMode === 'interactive'
+                                        ? 'border-brand-500 bg-brand-950/40 text-surface-50'
+                                        : 'border-surface-800 bg-surface-950/40 text-surface-300 hover:border-surface-700'
+                                } disabled:cursor-not-allowed disabled:opacity-50`}
+                            >
+                                <div className="flex items-center gap-2 text-sm font-medium">
+                                    <Terminal className="h-4 w-4" />
+                                    Interactive Session
+                                </div>
+                                <p className="mt-1 text-xs text-surface-400">
+                                    {selectedAgent?.supportsConnector
+                                        ? isVsCodeWebview
+                                            ? 'Connector available. Wintermute relay is still pending.'
+                                            : 'Start a live connector-backed agent session.'
+                                        : 'Not available for this provider yet.'}
+                                </p>
+                            </button>
+                        </div>
+                        {selectedAgent?.supportsConnector && selectedAgent.connectorCapabilities && (
+                            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                                <span className="rounded-full border border-surface-800 bg-surface-950/50 px-2 py-1 text-surface-300">
+                                    Streaming {selectedAgent.connectorCapabilities.streaming ? 'yes' : 'no'}
+                                </span>
+                                <span className="rounded-full border border-surface-800 bg-surface-950/50 px-2 py-1 text-surface-300">
+                                    Permissions {selectedAgent.connectorCapabilities.permissions ? 'yes' : 'no'}
+                                </span>
+                                <span className="rounded-full border border-surface-800 bg-surface-950/50 px-2 py-1 text-surface-300">
+                                    Multi-turn {selectedAgent.connectorCapabilities.multiTurn ? 'yes' : 'no'}
+                                </span>
+                                <span className="rounded-full border border-surface-800 bg-surface-950/50 px-2 py-1 text-surface-300">
+                                    Tool use {selectedAgent.connectorCapabilities.toolUseReporting ? 'yes' : 'no'}
+                                </span>
+                            </div>
+                        )}
                         {selectedAgent?.available === false && selectedAgent.installHint && (
                             <div className="mt-2 flex items-start gap-2 text-xs text-yellow-400 bg-yellow-950/30 border border-yellow-900/50 rounded-md px-3 py-2">
                                 <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
@@ -304,11 +408,11 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                     ) : (
                         <button
                             onClick={handleDispatch}
-                            disabled={loading || selectedAgent?.available === false}
+                            disabled={loading || selectedAgent?.available === false || (dispatchMode === 'interactive' && !canStartInteractiveSession)}
                             className="bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2 px-5 rounded-md transition-colors shadow-[0_0_15px_rgba(92,129,163,0.3)] flex items-center gap-2 text-sm"
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                            Start Run
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : dispatchMode === 'interactive' ? <Terminal className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                            {dispatchMode === 'interactive' ? 'Start Session' : 'Start Run'}
                         </button>
                     )}
                 </div>
