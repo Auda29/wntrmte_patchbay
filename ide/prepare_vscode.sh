@@ -63,13 +63,12 @@ fi
 # --- Build wntrmte-workflow extension ---
 if [[ -d "../extensions/wntrmte-workflow" ]]; then
   echo "=== Building wntrmte-workflow extension ==="
-  # Install the built-in extension in standalone mode so npm doesn't treat the
-  # monorepo root as a workspace and hoist @types/vscode into an ancestor
-  # node_modules directory that TypeScript can see from vscode/src.
+  # Build against the monorepo workspace so local packages like @patchbay/core
+  # resolve without requiring a published registry package.
   (
-    cd ../extensions/wntrmte-workflow &&
-    npm ci --workspaces=false &&
-    npm run compile --workspaces=false
+    cd .. &&
+    npm run build --workspace=packages/core &&
+    npm run compile --workspace=wntrmte-workflow
   )
 fi
 

@@ -121,6 +121,12 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install monorepo dependencies
+        run: npm install
+
+      - name: Build Patchbay core
+        run: npm run build --workspace=packages/core
+
       - name: Install system dependencies (Linux)
         if: matrix.os_name == 'linux'
         run: sudo apt-get update -y && sudo apt-get install -y libkrb5-dev
