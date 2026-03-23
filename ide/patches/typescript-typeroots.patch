@@ -2,7 +2,7 @@ diff --git a/src/tsconfig.json b/src/tsconfig.json
 index 9b34d6e..f0d33e1 100644
 --- a/src/tsconfig.json
 +++ b/src/tsconfig.json
-@@ -15,6 +15,9 @@
+@@ -15,6 +15,10 @@
  			"sinon",
  			"trusted-types",
  			"winreg",
@@ -10,7 +10,8 @@ index 9b34d6e..f0d33e1 100644
 +			"wicg-file-system-access"
 +		],
 +		"typeRoots": [
-+			"../node_modules/@types"
++			"../node_modules/@types",
++			"../node_modules/@webgpu"
  		],
  		"plugins": [
  			{
