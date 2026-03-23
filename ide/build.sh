@@ -87,6 +87,33 @@ if [[ -d "../extensions/wntrmte-theme" ]]; then
   cp -r ../extensions/wntrmte-theme/themes           extensions/wntrmte-theme/themes
 fi
 
+sync_custom_extensions() {
+  local target_extensions_dir="$1"
+
+  if [[ -z "${target_extensions_dir}" || ! -d "${target_extensions_dir}" ]]; then
+    echo "Could not find packaged extensions directory: ${target_extensions_dir}" >&2
+    exit 1
+  fi
+
+  echo "=== Syncing custom extensions into ${target_extensions_dir} ==="
+
+  if [[ -d "../extensions/wntrmte-workflow" ]]; then
+    rm -rf "${target_extensions_dir}/wntrmte-workflow"
+    mkdir -p "${target_extensions_dir}/wntrmte-workflow"
+    cp    ../extensions/wntrmte-workflow/package.json "${target_extensions_dir}/wntrmte-workflow/"
+    cp    ../extensions/wntrmte-workflow/.vscodeignore "${target_extensions_dir}/wntrmte-workflow/"
+    cp -r ../extensions/wntrmte-workflow/out          "${target_extensions_dir}/wntrmte-workflow/out"
+  fi
+
+  if [[ -d "../extensions/wntrmte-theme" ]]; then
+    rm -rf "${target_extensions_dir}/wntrmte-theme"
+    mkdir -p "${target_extensions_dir}/wntrmte-theme"
+    cp    ../extensions/wntrmte-theme/package.json     "${target_extensions_dir}/wntrmte-theme/"
+    cp    ../extensions/wntrmte-theme/package.nls.json "${target_extensions_dir}/wntrmte-theme/"
+    cp -r ../extensions/wntrmte-theme/themes           "${target_extensions_dir}/wntrmte-theme/themes"
+  fi
+}
+
 if [[ "${OS_NAME}" == "osx" ]]; then
   npm run gulp "vscode-darwin-${VSCODE_ARCH}-min-ci"
 elif [[ "${OS_NAME}" == "windows" ]]; then
@@ -94,6 +121,17 @@ elif [[ "${OS_NAME}" == "windows" ]]; then
 else
   npm run gulp "vscode-linux-${VSCODE_ARCH}-min-ci"
 fi
+
+if [[ "${OS_NAME}" == "osx" ]]; then
+  packaged_extensions_dir="$(find "VSCode-darwin-${VSCODE_ARCH}" -path '*/Contents/Resources/app/extensions' -type d | head -n 1)"
+elif [[ "${OS_NAME}" == "windows" ]]; then
+  packaged_extensions_dir="VSCode-win32-${VSCODE_ARCH}/resources/app/extensions"
+else
+  packaged_extensions_dir="VSCode-linux-${VSCODE_ARCH}/resources/app/extensions"
+fi
+
+sync_custom_extensions "${packaged_extensions_dir}"
+unset packaged_extensions_dir
 
 # --- Post-process packaged branding quirks ---
 if [[ "${OS_NAME}" == "windows" ]]; then
