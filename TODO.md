@@ -72,7 +72,7 @@ Vor dem Dashboard-Umbau zusammenführen — ab hier arbeiten Dashboard (patchbay
 
 - [x] `[root]` wntrmte + patchbay in ein Monorepo zusammenführen: `packages/` (core, dashboard, cli, server, runners) + `ide/` (build, extensions, patches)
 - [x] `[root]` Shared Types: duplizierte Interfaces (`store/types.ts` in wntrmte) durch Imports aus `@patchbay/core` ersetzen
-- [ ] `[root]` Ein `package.json` Root-Workspace, ein CI, ein Git-Log
+- [x] `[root]` Ein `package.json` Root-Workspace, ein CI, ein Git-Log
 - [x] `[w]` `extension.ts` aufteilen — `CliManager`, `AuthService`, `TerminalOrchestrator` in `extensions/wntrmte-workflow/src/services/` (Monorepo-Merge steht weiterhin aus)
 
 ### L6: Dashboard — Agent Chat (PRIMARY)

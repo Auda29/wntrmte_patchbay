@@ -807,13 +807,13 @@ Reihenfolge: **L2a** Claude Code (PoC), **L2b** Codex bevorzugt **`codex app-ser
 - [x] `packages/server/src/runtime.ts` — `ClaudeCodeConnector`, `CodexConnector`, `GeminiConnector`, `CursorAcpConnector` registriert
 - [x] Dashboard API Routes: `/api/connect`, `/api/agent-input` (unified: input/approve/deny/cancel), `/api/connectors`
 
-### L5: Monorepo-Konsolidierung
+### L5: Monorepo-Konsolidierung — DONE
 
-Vor dem Dashboard-Umbau: wntrmte + patchbay in ein Repository zusammenführen. Ab hier arbeiten Dashboard und Extension auf denselben Types.
+Wintermute + Patchbay liegen in **einem Monorepo** (Root-`package.json` mit Workspaces, `packages/`, `ide/`, `schema/`, `docs/`). Extension und Dashboard teilen sich `@patchbay/core`-Types.
 
-- [ ] Monorepo-Struktur: `packages/` (core, dashboard, cli, server, runners) + `ide/` (build, extensions, patches)
-- [ ] Shared Types: duplizierte Interfaces durch Imports aus `@patchbay/core` ersetzen
-- [x] Wintermute `extension.ts` aufgeteilt — `CliManager`, `AuthService`, `TerminalOrchestrator` unter `extensions/wntrmte-workflow/src/services/` (Merge der Repos steht weiterhin aus)
+- [x] Monorepo-Struktur: `packages/` (core, dashboard, cli, server, runners) + `ide/` (build, extensions, patches)
+- [x] Shared Types: Extension `store/types.ts` importiert aus `@patchbay/core` (u. a. `TaskStatus`, `Project`, …)
+- [x] Wintermute `extension.ts` aufgeteilt — `CliManager`, `AuthService`, `TerminalOrchestrator` unter `ide/extensions/wntrmte-workflow/src/services/`
 
 ### L6: Dashboard — Agent Chat
 

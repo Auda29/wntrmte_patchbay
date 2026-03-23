@@ -647,17 +647,17 @@ Gefunden beim manuellen Testen: nach dem Dispatch-Dialog gibt es kein Live-Feedb
 
 ## Phase L: Agent Connector Architecture — Wintermute-Anteil
 
-**Abhängigkeit:** In **patchbay** sind Phase-**L1–L4** umgesetzt (Core, Connectors, Orchestrator, Server + Dashboard-APIs). **Offen:** Monorepo (L5: Repo-Merge + Shared Types; `extension.ts`-Split ist **erledigt**), Agent-Chat-UI + dieses Relay (L6), `/agents`-Erweiterung (L7). Siehe `../patchbay/PLAN.md` Phase L.
+**Abhängigkeit:** Phase **L1–L5** sind im Monorepo umgesetzt (`packages/` Connector-Backend, **L5** Root-Workspace + `@patchbay/core` in der Extension). **Offen:** Agent-Chat-UI + Relay (L6), `/agents`-Erweiterung (L7). Siehe `../PLAN.md` Phase L.
 
-**Kontext:** Das Patchbay Dashboard wird zur vollwertigen Agent-Orchestration-App (Agent Chat, Streaming, Approvals). Wintermute bettet es als Webview-Panel ein. Die Dashboard-Funktionalität wird in patchbay gebaut — Wintermute stellt den Host und das postMessage-Relay.
+**Kontext:** Das Patchbay Dashboard wird zur vollwertigen Agent-Orchestration-App (Agent Chat, Streaming, Approvals). Wintermute bettet es als Webview-Panel ein. Die Dashboard-Funktionalität wird unter `packages/dashboard` gebaut — Wintermute stellt den Host und das postMessage-Relay.
 
-**Provider-Schichten:** Die konkrete Anbindung pro Anbieter (z. B. Codex `app-server`, Claude `stream-json`, Gemini Headless, `HttpConnector`, Cursor **`CursorAcpConnector`** / **ACP**) liegt in **patchbay** — siehe `VISION.md` / `../TODO.md` (Provider-Referenz). Wintermute ändert daran nichts; es leitet nur Commands weiter.
+**Provider-Schichten:** Die konkrete Anbindung pro Anbieter liegt in **`packages/`** (Runners/Connectors) — siehe `../VISION.md` / `../TODO.md` (Provider-Referenz). Wintermute ändert daran nichts; es leitet nur Commands weiter.
 
-### L5: Monorepo-Konsolidierung (gemeinsam mit patchbay)
+### L5: Monorepo-Konsolidierung — DONE
 
-- [ ] wntrmte + patchbay in ein Repository zusammenführen: `packages/` + `ide/`
-- [ ] Duplizierte Interfaces (`store/types.ts`) durch Imports aus `@patchbay/core` ersetzen
-- [x] `extension.ts` aufgeteilt — `CliManager`, `AuthService`, `TerminalOrchestrator` in `extensions/wntrmte-workflow/src/services/` (Monorepo-Merge und Shared-Types folgen)
+- [x] Monorepo: Root-`package.json` Workspaces, `packages/` + `ide/` + `schema/`
+- [x] `store/types.ts` — Imports aus `@patchbay/core`
+- [x] `extension.ts` aufgeteilt — `CliManager`, `AuthService`, `TerminalOrchestrator` in `ide/extensions/wntrmte-workflow/src/services/`
 
 ### L6: Dashboard Agent Chat — Wintermute-Integration
 

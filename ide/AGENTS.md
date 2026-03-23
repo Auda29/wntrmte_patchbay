@@ -71,9 +71,9 @@ bash build.sh    # auto-detects OS/arch
 
 Phases 1–5 + C + D + E + H + J + K complete. **Patchbay** has implemented Phase **L1–L4** (connector types, provider connectors including `HttpConnector` and **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), orchestrator session API with approve/deny, server routes and dashboard API proxies). **Wintermute:** Phase **L5** is now reflected in the monorepo layout and shared-type imports from `@patchbay/core`. Still needs **L6** — postMessage relay for `connectAgent`, `sendAgentInput`, `approveAgent`, **`denyAgent`**, `cancelAgent` — and **L7** `/agents` capabilities (see `../PLAN.md`, `../VISION.md`, `../TODO.md`).
 
-## Planned: Monorepo consolidation
+## Monorepo (Phase L5 — done)
 
-Phase L5 will merge wntrmte + patchbay into a single repository. Wintermute's extension will import types directly from `@patchbay/core` instead of maintaining duplicate interfaces. The build pipeline (`build.sh`, patches, `product.json`) moves to `ide/`. The **`extension.ts` refactor** (extracting `CliManager`, `AuthService`, `TerminalOrchestrator`) is already done.
+Single repository: root `package.json` workspaces, `packages/`, `ide/`, `schema/`. The extension imports shared types from `@patchbay/core`. Build pipeline (`build.sh`, patches, `product.json`) lives under `ide/`. **`extension.ts`** is split into `CliManager`, `AuthService`, `TerminalOrchestrator`.
 
 ## Running tests
 
