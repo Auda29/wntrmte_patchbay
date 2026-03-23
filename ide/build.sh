@@ -126,7 +126,7 @@ find_packaged_extensions_dir() {
   fi
 
   if [[ -n "${result}" ]]; then
-    printf '%s\n' "${result#../}"
+    printf '%s\n' "${result}"
     return 0
   fi
 
