@@ -236,7 +236,7 @@ Details: `./PLAN.md` Phase L, Provider-Tabelle oben.
 
 ### Nächster Schritt (Phase L8)
 
-- **Persistenter Agent Chat** — Konversationen und strukturierte Events nicht nur live streamen, sondern als dauerhafte primäre Oberfläche modellieren
+- **Persistenter Agent Chat** — Konversationen und strukturierte Events nicht nur live streamen, sondern als dauerhafte primäre Oberfläche modellieren. Bevorzugte Richtung: eigenes Session-/Chat-Modell unter `.project-agents/` statt die Historie in `Run.logs` oder ein überladenes `Run`-Objekt zu drücken.
 - **Connector-first UX** — Connector-Sessions nicht nur als Modus im Runner-Dialog, sondern als eigene, chat-zentrierte Interaktion präsentieren
 - **Klarerer Connector-Vertrag im UI** — Connector-Auswahl und Capabilities konsequent über einen Connector-Layer statt über angereicherte Runner-Metadaten
 - **Doku-Disziplin** — Vision, Pläne und Implementierung ohne Drift weiterführen
