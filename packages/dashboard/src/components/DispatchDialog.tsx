@@ -278,7 +278,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <button
                                 type="button"
-                                aria-label="Select Start Run Mode"
+                                aria-label="Select Batch Mode"
                                 onClick={() => setDispatchMode('run')}
                                 className={`rounded-md border px-3 py-2 text-left transition-colors ${
                                     dispatchMode === 'run'
@@ -296,7 +296,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                             </button>
                             <button
                                 type="button"
-                                aria-label="Select Interactive Session Mode"
+                                aria-label="Select Connector Session Mode"
                                 onClick={() => {
                                     if (canStartInteractiveSession) {
                                         setDispatchMode('interactive');
