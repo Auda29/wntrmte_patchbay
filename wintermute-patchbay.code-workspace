@@ -1,7 +1,5 @@
 {
   "folders": [
 	{ "name": "general", "path": "./" },
-    { "name": "wntrmte", "path": "./wntrmte" },
-    { "name": "patchbay", "path": "./patchbay" }
   ]
 }
