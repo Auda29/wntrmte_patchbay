@@ -1,3 +1,6 @@
+export { ClaudeCodeConnector } from './connector';
+export { parseStreamLine } from './stream-parser';
+
 import { Runner, RunnerInput, RunnerOutput, RunnerAuth } from '@patchbay/core';
 import { exec } from 'child_process';
 import { promisify } from 'util';

@@ -1,3 +1,6 @@
+export { HttpConnector } from './connector';
+export type { HttpConnectorConfig } from './connector';
+
 import { Runner, RunnerInput, RunnerOutput } from '@patchbay/core';
 
 export class HttpRunner implements Runner {

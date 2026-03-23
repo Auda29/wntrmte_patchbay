@@ -37,10 +37,10 @@ patchbay/
 │       ├── bash/         # Shell command execution (batch)
 │       ├── http/         # GET URL fetch (batch)
 │       ├── cursor/       # File-based handoff (batch)
-│       ├── cursor-cli/   # cursor agent wrapper (batch)
-│       ├── claude-code/  # Claude Code runner (batch) + connector (streaming)
-│       ├── codex/        # Codex runner (batch) + connector (streaming, planned)
-│       └── gemini/       # Gemini runner (batch) + connector (streaming, planned)
+│       ├── cursor-cli/   # cursor agent wrapper (batch); perspektivisch Cursor ACP (strukturiert, nicht hier)
+│       ├── claude-code/  # Claude Code runner (batch) + connector (streaming, CLI stream-json)
+│       ├── codex/        # Codex runner (batch) + connector (streaming: codex app-server bevorzugt)
+│       └── gemini/       # Gemini runner (batch) + connector (streaming: Headless/JSON)
 ├── PLAN.md           # Implementation roadmap
 └── README.md
 ```
@@ -49,7 +49,7 @@ patchbay/
 
 **Batch Runner** — `execute(): Promise<RunnerOutput>`. Fire-and-forget. For bash, http, cursor, simple one-shot tasks.
 
-**Agent Connector** — `connect(): AgentSession`. Event-based, session-oriented. Streams messages, handles permissions, accepts replies in a live session. For Claude Code, Codex, Gemini and future providers. Provider-agnostic: the `AgentConnector` interface is generic, each provider implements its own connector.
+**Agent Connector** — `connect(): AgentSession`. Event-based, session-oriented. Streams messages, handles permissions, accepts replies in a live session. Implementations differ per vendor (e.g. Claude Code stream-json, **Codex `app-server`** JSON-RPC, Gemini Headless, HTTP for local routers). Provider-agnostic: the `AgentConnector` interface is generic; each provider maps its best available layer. See `../VISION.md` (Provider-Schichten).
 
 ## Principles
 

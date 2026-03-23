@@ -755,6 +755,8 @@ Das Herzstück der neuen Produktvision (vgl. `VISION.md`): Live Agent Interactio
 
 **Strategie:** Das Patchbay Dashboard ist die primäre App-UI. Wintermute bettet es als Webview-Panel ein — Agent Chat, Streaming, Approvals laufen im Dashboard und sind automatisch in Wintermute verfügbar.
 
+**Provider-Integrations-Referenz** (Details: `VISION.md`, `../TODO.md`): Connectors mappen die jeweils beste Anbieter-Schicht auf einheitliche `AgentEvent`s — **Codex:** `codex app-server` (JSON-RPC, stdio, Threads, serverseitige Approvals); **Claude Code:** CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON), ergänzend Anthropic Agent SDK wo sinnvoll; **Gemini CLI:** Headless/JSON; **lokal:** HTTP (z. B. Ollama); **HTTP APIs:** OpenAI-kompatible Integrationen eher **Responses API**; **Cursor:** perspektivisch **ACP** (`agent acp`, stdio JSON-RPC) — proprietär, aber offizielle Schnittstelle.
+
 ### L1: Core Types — Provider-agnostisches Connector-Interface
 
 - [ ] `packages/core/src/connector.ts` — `AgentConnector`, `AgentSession`, `AgentEvent` Interfaces (generisch, nicht an Provider gebunden)
@@ -764,24 +766,28 @@ Das Herzstück der neuen Produktvision (vgl. `VISION.md`): Live Agent Interactio
 
 ### L2: Provider Connectors
 
+Reihenfolge: **L2a** Claude Code (PoC), **L2b** Codex bevorzugt **`codex app-server`**, **L2c** Gemini Headless, **L2d** Doku + HTTP/lokal/Cursor.
+
 #### L2a: Claude Code Connector (erster PoC)
 
-- [ ] `packages/runners/claude-code/src/connector.ts` — `ClaudeCodeConnector` spawnt `claude -p --output-format stream-json --session-id <uuid>`
+- [ ] `packages/runners/claude-code/src/connector.ts` — `ClaudeCodeConnector` — CLI mit `--input-format stream-json` / `--output-format stream-json` (NDJSON-Workflow)
 - [ ] `packages/runners/claude-code/src/stream-parser.ts` — NDJSON → AgentEvent Mapping (init → started, content_block_delta → message, tool_use → tool_use, result → completed/question)
-- [ ] Vorab evaluieren: Welche Events liefert `stream-json` bei Permission-Requests? stdin-basierte Approval möglich?
+- [ ] Vorab evaluieren: Welche Events liefert `stream-json` bei Permission-Requests? stdin-basierte Approval möglich? Wo sinnvoll: **Anthropic Agent SDK** für Multi-Turn/Sessions ergänzen
 
 #### L2b: Codex Connector
 
-- [ ] `packages/runners/codex/src/connector.ts` — `CodexConnector`; evaluieren ob Codex CLI strukturierte Events unterstützt, Fallback auf stdout-Parsing
+- [ ] **Bevorzugt:** `packages/runners/codex/src/connector.ts` — `CodexConnector` an **`codex app-server`** (JSON-RPC über stdio/JSONL, Thread-APIs, serverinitiierte Approvals → `AgentEvent`); optional `codex app-server generate-ts` für Typen ([App Server](https://developers.openai.com/codex/app-server))
+- [ ] **Fallback:** bestehender Batch-Runner / `codex exec` + stdout (Noise-Filter vorhanden) für Non-Interactive-Fälle
 
 #### L2c: Gemini Connector
 
-- [ ] `packages/runners/gemini/src/connector.ts` — `GeminiConnector`; evaluieren ob Gemini CLI Streaming-Output bietet
+- [ ] `packages/runners/gemini/src/connector.ts` — `GeminiConnector` — **Headless**-Modus (JSON/Text, stdin); kein JSON-RPC-App-Server wie Codex — gezieltes Mapping auf `AgentEvent`
 
 #### L2d: Connector-Erweiterbarkeit
 
 - [ ] Dokumentation: "How to build a custom Connector" — Interface-Contract, Event-Mapping, Beispiel
-- [ ] Perspektivisch: Connectors für lokale Modelle (Ollama, LM Studio), HTTP-basierte Agents (OpenRouter)
+- [ ] HTTP-Backends: OpenAI-kompatible APIs — für Neuentwicklung **Responses API** prüfen; Ollama/LM Studio über REST + Capabilities
+- [ ] Perspektivisch: **Cursor ACP** (`agent acp`, stdio JSON-RPC, Permission-Flows) — proprietär, aber offizielle strukturierte Schnittstelle
 
 ### L3: Orchestrator — Connector-Support
 

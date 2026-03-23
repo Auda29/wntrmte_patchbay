@@ -1,19 +1,196 @@
 import { Store } from './store';
 import { Runner, RunnerInput, RunnerOutput, ConversationTurn } from './runner';
+import { AgentConnector, AgentSession, AgentEvent, ConnectorRegistry } from './connector';
 import { Run, Task } from './types';
 import { randomUUID } from 'crypto';
 
 export class Orchestrator {
     private store: Store;
     private runners: Map<string, Runner>;
+    private connectorRegistry: ConnectorRegistry;
+    private activeSessions: Map<string, { session: AgentSession; run: Run; taskId: string }>;
 
     constructor(targetRepoPath: string = process.cwd()) {
         this.store = new Store(targetRepoPath);
         this.runners = new Map();
+        this.connectorRegistry = new ConnectorRegistry();
+        this.activeSessions = new Map();
     }
 
     registerRunner(id: string, runner: Runner) {
         this.runners.set(id, runner);
+    }
+
+    // -----------------------------------------------------------------------
+    // Connector Registration
+    // -----------------------------------------------------------------------
+
+    registerConnector(connector: AgentConnector): void {
+        this.connectorRegistry.register(connector);
+    }
+
+    listConnectors(): AgentConnector[] {
+        return this.connectorRegistry.list();
+    }
+
+    // -----------------------------------------------------------------------
+    // Live Agent Sessions
+    // -----------------------------------------------------------------------
+
+    async connectAgent(taskId: string, connectorId: string): Promise<AgentSession> {
+        if (!this.store.isInitialized) {
+            throw new Error('Patchbay is not initialized.');
+        }
+
+        const task = this.store.getTask(taskId);
+        if (!task) throw new Error(`Task ${taskId} not found.`);
+
+        const connector = this.connectorRegistry.get(connectorId);
+        if (!connector) throw new Error(`Connector ${connectorId} not registered.`);
+
+        if (task.status !== 'open' && task.status !== 'blocked' && task.status !== 'awaiting_input') {
+            throw new Error(`Cannot connect agent for task in status ${task.status}.`);
+        }
+
+        task.status = 'in_progress';
+        this.store.saveTask(task);
+
+        const project = this.store.getProject();
+        const repoPath = project.repoPath || process.cwd();
+        const projectRules = project.rules ? project.rules.join('\n') : undefined;
+        const contextFiles = this.store.getContextFiles();
+
+        const startTimeLabel = new Date().toISOString();
+        const runId = `${startTimeLabel.replace(/[:.]/g, '-')}-${taskId}-${connectorId}`;
+        const conversationId = randomUUID();
+
+        const run: Run = {
+            id: runId,
+            taskId,
+            runner: connectorId,
+            startTime: startTimeLabel,
+            status: 'running',
+            conversationId,
+            turnIndex: 0,
+        };
+        this.store.saveRun(run);
+
+        const input: RunnerInput = {
+            taskId,
+            repoPath,
+            branch: 'main',
+            affectedFiles: task.affectedFiles,
+            contextFiles,
+            projectRules,
+            goal: task.goal || task.description || task.title || '',
+        };
+
+        const session = await connector.connect(input);
+
+        // Track the active session
+        this.activeSessions.set(session.sessionId, { session, run, taskId });
+        run.sessionId = session.sessionId;
+        this.store.saveRun(run);
+
+        // Bridge session events to store updates
+        this.bridgeSessionEvents(session, run, task);
+
+        return session;
+    }
+
+    /** Send a text reply to an active session */
+    async sendInput(sessionId: string, text: string): Promise<void> {
+        const entry = this.activeSessions.get(sessionId);
+        if (!entry) throw new Error(`No active session ${sessionId}`);
+        await entry.session.sendInput(text);
+    }
+
+    /** Approve a pending permission request in an active session */
+    async approveSession(sessionId: string, permissionId: string): Promise<void> {
+        const entry = this.activeSessions.get(sessionId);
+        if (!entry) throw new Error(`No active session ${sessionId}`);
+        await entry.session.approve(permissionId);
+    }
+
+    /** Deny a pending permission request in an active session */
+    async denySession(sessionId: string, permissionId: string): Promise<void> {
+        const entry = this.activeSessions.get(sessionId);
+        if (!entry) throw new Error(`No active session ${sessionId}`);
+        await entry.session.deny(permissionId);
+    }
+
+    /** Cancel / abort an active session */
+    async cancelSession(sessionId: string): Promise<void> {
+        const entry = this.activeSessions.get(sessionId);
+        if (!entry) throw new Error(`No active session ${sessionId}`);
+        await entry.session.cancel();
+    }
+
+    /** Get an active session by ID */
+    getSession(sessionId: string): AgentSession | undefined {
+        return this.activeSessions.get(sessionId)?.session;
+    }
+
+    /** List all active session IDs */
+    listSessions(): string[] {
+        return Array.from(this.activeSessions.keys());
+    }
+
+    private bridgeSessionEvents(session: AgentSession, run: Run, task: Task): void {
+        const logs: string[] = [];
+
+        session.on('event', (event: AgentEvent) => {
+            switch (event.type) {
+                case 'agent:message':
+                    logs.push(event.content);
+                    break;
+
+                case 'agent:tool_use':
+                    if (event.status === 'started') {
+                        logs.push(`[tool] ${event.toolName}`);
+                    }
+                    break;
+
+                case 'agent:question':
+                    run.status = 'awaiting_input';
+                    run.question = event.question;
+                    task.status = 'awaiting_input';
+                    this.store.saveRun(run);
+                    this.store.saveTask(task);
+                    break;
+
+                case 'agent:permission':
+                    run.status = 'awaiting_input';
+                    task.status = 'awaiting_input';
+                    this.store.saveRun(run);
+                    this.store.saveTask(task);
+                    break;
+
+                case 'session:completed':
+                    run.status = 'completed';
+                    run.endTime = new Date().toISOString();
+                    run.summary = event.summary ?? (logs.join('').slice(0, 500) || 'Session completed.');
+                    run.logs = logs;
+                    task.status = 'review';
+                    this.store.saveRun(run);
+                    this.store.saveTask(task);
+                    break;
+
+                case 'session:failed':
+                    run.status = 'failed';
+                    run.endTime = new Date().toISOString();
+                    run.summary = `Session failed: ${event.error}`;
+                    run.logs = logs;
+                    task.status = 'open';
+                    this.store.saveRun(run);
+                    this.store.saveTask(task);
+                    break;
+            }
+        });
+
+        session.on('close', () => {
+            this.activeSessions.delete(session.sessionId);
+        });
     }
 
     private preflight(taskId: string, runnerId: string): {

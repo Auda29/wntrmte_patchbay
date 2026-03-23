@@ -1,3 +1,6 @@
+export { CodexConnector } from './connector';
+export { parseCodexLine } from './stream-parser';
+
 import { Runner, RunnerInput, RunnerOutput, RunnerAuth } from '@patchbay/core';
 import { exec } from 'child_process';
 import { promisify } from 'util';
