@@ -60,24 +60,10 @@ if [[ -d "../icons" ]]; then
   fi
 fi
 
-# --- Build and bundle wntrmte-workflow extension ---
+# --- Build wntrmte-workflow extension ---
 if [[ -d "../extensions/wntrmte-workflow" ]]; then
   echo "=== Building wntrmte-workflow extension ==="
   (cd ../extensions/wntrmte-workflow && npm ci && npm run compile)
-  rm -rf extensions/wntrmte-workflow
-  mkdir -p extensions/wntrmte-workflow
-  cp    ../extensions/wntrmte-workflow/package.json extensions/wntrmte-workflow/
-  cp -r ../extensions/wntrmte-workflow/out          extensions/wntrmte-workflow/out
-fi
-
-# --- Bundle wntrmte-theme extension ---
-if [[ -d "../extensions/wntrmte-theme" ]]; then
-  echo "=== Bundling wntrmte-theme extension ==="
-  rm -rf extensions/wntrmte-theme
-  mkdir -p extensions/wntrmte-theme
-  cp    ../extensions/wntrmte-theme/package.json     extensions/wntrmte-theme/
-  cp    ../extensions/wntrmte-theme/package.nls.json extensions/wntrmte-theme/
-  cp -r ../extensions/wntrmte-theme/themes           extensions/wntrmte-theme/themes
 fi
 
 # --- Apply patches ---

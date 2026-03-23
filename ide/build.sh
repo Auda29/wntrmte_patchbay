@@ -58,6 +58,26 @@ npm run gulp compile-extension-media
 npm run gulp compile-extensions-build
 npm run gulp minify-vscode
 
+# --- Bundle Wintermute built-in extensions after VS Code compilation ---
+# Keeping custom extensions out of the source tree during compilation avoids
+# pulling their VS Code typings into the upstream TypeScript program.
+if [[ -d "../extensions/wntrmte-workflow" ]]; then
+  echo "=== Bundling wntrmte-workflow extension ==="
+  rm -rf extensions/wntrmte-workflow
+  mkdir -p extensions/wntrmte-workflow
+  cp    ../extensions/wntrmte-workflow/package.json extensions/wntrmte-workflow/
+  cp -r ../extensions/wntrmte-workflow/out          extensions/wntrmte-workflow/out
+fi
+
+if [[ -d "../extensions/wntrmte-theme" ]]; then
+  echo "=== Bundling wntrmte-theme extension ==="
+  rm -rf extensions/wntrmte-theme
+  mkdir -p extensions/wntrmte-theme
+  cp    ../extensions/wntrmte-theme/package.json     extensions/wntrmte-theme/
+  cp    ../extensions/wntrmte-theme/package.nls.json extensions/wntrmte-theme/
+  cp -r ../extensions/wntrmte-theme/themes           extensions/wntrmte-theme/themes
+fi
+
 if [[ "${OS_NAME}" == "osx" ]]; then
   npm run gulp "vscode-darwin-${VSCODE_ARCH}-min-ci"
 elif [[ "${OS_NAME}" == "windows" ]]; then
