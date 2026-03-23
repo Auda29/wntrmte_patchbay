@@ -21,7 +21,7 @@ interface DispatchDialogProps {
     taskId: string;
     taskTitle: string;
     taskStatus?: string;
-    onDispatched: () => void;
+    onDispatched: (meta?: { interactive?: boolean }) => void;
 }
 
 const preferredRunnerOrder = ['claude-code', 'codex', 'gemini', 'cursor-cli', 'cursor'];
@@ -128,7 +128,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                 { command: 'wntrmte.runInTerminal', args: [`patchbay reply ${conversationId} "${escaped}"`] },
                 '*',
             );
-            onDispatched();
+            onDispatched({ interactive: false });
             onClose();
             setLoading(false);
             return;
@@ -144,7 +144,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                 const data = await res.json().catch(() => ({}));
                 throw new Error(typeof data.error === 'string' ? data.error : 'Reply failed');
             }
-            onDispatched();
+            onDispatched({ interactive: false });
             onClose();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Reply failed');
@@ -166,7 +166,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                     { command: 'wntrmte.connectAgent', args: [taskId, connectorId] },
                     '*',
                 );
-                onDispatched();
+                onDispatched({ interactive: true });
                 onClose();
                 return;
             }
@@ -183,7 +183,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                     const data = await res.json().catch(() => ({}));
                     throw new Error(typeof data.error === 'string' ? data.error : 'Interactive session failed');
                 }
-                onDispatched();
+                onDispatched({ interactive: true });
                 onClose();
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Interactive session failed');
@@ -198,7 +198,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                 { command: 'wntrmte.dispatchInTerminal', args: [taskId, runnerId] },
                 '*',
             );
-            onDispatched();
+            onDispatched({ interactive: false });
             onClose();
             return;
         }
@@ -219,7 +219,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                 setErrorDetails(details);
                 throw new Error(typeof data.error === 'string' ? data.error : 'Dispatch failed');
             }
-            onDispatched();
+            onDispatched({ interactive: false });
             onClose();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Dispatch failed');
@@ -278,6 +278,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <button
                                 type="button"
+                                aria-label="Select Start Run Mode"
                                 onClick={() => setDispatchMode('run')}
                                 className={`rounded-md border px-3 py-2 text-left transition-colors ${
                                     dispatchMode === 'run'
@@ -295,6 +296,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                             </button>
                             <button
                                 type="button"
+                                aria-label="Select Interactive Session Mode"
                                 onClick={() => {
                                     if (canStartInteractiveSession) {
                                         setDispatchMode('interactive');
@@ -314,7 +316,7 @@ export function DispatchDialog({ open, onClose, taskId, taskTitle, taskStatus, o
                                 <p className="mt-1 text-xs text-surface-400">
                                     {selectedAgent?.supportsConnector
                                         ? isVsCodeWebview
-                                            ? 'Connector available. Wintermute relay is still pending.'
+                                            ? 'Connector available. Wintermute can open a live embedded session.'
                                             : 'Start a live connector-backed agent session.'
                                         : 'Not available for this provider yet.'}
                                 </p>

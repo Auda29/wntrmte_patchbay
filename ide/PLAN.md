@@ -661,6 +661,7 @@ Gefunden beim manuellen Testen: nach dem Dispatch-Dialog gibt es kein Live-Feedb
 
 ### L6: Dashboard Agent Chat — Wintermute-Integration
 
-- [ ] `DashboardPanel.ts` — postMessage-Relay für: `wntrmte.connectAgent`, `wntrmte.sendAgentInput`, `wntrmte.approveAgent`, `wntrmte.denyAgent`, `wntrmte.cancelAgent` (Patchbay-Backend unterstützt Approve/Deny/Cancel bereits)
-- [ ] Agent Chat läuft im eingebetteten Dashboard-iframe — keine eigene Webview-UI in der Extension nötig
-- [ ] `schedulePostRunCheck` bleibt für Batch-Runner; Connector-Sessions werden live über Dashboard/SSE gehandelt
+- [x] `DashboardPanel.ts` — postMessage-Relay für: `wntrmte.connectAgent`, `wntrmte.sendAgentInput`, `wntrmte.approveAgent`, `wntrmte.denyAgent`, `wntrmte.cancelAgent` (Patchbay-Backend unterstützt Approve/Deny/Cancel bereits)
+- [x] Extension-Commands relayen die eingebetteten Connector-Aktionen an `/api/connect` und `/api/agent-input`
+- [x] Agent Chat läuft im eingebetteten Dashboard-iframe — keine eigene Webview-UI in der Extension nötig
+- [x] `schedulePostRunCheck` bleibt für Batch-Runner; Connector-Sessions werden live über Dashboard/SSE gehandelt

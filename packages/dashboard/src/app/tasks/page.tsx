@@ -1,10 +1,11 @@
 'use client';
 import useSWR from 'swr';
 import { Task } from '@patchbay/core';
-import { Play, ChevronDown } from 'lucide-react';
+import { Play, ChevronDown, MessageSquare } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { NewTaskModal } from '@/components/NewTaskModal';
 import { DispatchDialog } from '@/components/DispatchDialog';
+import { AgentChat } from '@/components/AgentChat';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 const columns = [
@@ -20,6 +21,7 @@ export default function TasksBoard() {
     const { data, error, isLoading, mutate } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
     const [showNewTask, setShowNewTask] = useState(false);
     const [dispatchTarget, setDispatchTarget] = useState<{ id: string; title: string; status: string } | null>(null);
+    const [chatTarget, setChatTarget] = useState<{ id: string; title: string } | null>(null);
     const [statusMenu, setStatusMenu] = useState<string | null>(null);
     const [statusMenuPlacement, setStatusMenuPlacement] = useState<'bottom' | 'top'>('bottom');
     const statusButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -130,6 +132,13 @@ export default function TasksBoard() {
                                                         <Play className="w-3.5 h-3.5" />
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={() => setChatTarget({ id: task.id, title: task.title })}
+                                                    className="p-1.5 rounded-md text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors"
+                                                    title="Open agent chat"
+                                                >
+                                                    <MessageSquare className="w-3.5 h-3.5" />
+                                                </button>
                                                 {/* Status change menu */}
                                                 <div className="relative">
                                                     <button
@@ -188,7 +197,21 @@ export default function TasksBoard() {
                     taskId={dispatchTarget.id}
                     taskTitle={dispatchTarget.title}
                     taskStatus={dispatchTarget.status}
-                    onDispatched={() => mutate()}
+                    onDispatched={(meta) => {
+                        void mutate();
+                        if (meta?.interactive) {
+                            setChatTarget({ id: dispatchTarget.id, title: dispatchTarget.title });
+                        }
+                    }}
+                />
+            )}
+
+            {chatTarget && (
+                <AgentChat
+                    open={!!chatTarget}
+                    taskId={chatTarget.id}
+                    taskTitle={chatTarget.title}
+                    onClose={() => setChatTarget(null)}
                 />
             )}
         </div>

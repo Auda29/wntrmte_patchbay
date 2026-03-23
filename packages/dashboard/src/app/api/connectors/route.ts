@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getStore, REPO_ROOT } from '@/lib/store';
-import { createConfiguredOrchestrator } from '@patchbay/server';
+import { getStore } from '@/lib/store';
+import { getOrchestrator } from '@/lib/runtime';
 
 export async function GET() {
     try {
@@ -9,7 +9,7 @@ export async function GET() {
             return NextResponse.json({ error: 'Patchbay is not initialized.' }, { status: 404 });
         }
 
-        const orchestrator = createConfiguredOrchestrator(REPO_ROOT);
+        const orchestrator = getOrchestrator();
         const connectors = orchestrator.listConnectors();
 
         const result = await Promise.all(

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getStore, REPO_ROOT } from '@/lib/store';
-import { createConfiguredOrchestrator } from '@patchbay/server';
+import { getOrchestrator } from '@/lib/runtime';
 import * as path from 'path';
 
 export async function POST(request: Request) {
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing taskId or connectorId' }, { status: 400 });
         }
 
-        const orchestrator = createConfiguredOrchestrator(REPO_ROOT);
+        const orchestrator = getOrchestrator();
         const session = await orchestrator.connectAgent(taskId, connectorId);
         return NextResponse.json(
             { sessionId: session.sessionId, connectorId: session.connectorId },

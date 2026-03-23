@@ -817,13 +817,16 @@ Wintermute + Patchbay liegen in **einem Monorepo** (Root-`package.json` mit Work
 
 ### L6: Dashboard — Agent Chat
 
-- [ ] `packages/dashboard/src/components/AgentChat.tsx` — Streaming Messages, Tool-Use-Anzeige, Permission-Dialoge, inline Replies, Cancel. Provider-agnostisch.
-- [ ] `packages/dashboard/src/components/DispatchDialog.tsx` — Provider-Auswahl: Connectors + Batch-Runner, "Interactive Session" vs "Start Run"
-- [ ] `packages/dashboard/src/app/tasks/page.tsx` — AgentChat als Sliding Panel
-- [ ] Wintermute `DashboardPanel.ts` — postMessage-Relay für `wntrmte.connectAgent`, `wntrmte.sendAgentInput`, `wntrmte.approveAgent`, `wntrmte.denyAgent`, `wntrmte.cancelAgent`
+- [x] `packages/dashboard/src/components/AgentChat.tsx` — Streaming Messages, Tool-Use-Anzeige, Permission-Dialoge, inline Replies, Cancel. Provider-agnostisch.
+- [x] `packages/dashboard/src/components/DispatchDialog.tsx` — Provider-Auswahl: Connectors + Batch-Runner, "Interactive Session" vs "Start Run"
+- [x] `packages/dashboard/src/app/tasks/page.tsx` — AgentChat als Sliding Panel
+- [x] Wintermute `DashboardPanel.ts` — postMessage-Relay für `wntrmte.connectAgent`, `wntrmte.sendAgentInput`, `wntrmte.approveAgent`, `wntrmte.denyAgent`, `wntrmte.cancelAgent`
+- [x] Eingebetteter Dispatch kann Connector-Metadaten lesen und `Interactive Session` an das Wintermute-Relay weiterreichen
+- [x] Session-Events (`/agent-events`) im Dashboard abonnieren und im Chat rendern
+- [x] Dashboard-Connector-Routen teilen sich eine Runtime-Orchestrator-Instanz, damit `/connect`, `/agent-input` und `/agent-events` dieselbe Live-Session sehen
 
 ### L7: Backward Compatibility
 
-- [ ] `/agents` Endpoint um `supportsConnector: boolean` und `connectorCapabilities` erweitern
-- [ ] Bestehende Batch-Runner, `/dispatch`, `/reply` bleiben unverändert
-- [ ] Provider ohne Connector fallen automatisch auf Batch-Runner zurück
+- [x] `/agents` Endpoint um `supportsConnector: boolean` und `connectorCapabilities` erweitern
+- [x] Bestehende Batch-Runner, `/dispatch`, `/reply` bleiben unverändert
+- [x] Provider ohne Connector fallen automatisch auf Batch-Runner zurück

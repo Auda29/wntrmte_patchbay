@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getStore, REPO_ROOT } from '@/lib/store';
-import { createConfiguredOrchestrator } from '@patchbay/server';
+import { getStore } from '@/lib/store';
+import { getOrchestrator } from '@/lib/runtime';
 
 export async function POST(request: Request) {
     try {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing sessionId or action' }, { status: 400 });
         }
 
-        const orchestrator = createConfiguredOrchestrator(REPO_ROOT);
+        const orchestrator = getOrchestrator();
 
         switch (action) {
             case 'input':
