@@ -788,7 +788,9 @@ Reihenfolge: **L2a** Claude Code (PoC), **L2b** Codex bevorzugt **`codex app-ser
 
 - [x] `docs/custom-connector.md` — Dokumentation: "How to build a custom Connector" — Interface-Contract, Event-Mapping, Step-by-Step mit Beispielen
 - [x] `packages/runners/http/src/connector.ts` — `HttpConnector` für OpenAI-kompatible APIs (Ollama, LM Studio, OpenRouter, vLLM) — SSE-Streaming + Non-Streaming, Multi-Turn, konfigurierbar via `HttpConnectorConfig`
-- [x] Perspektivisch: **Cursor ACP** — dokumentiert in `docs/custom-connector.md`, Implementierung folgt wenn ACP stabil
+- [x] `packages/runners/cursor-cli/src/connector.ts` — `CursorAcpConnector` für **Cursor ACP** (Agent Client Protocol, JSON-RPC/stdio) — `initialize` Handshake, `session/new`, `session/prompt`, `session/request_permission` (approve/deny), `session/cancel`, `fs/read_text_file`/`fs/write_text_file` Auto-Handling
+- [x] `packages/runners/cursor-cli/src/acp-parser.ts` — ACP JSON-RPC → AgentEvent Mapping (`session/update` → message/tool_use/completed, `session/request_permission` → permission)
+- [x] `docs/custom-connector.md` — ACP-Protokoll-Mapping-Referenz (Lifecycle-Diagramm, Event-Tabelle, Key Differences)
 
 ### L3: Orchestrator — Connector-Support — DONE
 

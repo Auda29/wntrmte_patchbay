@@ -1,3 +1,7 @@
+export { AcpConnector, CursorAcpConnector } from './connector';
+export type { AcpConnectorConfig } from './connector';
+export { parseAcpLine } from './acp-parser';
+
 import { Runner, RunnerInput, RunnerOutput, RunnerAuth } from '@patchbay/core';
 
 export class CursorCliRunner implements Runner {

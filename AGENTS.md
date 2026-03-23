@@ -43,7 +43,7 @@ patchbay/
 │       ├── bash/         # Shell command execution (batch)
 │       ├── http/         # GET URL fetch (batch) + HttpConnector (OpenAI-compatible APIs)
 │       ├── cursor/       # File-based handoff (batch)
-│       ├── cursor-cli/   # cursor agent wrapper (batch); perspektivisch Cursor ACP
+│       ├── cursor-cli/   # Batch runner (immediate fail) + CursorAcpConnector (ACP JSON-RPC/stdio)
 │       ├── claude-code/  # Batch runner + ClaudeCodeConnector (streaming, CLI stream-json)
 │       ├── codex/        # Batch runner + CodexConnector (streaming, codex app-server JSON-RPC)
 │       └── gemini/       # Batch runner + GeminiConnector (streaming, Headless/JSON)

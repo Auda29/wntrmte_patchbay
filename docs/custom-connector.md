@@ -206,6 +206,7 @@ registry.register(new MyConnector());
 | `CodexConnector`      | OpenAI Codex    | `codex app-server` (JSON-RPC/stdio)          |
 | `GeminiConnector`     | Google Gemini   | Headless mode (`--json`, stdin)               |
 | `HttpConnector`       | Any OpenAI-compatible API | `POST /chat/completions` (SSE)   |
+| `AcpConnector`        | Any ACP-compliant agent | [Agent Client Protocol](https://agentclientprotocol.com) (JSON-RPC/stdio) |
 
 ## Tips
 
@@ -215,6 +216,75 @@ registry.register(new MyConnector());
 - **Use `setStatus()`** to keep session status in sync — the orchestrator reads this.
 - **Permissions**: If your provider doesn't support granular permissions, implement `approve()`/`deny()` as no-ops or plain text stdin fallbacks.
 
-## Future: Cursor ACP
+## ACP (Agent Client Protocol)
 
-Cursor is developing **ACP** (Agent Communication Protocol) — a stdio-based JSON-RPC interface (`cursor agent acp`). Once stable, a `CursorAcpConnector` will follow the same pattern: spawn the process, parse JSON-RPC notifications into `AgentEvent`s, send responses via stdin. The interface contract is identical.
+The `AcpConnector` implements the [Agent Client Protocol](https://agentclientprotocol.com) — an open standard for IDE-to-agent communication. ACP uses **JSON-RPC 2.0 over stdio** and defines a structured session lifecycle with built-in permission flows.
+
+Any ACP-compliant agent works with a single configuration:
+
+```typescript
+import { AcpConnector } from '@patchbay/runner-cursor-cli';
+
+// Cursor (pre-configured as CursorAcpConnector)
+new AcpConnector({
+    id: 'cursor-acp',
+    name: 'Cursor (ACP)',
+    command: 'cursor',
+    args: ['agent', 'acp'],
+    versionCommand: 'cursor --version',
+});
+
+// Any other ACP-compliant agent
+new AcpConnector({
+    id: 'my-agent',
+    name: 'My ACP Agent',
+    command: 'my-agent',
+    args: ['--acp'],
+    versionCommand: 'my-agent --version',
+    env: { MY_API_KEY: '...' },
+});
+```
+
+### ACP → AgentEvent Mapping
+
+| ACP Method/Notification | Direction | Patchbay AgentEvent |
+|-------------------------|-----------|---------------------|
+| `initialize` (response) | Agent → Client | `session:started` |
+| `session/update` (content) | Agent → Client | `agent:message` |
+| `session/update` (tool_call, status: pending/in_progress) | Agent → Client | `agent:tool_use` (started) |
+| `session/update` (tool_call, status: completed) | Agent → Client | `agent:tool_use` (completed) |
+| `session/request_permission` | Agent → Client | `agent:permission` |
+| `session/update` (stop_reason: end_turn) | Agent → Client | `session:completed` |
+| `session/update` (stop_reason: refusal/error) | Agent → Client | `session:failed` |
+| `session/prompt` | Client → Agent | `sendInput()` |
+| Permission grant/deny (response) | Client → Agent | `approve()` / `deny()` |
+| `session/cancel` | Client → Agent | `cancel()` |
+
+### ACP Session Lifecycle
+
+```
+Client                          Agent
+  │                               │
+  │──── initialize ──────────────►│
+  │◄─── initialize (response) ───│  → session:started
+  │                               │
+  │──── session/new ─────────────►│
+  │◄─── session/new (response) ──│
+  │                               │
+  │──── session/prompt ──────────►│  (user message)
+  │◄─── session/update ──────────│  → agent:message (streaming)
+  │◄─── session/update (tool) ───│  → agent:tool_use
+  │◄─── session/request_permission│  → agent:permission
+  │──── permission response ─────►│  (approve/deny)
+  │◄─── session/update (done) ───│  → session:completed
+  │                               │
+  │──── session/cancel ──────────►│  (notification, no response)
+```
+
+### Key Differences from Other Connectors
+
+- **Capability negotiation**: ACP starts with an `initialize` handshake where client and agent declare supported features (file system, terminal, image/audio content).
+- **Structured permissions**: Permission requests use `session/request_permission` as a proper JSON-RPC method (request/response), not a notification — the agent blocks until the client responds.
+- **Content blocks**: Messages use typed content blocks (text, resource, image) rather than plain strings.
+- **Stop reasons**: Sessions end with explicit reasons (`end_turn`, `max_tokens`, `cancelled`, `refusal`) mapped to `session:completed` or `session:failed`.
+- **Session persistence**: ACP supports `session/load` for resuming previous sessions (if the agent advertises `loadSession` capability).

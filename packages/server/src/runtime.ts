@@ -3,7 +3,7 @@ import { BashRunner } from '@patchbay/runner-bash';
 import { HttpRunner } from '@patchbay/runner-http';
 import { CursorRunner } from '@patchbay/runner-cursor';
 import { ClaudeCodeRunner, ClaudeCodeConnector } from '@patchbay/runner-claude-code';
-import { CursorCliRunner } from '@patchbay/runner-cursor-cli';
+import { CursorCliRunner, CursorAcpConnector } from '@patchbay/runner-cursor-cli';
 import { CodexRunner, CodexConnector } from '@patchbay/runner-codex';
 import { GeminiRunner, GeminiConnector } from '@patchbay/runner-gemini';
 
@@ -25,6 +25,7 @@ export function createConfiguredOrchestrator(repoRoot: string = process.cwd()): 
     orchestrator.registerConnector(new ClaudeCodeConnector(r['claude-code']));
     orchestrator.registerConnector(new CodexConnector(r['codex']));
     orchestrator.registerConnector(new GeminiConnector(r['gemini']));
+    orchestrator.registerConnector(new CursorAcpConnector());
 
     return orchestrator;
 }

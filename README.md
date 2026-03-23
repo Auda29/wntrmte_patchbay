@@ -47,7 +47,7 @@ patchbay/
 │       ├── bash/                  #   Shell command execution (batch)
 │       ├── http/                  #   HTTP/API requests (batch) + HttpConnector (OpenAI-compatible)
 │       ├── cursor/                #   Cursor file-based (manual handoff)
-│       ├── cursor-cli/            #   Cursor headless (cursor agent -p)
+│       ├── cursor-cli/            #   Batch runner + CursorAcpConnector (ACP JSON-RPC)
 │       ├── claude-code/           #   Batch runner + ClaudeCodeConnector (stream-json)
 │       ├── codex/                 #   Batch runner + CodexConnector (app-server JSON-RPC)
 │       └── gemini/                #   Batch runner + GeminiConnector (headless/JSON)
@@ -122,6 +122,7 @@ patchbay/
 | **CodexConnector** | `codex app-server` (JSON-RPC over stdio) | Streaming, Permissions, Multi-Turn, Tool Use |
 | **GeminiConnector** | Headless mode (`--json`, stdin) | Streaming, Multi-Turn, Tool Use |
 | **HttpConnector** | OpenAI-compatible `POST /chat/completions` (SSE) | Streaming, Multi-Turn |
+| **AcpConnector** | [Agent Client Protocol](https://agentclientprotocol.com) (JSON-RPC/stdio) | Streaming, Permissions, Multi-Turn, Tool Use |
 
 See [docs/custom-connector.md](docs/custom-connector.md) for how to build your own connector.
 
