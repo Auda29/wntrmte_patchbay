@@ -63,6 +63,8 @@ fi
 # --- Build wntrmte-workflow extension ---
 if [[ -d "../extensions/wntrmte-workflow" ]]; then
   echo "=== Building wntrmte-workflow extension ==="
+  rm -rf ../extensions/wntrmte-workflow/out
+
   # Build against the monorepo workspace so local packages like @patchbay/core
   # resolve without requiring a published registry package.
   (
@@ -70,6 +72,11 @@ if [[ -d "../extensions/wntrmte-workflow" ]]; then
     npm run build --workspace=packages/core &&
     npm run compile --workspace=wntrmte-workflow
   )
+
+  if [[ ! -f "../extensions/wntrmte-workflow/out/extension.js" ]]; then
+    echo "wntrmte-workflow build did not produce out/extension.js" >&2
+    exit 1
+  fi
 fi
 
 # --- Apply patches ---

@@ -25,7 +25,7 @@ export default function DashboardHome() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">Dashboard</h1>
+        <h1 className="mb-2 text-3xl font-semibold tracking-tight text-surface-50">Dashboard</h1>
         <p className="text-surface-400">
           {data?.project
             ? `Connected to ${projectOptions?.name || 'Project'}`
@@ -39,7 +39,7 @@ export default function DashboardHome() {
           title="Active Tasks"
           value={activeTasks.length.toString()}
           icon={Activity}
-color="text-blue-400"
+          color="text-brand-400"
         />
         <StatCard
           title="Open Tasks"
@@ -67,7 +67,7 @@ color="text-blue-400"
           <section className="glass-card rounded-xl p-6 border border-surface-900/50 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all duration-500 group-hover:bg-brand-500/20" />
             <div className="mb-4 flex items-start justify-between gap-4">
-              <h2 className="text-lg font-medium text-white flex items-center gap-2">
+              <h2 className="flex items-center gap-2 text-lg font-medium text-surface-50">
                 <FileCode2 className="w-5 h-5 text-brand-400" />
                 Project Goal
               </h2>
@@ -96,7 +96,7 @@ color="text-blue-400"
           </section>
 
           <section>
-            <h2 className="text-lg font-medium text-white mb-4">Recent Runs</h2>
+            <h2 className="mb-4 text-lg font-medium text-surface-50">Recent Runs</h2>
             <div className="space-y-3">
               {runs.length === 0 ? (
                 <div className="glass-card rounded-xl p-8 text-center border border-surface-900/50">
@@ -112,7 +112,7 @@ color="text-blue-400"
                           : run.status === 'failed'
                             ? 'bg-red-500'
                             : run.status === 'awaiting_input'
-                              ? 'bg-purple-400'
+                              ? 'bg-brand-400'
                               : 'bg-blue-500'
                       }`} />
                       <div>
@@ -137,7 +137,7 @@ color="text-blue-400"
         <div className="space-y-6">
           <section className="glass rounded-xl p-6 border border-surface-900/50">
             <div className="mb-4 flex items-start justify-between gap-4">
-              <h2 className="text-lg font-medium text-white">Project Rules</h2>
+              <h2 className="text-lg font-medium text-surface-50">Project Rules</h2>
               <button
                 type="button"
                 onClick={() => setShowEditProject(true)}
@@ -188,7 +188,7 @@ function StatCard({ title, value, icon: Icon, trend, color }: StatCardProps) {
           <Icon className="w-4 h-4" />
         </div>
       </div>
-      <h3 className="text-3xl font-semibold text-white tracking-tight">{value}</h3>
+      <h3 className="text-3xl font-semibold text-surface-50 tracking-tight">{value}</h3>
       {trend && (
         <p className="text-xs text-surface-500 mt-2 font-medium">{trend}</p>
       )}

@@ -66,9 +66,15 @@ npm run gulp minify-vscode
 # pulling their VS Code typings into the upstream TypeScript program.
 if [[ -d "../extensions/wntrmte-workflow" ]]; then
   echo "=== Bundling wntrmte-workflow extension ==="
+  if [[ ! -f "../extensions/wntrmte-workflow/out/extension.js" ]]; then
+    echo "Missing wntrmte-workflow build output: ../extensions/wntrmte-workflow/out/extension.js" >&2
+    exit 1
+  fi
+
   rm -rf extensions/wntrmte-workflow
   mkdir -p extensions/wntrmte-workflow
   cp    ../extensions/wntrmte-workflow/package.json extensions/wntrmte-workflow/
+  cp    ../extensions/wntrmte-workflow/.vscodeignore extensions/wntrmte-workflow/
   cp -r ../extensions/wntrmte-workflow/out          extensions/wntrmte-workflow/out
 fi
 
