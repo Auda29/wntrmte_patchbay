@@ -7,13 +7,13 @@ import {
     AgentEvent,
     ConnectorCapabilities,
     SessionStatus,
+    buildPrompt,
 } from '@patchbay/core';
 import { spawn, ChildProcess } from 'child_process';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { randomUUID } from 'crypto';
 import { createInterface } from 'readline';
-import { buildPrompt } from './index';
 import { parseStreamLine } from './stream-parser';
 
 const execAsync = promisify(exec);

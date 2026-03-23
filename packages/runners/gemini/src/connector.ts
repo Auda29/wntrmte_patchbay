@@ -11,7 +11,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { randomUUID } from 'crypto';
 import { createInterface } from 'readline';
-import { buildPrompt } from '@patchbay/runner-claude-code';
+import { buildPrompt } from '@patchbay/core';
 import { parseGeminiLine } from './stream-parser';
 
 const execAsync = promisify(exec);

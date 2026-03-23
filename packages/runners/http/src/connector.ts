@@ -7,7 +7,7 @@ import {
     ConnectorCapabilities,
 } from '@patchbay/core';
 import { randomUUID } from 'crypto';
-import { buildPrompt } from '@patchbay/runner-claude-code';
+import { buildPrompt } from '@patchbay/core';
 
 // ---------------------------------------------------------------------------
 // Configuration for the HTTP connector endpoint

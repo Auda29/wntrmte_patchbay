@@ -5,7 +5,7 @@ import { Runner, RunnerInput, RunnerOutput, RunnerAuth } from '@patchbay/core';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { spawn } from 'child_process';
-import { buildPrompt } from '@patchbay/runner-claude-code';
+import { buildPrompt } from '@patchbay/core';
 
 const execAsync = promisify(exec);
 const DEFAULT_RUNNER_TIMEOUT_MS = 900_000;

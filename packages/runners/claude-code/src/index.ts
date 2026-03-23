@@ -1,13 +1,12 @@
 export { ClaudeCodeConnector } from './connector';
 export { parseStreamLine } from './stream-parser';
+export { buildPrompt } from '@patchbay/core';
 
-import { Runner, RunnerInput, RunnerOutput, RunnerAuth } from '@patchbay/core';
+import { Runner, RunnerInput, RunnerOutput, RunnerAuth, buildPrompt } from '@patchbay/core';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { spawn } from 'child_process';
 import { randomUUID } from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const execAsync = promisify(exec);
 const DEFAULT_RUNNER_TIMEOUT_MS = 900_000;
@@ -18,39 +17,6 @@ function getRunnerTimeoutMs(): number {
 
     const parsed = Number.parseInt(raw, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_RUNNER_TIMEOUT_MS;
-}
-
-export function buildPrompt(input: RunnerInput): string {
-    const parts: string[] = [];
-
-    // Inject previous conversation turns for context (fallback for non-resume runners)
-    if (input.previousTurns?.length) {
-        const turnLines = input.previousTurns.map(
-            t => `### ${t.role} (${t.timestamp})\n${t.content}`
-        );
-        parts.push(`## Previous Conversation\n${turnLines.join('\n\n')}`);
-    }
-
-    if (input.projectRules) {
-        parts.push(`## Project Rules\n${input.projectRules}`);
-    }
-
-    if (input.contextFiles?.length) {
-        const contextParts = input.contextFiles
-            .filter(f => fs.existsSync(f))
-            .map(f => `### ${path.basename(f)}\n${fs.readFileSync(f, 'utf-8')}`);
-        if (contextParts.length) {
-            parts.push(`## Context\n${contextParts.join('\n\n')}`);
-        }
-    }
-
-    if (input.affectedFiles?.length) {
-        parts.push(`## Affected Files\n${input.affectedFiles.map(f => `- ${f}`).join('\n')}`);
-    }
-
-    parts.push(`## Task\n${input.goal}`);
-
-    return parts.join('\n\n');
 }
 
 /** Detect whether runner output is a clarifying question rather than real work. */
