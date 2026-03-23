@@ -224,27 +224,23 @@ Fast alle Konkurrenten sind closed source (ZenFlow, Cursor, T3 Code, Codex App) 
 
 ## Roadmap
 
-### Aktueller Stand (Phase A–K, abgeschlossen)
+### Aktueller Stand
 
-Die Grundlagen sind implementiert:
-- Patchbay: Schema, Orchestrator, Dashboard (Kanban, Dispatch, History), 7 Runner-Adapter, Auth-System, CLI, Standalone Server, Multi-Turn Conversations (Phase J), Projekt-Import (Phase K)
-- Wintermute: VS Code Distribution, Branding, Patchbay Client Extension (FileStore/ApiStore, TreeView, DashboardPanel), Setup-Flow, Auth-Commands, Terminal-Integration
+**Phasen A–K (abgeschlossen):** Schema, Orchestrator, Dashboard, Runner, Extension, Multi-Turn (J), Projekt-Import (K) — siehe `TODO.md` / jeweilige `PLAN.md`.
 
-Details: `patchbay/PLAN.md`, `wntrmte/PLAN.md`, `TODO.md`
+**Phase L — Patchbay-Backend (L1–L4, umgesetzt):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`** (OpenAI-kompatible APIs, Ollama, …), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`) und Dashboard-API-Routen, Doku `patchbay/docs/custom-connector.md`.
 
-### Nächster Meilenstein: Phase L — Agent Connector Architecture
+**Phase L — noch offen:** Monorepo (L5), **Agent-Chat-UI** im Dashboard + **Wintermute** postMessage (L6, inkl. `denyAgent`), `/agents`-Capabilities (L7).
 
-Das Herzstück der neuen Vision. Live Agent Interaction im Dashboard:
-- **AgentConnector-Interface** — event-basiert, session-orientiert (statt Batch)
-- **Claude Code Connector** — CLI **`stream-json`** (Input/Output), NDJSON → `AgentEvent`; ergänzend Session-Konzepte über **Anthropic Agent SDK** wo sinnvoll
-- **Codex Connector** — bevorzugt **`codex app-server`** (JSON-RPC, stdio, Approvals, Threads); Fallback bestehender Batch-Runner
-- **Gemini Connector** — **Headless**/JSON-CLI; Mapping auf dieselbe Event-Schicht
-- **Streaming Endpoints** — SSE für Live-Events, REST für Input/Approval
-- **Agent Chat im Dashboard** — Streaming Messages, Tool-Use-Anzeige, Permission-Dialoge, inline Replies
-- **Automatisch in Wintermute** — weil das Dashboard als iframe eingebettet ist
-- **Perspektivisch** — Cursor **ACP**, lokale HTTP-Backends (Ollama), OpenAI-kompatible APIs (**Responses API** wo passend)
+Details: `patchbay/PLAN.md` Phase L, Provider-Tabelle oben, `TODO.md`
 
-Details: `patchbay/PLAN.md` Phase L, Provider-Tabelle oben in dieser Datei
+### Nächster Schritt (Phase L — Rest)
+
+- **L5** — Monorepo wntrmte + patchbay
+- **L6** — `AgentChat.tsx`, Dispatch-Erweiterung, Wintermute-Relay (`connectAgent`, `sendAgentInput`, `approveAgent`, **`denyAgent`**, `cancelAgent`)
+- **L7** — `/agents` um Connector-Capabilities erweitern; Batch-Fallback bleibt
+
+Bereits vorhanden im Backend: Live-Sessions über Server/Dashboard-APIs; die **Chat-Oberfläche** und **IDE-Relay** fehlen noch.
 
 ### Darüber hinaus (Evaluierung)
 

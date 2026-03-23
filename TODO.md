@@ -8,9 +8,11 @@
 
 ---
 
-## Nächster Meilenstein: Phase L — Agent Connector Architecture
+## Phase L — Agent Connector Architecture
 
-Das Herzstück der neuen Vision: Live Agent Interaction im Dashboard statt Batch-Runner mit Text-Heuristik. Provider-agnostisch — die Architektur ist generisch, Connectors sind austauschbar (Claude Code, Codex, Gemini, lokale Modelle, …).
+**Stand:** In **patchbay** sind **L1–L4 umgesetzt** (Core-Types, alle Provider-Connectors inkl. `HttpConnector`, Orchestrator inkl. `denySession` / Session-Liste, Server + Dashboard-APIs). **Offen:** L5–L7, **L6** (Agent-Chat-UI + **Wintermute** postMessage inkl. Deny). Details: `patchbay/PLAN.md` Phase L.
+
+Das Herzstück der Vision: Live Agent Interaction im Dashboard statt Batch-Runner mit Text-Heuristik. Provider-agnostisch — Connectors sind austauschbar (Claude Code, Codex, Gemini, HTTP, lokale Modelle, …).
 
 ### Provider-Integrations-Referenz (für L2)
 
@@ -21,58 +23,48 @@ Connectors mappen die **jeweils beste verfügbare** Anbieter-Schicht auf einheit
 | **OpenAI Codex** | `codex app-server` (JSON-RPC, stdio/JSONL, Threads, serverinitiierte Approvals, gestreamte Events) | Deep-Integration wie VS-Code-Extension; [App Server](https://developers.openai.com/codex/app-server) |
 | **Anthropic Claude Code** | CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON) | Kein vollständiges Codex-App-Server-Äquivalent in einem Paket; Multi-Turn zusätzlich Agent SDK |
 | **Google Gemini CLI** | Headless, JSON/Text, stdin ([Headless](https://google-gemini.github.io/gemini-cli/docs/cli/headless.html)) | Open Source; kein JSON-RPC-App-Server wie Codex |
-| **Lokal (Ollama, …)** | HTTP (`/api/chat` u. a.) | Adapter + Capabilities |
+| **Lokal (Ollama, …)** | HTTP (`/api/chat` u. a.) | In patchbay: `HttpConnector` (`packages/runners/http`) + Capabilities |
 | **HTTP / kompatible APIs** | OpenAI: eher **Responses API** für Neues; Chat Completions weiter möglich | Kein fertiger Agent-/Approval-Loop — ggf. selbst bauen |
 | **Cursor** | **ACP** — `agent acp`, stdio JSON-RPC, z. B. `session/request_permission` | Strukturiert, proprietäres Produkt |
 
 **Hinweis Kosten:** OSS-CLIs ≠ kostenlose Modellnutzung — API/Abos bleiben beim Nutzer.
 
-### L1: Core Types — Provider-agnostisches Connector-Interface
+### L1: Core Types — Provider-agnostisches Connector-Interface — done `[p]`
 
-- [ ] `[p]` `AgentConnector`, `AgentSession`, `AgentEvent` Interfaces in `packages/core/src/connector.ts` — generisch, nicht an einen Provider gebunden
-- [ ] `[p]` Event-Typen: `session:started`, `agent:message`, `agent:tool_use`, `agent:permission`, `agent:question`, `session:completed`, `session:failed`
-- [ ] `[p]` `ConnectorRegistry` — dynamische Registrierung von Connectors, analog zur bestehenden Runner-Registry
-- [ ] `[p]` `BaseConnector` abstrakte Klasse — gemeinsame Logik (Session-Lifecycle, Event-Emitting, Timeout-Handling) die alle Provider-Connectors erben
+- [x] `[p]` `AgentConnector`, `AgentSession`, `AgentEvent` in `packages/core/src/connector.ts`
+- [x] `[p]` Event-Typen u. a. `session:started`, `agent:message`, `agent:tool_use`, `agent:permission`, `agent:question`, `session:completed`, `session:failed`
+- [x] `[p]` `ConnectorRegistry` + `BaseConnector` / `BaseSession` (gemeinsame Session-/Lifecycle-Logik)
+- [x] `[p]` Re-export in `packages/core/src/index.ts`
 
-### L2: Provider Connectors
+### L2: Provider Connectors — done `[p]`
 
-Jeder Provider bekommt seinen eigenen Connector. **Reihenfolge:** Claude Code als PoC (stream-json), **Codex** bevorzugt über **`codex app-server`** (nicht nur `exec`), Gemini über Headless/JSON. Architektur erlaubt Community-Connectors für weitere Provider.
+#### L2a: Claude Code Connector
 
-#### L2a: Claude Code Connector (erster Proof-of-Concept)
-
-- [ ] `[p]` `ClaudeCodeConnector` in `packages/runners/claude-code/src/connector.ts` — CLI mit `--input-format stream-json` / `--output-format stream-json` (NDJSON-Workflow)
-- [ ] `[p]` Stream-Parser in `packages/runners/claude-code/src/stream-parser.ts` — NDJSON → AgentEvent Mapping
-- [ ] `[p]` Vorab klären: Welche Events liefert `stream-json` bei Permission-Requests? Ist stdin-basierte Approval möglich? Wo sinnvoll: Anthropic **Agent SDK**-Session-Konzepte für Multi-Turn ergänzen
+- [x] `[p]` `packages/runners/claude-code/src/connector.ts` + `stream-parser.ts` — NDJSON stream-json → `AgentEvent`
 
 #### L2b: Codex Connector
 
-- [ ] `[p]` **Bevorzugt:** `CodexConnector` an **`codex app-server`** — JSON-RPC über stdio (JSONL), Thread-APIs, serverinitiierte Approvals → AgentEvent ([Doku](https://developers.openai.com/codex/app-server)); optional: `codex app-server generate-ts` für Typen
-- [ ] `[p]` **Fallback:** bestehender Batch-Runner / `codex exec` + Log-Parsing bleibt für Non-Interactive-Fälle; Noise-Filter bereits vorhanden
+- [x] `[p]` `CodexConnector` + `codex app-server` (JSON-RPC), `stream-parser.ts`; Batch-Runner bleibt Fallback
 
 #### L2c: Gemini Connector
 
-- [ ] `[p]` `GeminiConnector` in `packages/runners/gemini/src/connector.ts` — **Headless**-Modus (JSON/Text, stdin), kein JSON-RPC-App-Server wie Codex — gezieltes Mapping auf AgentEvents
-- [ ] `[p]` Gemini-spezifische Event-Mappings
+- [x] `[p]` `GeminiConnector` + `stream-parser.ts` — Headless/JSON
 
 #### L2d: Connector-Erweiterbarkeit
 
-- [ ] `[p]` Dokumentation: "How to build a custom Connector" — Interface-Contract, Event-Mapping, Beispiel-Implementierung
-- [ ] `[p]` HTTP-Backends: OpenAI-kompatible APIs — für Neuentwicklung **Responses API** prüfen (Chat Completions nur wo nötig); lokale **Ollama**/LM Studio über REST + Capabilities
-- [ ] `[p]` Perspektivisch: **Cursor ACP** (`agent acp`, stdio JSON-RPC, Permission-Flows) — proprietär, aber offizielle strukturierte Schnittstelle
+- [x] `[p]` `docs/custom-connector.md` — Custom Connector Guide
+- [x] `[p]` `packages/runners/http/src/connector.ts` — `HttpConnector` (OpenAI-kompatible APIs, Ollama, OpenRouter, …)
+- [ ] `[p]` Perspektivisch: **Cursor ACP** — in Doku erwähnt; Implementierung folgt
 
-### L3: Orchestrator
+### L3: Orchestrator — done `[p]`
 
-- [ ] `[p]` `registerConnector()`, `connectAgent()`, `sendInput()`, `approveSession()`, `cancelSession()` in `orchestrator.ts`
-- [ ] `[p]` Session-Map für aktive AgentSessions; Event-Listener für Store-Updates bei Session-Events
-- [ ] `[p]` `listConnectors()` — verfügbare Connectors mit Capabilities (streaming, approval, multi-turn) zurückgeben
+- [x] `[p]` `registerConnector()`, `connectAgent()`, `sendInput()`, `approveSession()`, `denySession()`, `cancelSession()`, `listConnectors()`, `getSession()`, `listSessions()`, …
+- [x] `[p]` `activeSessions` + `bridgeSessionEvents()` für Store-Updates
 
-### L4: Server Streaming Endpoints
+### L4: Server Streaming Endpoints — done `[p]`
 
-- [ ] `[p]` `POST /connect` → startet interactive Session, gibt `sessionId` zurück (provider-agnostisch: `{ taskId, connectorId }`)
-- [ ] `[p]` `GET /agent-events/:sessionId` → SSE-Stream von AgentEvents (gleiches Format unabhängig vom Provider)
-- [ ] `[p]` `POST /agent-input/:sessionId` + `POST /agent-approve/:sessionId` + `POST /agent-cancel/:sessionId`
-- [ ] `[p]` `GET /connectors` → Liste verfügbarer Connectors mit Capabilities
-- [ ] `[p]` Dashboard API Routes als Next.js Proxies (`/api/connect`, `/api/agent-input`, `/api/connectors`)
+- [x] `[p]` `POST /connect`, `GET /agent-events/:sessionId` (SSE), `POST /agent-input|approve|deny|cancel/:sessionId`, `GET /connectors`
+- [x] `[p]` Dashboard: `/api/connect`, `/api/agent-input` (unified), `/api/connectors`
 
 ### L5: Monorepo-Konsolidierung
 
@@ -88,13 +80,13 @@ Vor dem Dashboard-Umbau zusammenführen — ab hier arbeiten Dashboard (patchbay
 - [ ] `[p]` `AgentChat.tsx` Komponente — Streaming Messages, Tool-Use-Anzeige, Permission-Dialoge, inline Replies, Cancel. Provider-agnostisch: rendert AgentEvents unabhängig von der Quelle
 - [ ] `[p]` `DispatchDialog.tsx` — Provider-Auswahl: zeigt verfügbare Connectors + Batch-Runner, User wählt bevorzugten Provider. "Interactive Session" vs "Start Run" je nach Connector-Verfügbarkeit
 - [ ] `[p]` `tasks/page.tsx` — AgentChat als Sliding Panel in der Task-Ansicht integrieren
-- [ ] Wintermute `DashboardPanel.ts` — postMessage-Relay für neue Commands (`wntrmte.connectAgent`, `wntrmte.sendAgentInput`, `wntrmte.approveAgent`, `wntrmte.cancelAgent`)
+- [ ] `[w]` Wintermute `DashboardPanel.ts` — postMessage-Relay: `wntrmte.connectAgent`, `sendAgentInput`, `approveAgent`, `denyAgent`, `cancelAgent` (Backend unterstützt Deny bereits)
 
 ### L7: Backward Compatibility
 
-- [ ] `/agents` Endpoint um `supportsConnector: boolean` und `connectorCapabilities` erweitern
-- [ ] Bestehende Batch-Runner, `/dispatch`, `/reply` bleiben unverändert
-- [ ] Provider ohne Connector fallen automatisch auf Batch-Runner zurück
+- [ ] `[p]` `/agents` Endpoint um `supportsConnector: boolean` und `connectorCapabilities` erweitern
+- [ ] `[p]` Bestehende Batch-Runner, `/dispatch`, `/reply` bleiben unverändert
+- [ ] `[p]` Provider ohne Connector fallen automatisch auf Batch-Runner zurück
 
 ---
 
@@ -120,19 +112,11 @@ Vor dem Dashboard-Umbau zusammenführen — ab hier arbeiten Dashboard (patchbay
 ## Dependency Graph
 
 ```
-Phase A–K          ✅ done (Grundlagen: Schema, Orchestrator, Dashboard, Runner, Extension, Multi-Turn)
-Phase L            ⬜ next (Agent Connector Architecture — Live Agent Interaction)
-  L1 Core Types (provider-agnostisch)
-    → L2a Claude Code Connector (erster PoC)
-    → L2b Codex Connector        ─┐
-    → L2c Gemini Connector        ├─ parallel nach L2a
-    → L2d Connector-Docs          ─┘
-      → L3 Orchestrator → L4 Server
-        → L5 Monorepo-Konsolidierung (+ extension.ts Refactoring)
-          → L6 Dashboard Agent Chat (+ Wintermute postMessage-Relay)
-Multi-Agent          ⬜ nach Phase L
-Community Connectors ⬜ nach Connector-Docs (Ollama, HTTP/Responses API, Cursor ACP, …)
-npm Publish          ⬜ nach stabiler API
+Phase A–K          ✅ done
+Phase L (patchbay) ✅ L1–L4 (Core, Connectors inkl. Http, Orchestrator, Server + Dashboard APIs)
+Phase L (rest)     ⬜ L5 Monorepo → L6 Agent Chat UI + Wintermute Relay (inkl. denyAgent) → L7 /agents Capabilities
+Multi-Agent        ⬜ nach Phase L
+npm Publish        ⬜ nach stabiler API (L6/L7)
 ```
 
 ---
@@ -242,7 +226,7 @@ npm Publish          ⬜ nach stabiler API
 ### Phase J: Multi-Turn Runner Conversations
 
 - [x] `[p]` Core: `ConversationTurn`, `awaiting_input`, Konversations-Felder
-- [x] `[p]` Claude Code Runner: `detectQuestion()`, `--resume`, `buildPrompt()`
+- [x] `[p]` Claude Code Runner: `detectQuestion()`, `--resume`, `buildPrompt()` (seit Refactor: `buildPrompt` in `@patchbay/core` / `runner.ts`, von allen CLI-Runners/Connectors genutzt)
 - [x] `[p]` Orchestrator: `continueConversation()`, `buildConversationHistory()`
 - [x] `[p]` CLI: `patchbay reply`, interaktive Follow-up-Loop
 - [x] `[w]` Extension: `schedulePostRunCheck` Reply-Flow, "Awaiting Reply"-Icon
@@ -262,5 +246,9 @@ npm Publish          ⬜ nach stabiler API
 
 - [x] `[p]` CLI Shebang fix, Slug-IDs, Codex Noise-Filter, DispatchDialog Sortierung
 - [x] `[root]` VISION.md, TODO.md, PLAN.md, AGENTS.md aktualisiert
+
+### Patchbay Phase L — L1–L4 (Connector-Backend)
+
+- [x] `[p]` Core `connector.ts`, alle Provider-Connectors (claude-code, codex app-server, gemini, http), Orchestrator-Session-API, Server-Routes + Dashboard-Proxies, `docs/custom-connector.md`
 
 </details>
