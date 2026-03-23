@@ -10,7 +10,7 @@
 
 ## Phase L — Agent Connector Architecture
 
-**Stand:** In **patchbay** sind **L1–L4 umgesetzt** (Core-Types, alle Provider-Connectors inkl. `HttpConnector` und **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. `denySession` / Session-Liste, Server + Dashboard-APIs). **Offen:** L5–L7, **L6** (Agent-Chat-UI + **Wintermute** postMessage inkl. Deny). Details: `patchbay/PLAN.md` Phase L.
+**Stand:** In **patchbay** sind **L1–L4 umgesetzt** (Core-Types, alle Provider-Connectors inkl. `HttpConnector` und **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. `denySession` / Session-Liste, Server + Dashboard-APIs). In **Wintermute** ist die **L5-Teilaufgabe `extension.ts`-Aufteilung** erledigt (`CliManager`, `AuthService`, `TerminalOrchestrator` in `src/services/`). **Offen:** L5 **Monorepo-Merge** (Repos zusammenführen, `@patchbay/core`-Imports), **L6–L7**, Agent-Chat-UI + **Wintermute** postMessage. Details: `patchbay/PLAN.md` Phase L.
 
 Das Herzstück der Vision: Live Agent Interaction im Dashboard statt Batch-Runner mit Text-Heuristik. Provider-agnostisch — Connectors sind austauschbar (Claude Code, Codex, Gemini, HTTP, lokale Modelle, …).
 
@@ -73,7 +73,7 @@ Vor dem Dashboard-Umbau zusammenführen — ab hier arbeiten Dashboard (patchbay
 - [ ] `[root]` wntrmte + patchbay in ein Monorepo zusammenführen: `packages/` (core, dashboard, cli, server, runners) + `ide/` (build, extensions, patches)
 - [ ] `[root]` Shared Types: duplizierte Interfaces (`store/types.ts` in wntrmte) durch Imports aus `@patchbay/core` ersetzen
 - [ ] `[root]` Ein `package.json` Root-Workspace, ein CI, ein Git-Log
-- [ ] `[w]` `extension.ts` aufteilen (>1200 Zeilen) — `CliManager`, `AuthService`, `TerminalOrchestrator` extrahieren. Natürlicher Zeitpunkt im Rahmen des Merges.
+- [x] `[w]` `extension.ts` aufteilen — `CliManager`, `AuthService`, `TerminalOrchestrator` in `extensions/wntrmte-workflow/src/services/` (Monorepo-Merge steht weiterhin aus)
 
 ### L6: Dashboard — Agent Chat (PRIMARY)
 
@@ -114,7 +114,7 @@ Vor dem Dashboard-Umbau zusammenführen — ab hier arbeiten Dashboard (patchbay
 ```
 Phase A–K          ✅ done
 Phase L (patchbay) ✅ L1–L4 (Core, Connectors inkl. Http + Cursor ACP, Orchestrator, Server + Dashboard APIs)
-Phase L (rest)     ⬜ L5 Monorepo → L6 Agent Chat UI + Wintermute Relay (inkl. denyAgent) → L7 /agents Capabilities
+Phase L (rest)     ⬜ L5 Monorepo (Merge) → L6 Agent Chat UI + Wintermute Relay (inkl. denyAgent) → L7 /agents Capabilities
 Multi-Agent        ⬜ nach Phase L
 npm Publish        ⬜ nach stabiler API (L6/L7)
 ```

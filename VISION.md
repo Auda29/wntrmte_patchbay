@@ -230,13 +230,13 @@ Fast alle Konkurrenten sind closed source (ZenFlow, Cursor, T3 Code, Codex App) 
 
 **Phase L — Patchbay-Backend (L1–L4, umgesetzt):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`**, **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`) und Dashboard-API-Routen, Doku `patchbay/docs/custom-connector.md` (inkl. ACP-Mapping).
 
-**Phase L — noch offen:** Monorepo (L5), **Agent-Chat-UI** im Dashboard + **Wintermute** postMessage (L6, inkl. `denyAgent`), `/agents`-Capabilities (L7).
+**Phase L — noch offen:** Monorepo (L5: **Repo-Zusammenführung** + Shared Types aus `@patchbay/core`; `extension.ts`-Refactor in Wintermute ist **erledigt**), **Agent-Chat-UI** im Dashboard + **Wintermute** postMessage (L6, inkl. `denyAgent`), `/agents`-Capabilities (L7).
 
 Details: `patchbay/PLAN.md` Phase L, Provider-Tabelle oben, `TODO.md`
 
 ### Nächster Schritt (Phase L — Rest)
 
-- **L5** — Monorepo wntrmte + patchbay
+- **L5** — Monorepo wntrmte + patchbay (Wintermute: `extension.ts` bereits in `CliManager` / `AuthService` / `TerminalOrchestrator` aufgeteilt)
 - **L6** — `AgentChat.tsx`, Dispatch-Erweiterung, Wintermute-Relay (`connectAgent`, `sendAgentInput`, `approveAgent`, **`denyAgent`**, `cancelAgent`)
 - **L7** — `/agents` um Connector-Capabilities erweitern; Batch-Fallback bleibt
 
