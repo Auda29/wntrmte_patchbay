@@ -66,7 +66,7 @@ if [[ -d "../extensions/wntrmte-workflow" ]]; then
   # Build against the monorepo workspace so local packages like @patchbay/core
   # resolve without requiring a published registry package.
   (
-    cd .. &&
+    cd ../.. &&
     npm run build --workspace=packages/core &&
     npm run compile --workspace=wntrmte-workflow
   )
