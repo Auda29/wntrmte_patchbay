@@ -66,4 +66,4 @@ patchbay/
 
 ## Current status
 
-Phases A–K complete. Phase L in progress — **L1–L4 done** (core types, Claude/Codex/Gemini/`HttpConnector`/`CursorAcpConnector` + `AcpConnector`, orchestrator incl. approve/deny, server + dashboard API routes, `docs/custom-connector.md` incl. ACP mapping). **Remaining:** L6 (Agent Chat UI + Wintermute relay with `denyAgent`), L7 (`/agents` capabilities). **L5** (Monorepo, Shared Types aus `@patchbay/core`, `extension.ts`-Split) **done**. See `PLAN.md` Phase L.
+Phases A–K complete. **Phase L1–L5 done** — core connector types, all provider connectors (Claude Code, Codex, Gemini, HttpConnector, CursorAcpConnector/AcpConnector), orchestrator incl. approve/deny, server + dashboard API routes, `docs/custom-connector.md` incl. ACP mapping, monorepo consolidation with shared types from `@patchbay/core`. **Remaining:** L6 (Agent Chat UI + Wintermute relay with `denyAgent`), L7 (`/agents` capabilities). See `PLAN.md` Phase L.

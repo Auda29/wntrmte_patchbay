@@ -651,7 +651,7 @@ Gefunden beim manuellen Testen: nach dem Dispatch-Dialog gibt es kein Live-Feedb
 
 **Kontext:** Das Patchbay Dashboard wird zur vollwertigen Agent-Orchestration-App (Agent Chat, Streaming, Approvals). Wintermute bettet es als Webview-Panel ein. Die Dashboard-Funktionalität wird unter `packages/dashboard` gebaut — Wintermute stellt den Host und das postMessage-Relay.
 
-**Provider-Schichten:** Die konkrete Anbindung pro Anbieter liegt in **`packages/`** (Runners/Connectors) — siehe `../VISION.md` / `../TODO.md` (Provider-Referenz). Wintermute ändert daran nichts; es leitet nur Commands weiter.
+**Provider-Schichten:** Die konkrete Anbindung pro Anbieter liegt in **`packages/`** (Runners/Connectors) — siehe `../VISION.md` (Provider-Referenz). Wintermute ändert daran nichts; es leitet nur Commands weiter.
 
 ### L5: Monorepo-Konsolidierung — DONE
 

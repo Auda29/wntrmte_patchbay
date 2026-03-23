@@ -226,13 +226,13 @@ Fast alle Konkurrenten sind closed source (ZenFlow, Cursor, T3 Code, Codex App) 
 
 ### Aktueller Stand
 
-**Phasen A–K (abgeschlossen):** Schema, Orchestrator, Dashboard, Runner, Extension, Multi-Turn (J), Projekt-Import (K) — siehe `TODO.md` / jeweilige `PLAN.md`.
+**Phasen A–K (abgeschlossen):** Schema, Orchestrator, Dashboard, Runner, Extension, Multi-Turn (J), Projekt-Import (K) — siehe jeweilige `PLAN.md`.
 
-**Phase L — Patchbay-Backend (L1–L4, umgesetzt):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`**, **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`) und Dashboard-API-Routen, Doku `docs/custom-connector.md` (inkl. ACP-Mapping).
+**Phase L — Backend + Monorepo (L1–L5, abgeschlossen):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`**, **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`) und Dashboard-API-Routen, Doku `docs/custom-connector.md` (inkl. ACP-Mapping). **L5 Monorepo-Konsolidierung** abgeschlossen — ein Repo, Shared Types aus `@patchbay/core`, Extension-Split.
 
-**Phase L — noch offen:** **Agent-Chat-UI** im Dashboard + **Wintermute** postMessage (L6, inkl. `denyAgent`) sowie `/agents`-Capabilities (L7). **L5 Monorepo + Shared Types** ist in der Struktur umgesetzt.
+**Phase L — noch offen:** **Agent-Chat-UI** im Dashboard + **Wintermute** postMessage (L6, inkl. `denyAgent`) sowie `/agents`-Capabilities (L7).
 
-Details: `PLAN.md` Phase L, Provider-Tabelle oben, `TODO.md`
+Details: `PLAN.md` Phase L, Provider-Tabelle oben.
 
 ### Nächster Schritt (Phase L — Rest)
 
@@ -247,7 +247,6 @@ Bereits vorhanden im Backend: Live-Sessions über Server/Dashboard-APIs; die **C
 - **Agent-Sandboxing** — isolierte Umgebungen pro Agent-Session (Git-Worktrees oder Container)
 - **Workflow-Templates** — vordefinierte Abläufe (Plan → Implement → Test → Review)
 - **Weitere Connectors** — weitere ACP-kompatible Agents (`AcpConnector`), Community-HTTP, lokale Modelle (siehe Provider-Schichten)
-- **Monorepo-Konsolidierung** — Wintermute + Patchbay in ein Repository zusammenführen
 - **npm-Publish** — `@patchbay/cli` öffentlich verfügbar machen
 
 ---

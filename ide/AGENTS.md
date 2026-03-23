@@ -69,7 +69,7 @@ bash build.sh    # auto-detects OS/arch
 
 ## Current status
 
-Phases 1–5 + C + D + E + H + J + K complete. **Patchbay** has implemented Phase **L1–L4** (connector types, provider connectors including `HttpConnector` and **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), orchestrator session API with approve/deny, server routes and dashboard API proxies). **Wintermute:** Phase **L5** is now reflected in the monorepo layout and shared-type imports from `@patchbay/core`. Still needs **L6** — postMessage relay for `connectAgent`, `sendAgentInput`, `approveAgent`, **`denyAgent`**, `cancelAgent` — and **L7** `/agents` capabilities (see `../PLAN.md`, `../VISION.md`, `../TODO.md`).
+Phases 1–5 + C + D + E + H + J + K complete. **Patchbay** has implemented Phase **L1–L4** (connector types, provider connectors including `HttpConnector` and **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), orchestrator session API with approve/deny, server routes and dashboard API proxies). **Wintermute:** Phase **L5** is now reflected in the monorepo layout and shared-type imports from `@patchbay/core`. Still needs **L6** — postMessage relay for `connectAgent`, `sendAgentInput`, `approveAgent`, **`denyAgent`**, `cancelAgent` — and **L7** `/agents` capabilities (see `../PLAN.md`, `../VISION.md`).
 
 ## Monorepo (Phase L5 — done)
 
