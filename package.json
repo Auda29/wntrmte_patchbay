@@ -1,0 +1,21 @@
+{
+  "name": "wintermute-patchbay",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "packages/runners/*",
+    "ide/extensions/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:ide": "cd ide && bash build.sh",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run && npm run test:unit --workspace=wntrmte-workflow",
+    "test:e2e": "npm run test:e2e --workspace=dashboard"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.3",
+    "vitest": "^2.0.0"
+  }
+}

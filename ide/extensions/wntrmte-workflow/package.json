@@ -1,0 +1,216 @@
+{
+  "name": "wntrmte-workflow",
+  "displayName": "Wintermute Workflow",
+  "description": "Patchbay client — task tree, run logs, agent dispatch, and status for .project-agents workspaces",
+  "version": "0.2.0",
+  "publisher": "wintermute",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.110.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onStartupFinished",
+    "workspaceContains:.project-agents"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "wntrmte.taskTree",
+          "name": "Patchbay Tasks",
+          "when": "wntrmte.projectAgentsFound"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "wntrmte.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.setStatus",
+        "title": "Set Task Status",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.openRun",
+        "title": "Open Run Log",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.openDashboard",
+        "title": "Open Patchbay Dashboard",
+        "icon": "$(dashboard)",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.toggleDashboard",
+        "title": "Toggle Patchbay Dashboard",
+        "icon": "$(layout-sidebar-right)",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.refreshDashboardPanel",
+        "title": "Refresh Patchbay Panel",
+        "icon": "$(refresh)",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.openPatchbayDashboardExternal",
+        "title": "Open Patchbay Dashboard in Browser",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.startPatchbayDashboard",
+        "title": "Start Patchbay Dashboard",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.checkPatchbayCli",
+        "title": "Check Patchbay CLI",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.showPatchbayCliInstall",
+        "title": "Install Patchbay CLI",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.showOutput",
+        "title": "Open Patchbay Output",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.setDefaultRunner",
+        "title": "Set Default Runner",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.configureAuth",
+        "title": "Configure Runner Auth",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.configureClaude",
+        "title": "Configure Claude Auth",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.configureCodex",
+        "title": "Configure Codex Auth",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.configureGemini",
+        "title": "Configure Gemini Auth",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.setupWorkspace",
+        "title": "Initialize Patchbay Workspace",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.initializePatchbay",
+        "title": "Initialize Patchbay Workflow",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.dispatch",
+        "title": "Dispatch Task to Runner",
+        "icon": "$(play)",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.switchMode",
+        "title": "Switch Connection Mode",
+        "category": "Wintermute"
+      },
+      {
+        "command": "wntrmte.dispatchInTerminal",
+        "title": "Dispatch Task in Terminal",
+        "icon": "$(terminal)",
+        "category": "Wintermute"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "wntrmte.refresh",
+          "when": "view == wntrmte.taskTree",
+          "group": "navigation"
+        },
+        {
+          "command": "wntrmte.dispatch",
+          "when": "view == wntrmte.taskTree",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "wntrmte.setStatus",
+          "when": "viewItem == task",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Wintermute Workflow",
+      "properties": {
+        "wntrmte.workflow.projectAgentsDir": {
+          "type": "string",
+          "default": ".project-agents",
+          "description": "Path to the .project-agents directory (relative to workspace root)."
+        },
+        "wntrmte.workflow.dashboardUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL of the Patchbay Dashboard or standalone server for connected mode and the embedded webview (for example port 3000 or 3001)."
+        },
+        "wntrmte.workflow.mode": {
+          "type": "string",
+          "enum": ["auto", "offline", "connected"],
+          "default": "auto",
+          "description": "Connection mode. 'auto' probes the dashboard URL on activation."
+        },
+        "wntrmte.workflow.defaultRunner": {
+          "type": "string",
+          "enum": ["claude-code", "codex", "gemini", "cursor", "cursor-cli", "http", "bash"],
+          "default": "claude-code",
+          "description": "Default Patchbay runner for task dispatch."
+        },
+        "wntrmte.workflow.openDashboardOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically open the Patchbay panel when a Patchbay workspace is opened."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --external:vscode --sourcemap",
+    "compile:fresh": "npm ci && esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --external:vscode --sourcemap",
+    "watch": "esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --external:vscode --sourcemap --watch",
+    "test:unit": "vitest run",
+    "test:integration": "npm run compile && node ./test/runTest.js",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@patchbay/core": "*"
+  },
+  "devDependencies": {
+    "@vscode/test-electron": "^2.5.2",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.109.0",
+    "esbuild": "^0.24.0",
+    "eventsource": "^3.0.0",
+    "js-yaml": "^4.1.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.0.0"
+  }
+}

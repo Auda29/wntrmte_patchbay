@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(npm run:*)",
-      "Bash(npm install:*)",
-      "Bash(find /c/Users/wecke/Projects/wntrmte_patchbay/patchbay/packages -name \"*.ts\" -type f -exec grep -l \"installHint\\\\|install_hint\" {})"
-    ]
-  }
-}

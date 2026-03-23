@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+packages/*/node_modules/
+packages/runners/*/node_modules/
+ide/extensions/*/node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Dashboard / extension artifacts
+ide/extensions/*/.vscode-test/
+ide/extensions/*/out/
+ide/extensions/*/dist/
+
+# IDE build artifacts
+vscode/
+VSCode-*/
+*.vsix
+*.zip
+*.tar.gz
+
+# Local patches and generated assets
+patches/user/
+icon_v1.png
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
+# Logs
+*.log
+npm-debug.log*

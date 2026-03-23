@@ -53,14 +53,16 @@ All project state lives in `.project-agents/` — a git-versioned directory in y
 
 ---
 
-## Repositories
+## Monorepo
 
-| Repo | Description |
+| Path | Description |
 |---|---|
-| [`Auda29/patchbay`](https://github.com/Auda29/patchbay) | Orchestrator, Dashboard (Next.js), CLI, Runners, Agent Connectors |
-| [`Auda29/wntrmte`](https://github.com/Auda29/wntrmte) | VS Code build pipeline, Wintermute extension, Patchbay host |
+| `packages/` | Patchbay packages: core, dashboard, cli, server, runners |
+| `schema/` | Shared `.project-agents/` schema definitions |
+| `docs/` | Shared docs such as the custom connector guide |
+| `ide/` | Wintermute build pipeline, patches, icons, extensions, upstream metadata |
 
-This repo is the meta-workspace. It contains both as git submodules and holds the shared roadmap (`VISION.md`, `TODO.md`).
+This repo is the canonical monorepo and holds the shared roadmap (`VISION.md`, `TODO.md`) plus both codebases in one workspace.
 
 ---
 
@@ -75,16 +77,15 @@ See [`VISION.md`](./VISION.md) for the full roadmap and [`TODO.md`](./TODO.md) f
 ## Getting started
 
 ```bash
-# Clone with submodules
-git clone --recurse-submodules https://github.com/Auda29/wntrmte_patchbay
-
-# Or if already cloned
-git submodule update --init --recursive
+git clone https://github.com/Auda29/wntrmte_patchbay
+cd wntrmte_patchbay
+npm install
 ```
 
-Then follow the setup instructions in the individual repos:
-- [patchbay setup](https://github.com/Auda29/patchbay#readme)
-- [wntrmte setup](https://github.com/Auda29/wntrmte#readme)
+Then work from the unified workspace:
+- Patchbay packages live under `packages/`
+- Wintermute build assets live under `ide/`
+- The custom connector guide lives at `docs/custom-connector.md`
 
 ---
 

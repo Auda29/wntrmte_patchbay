@@ -228,15 +228,14 @@ Fast alle Konkurrenten sind closed source (ZenFlow, Cursor, T3 Code, Codex App) 
 
 **Phasen A–K (abgeschlossen):** Schema, Orchestrator, Dashboard, Runner, Extension, Multi-Turn (J), Projekt-Import (K) — siehe `TODO.md` / jeweilige `PLAN.md`.
 
-**Phase L — Patchbay-Backend (L1–L4, umgesetzt):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`**, **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`) und Dashboard-API-Routen, Doku `patchbay/docs/custom-connector.md` (inkl. ACP-Mapping).
+**Phase L — Patchbay-Backend (L1–L4, umgesetzt):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`**, **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`) und Dashboard-API-Routen, Doku `docs/custom-connector.md` (inkl. ACP-Mapping).
 
-**Phase L — noch offen:** Monorepo (L5: **Repo-Zusammenführung** + Shared Types aus `@patchbay/core`; `extension.ts`-Refactor in Wintermute ist **erledigt**), **Agent-Chat-UI** im Dashboard + **Wintermute** postMessage (L6, inkl. `denyAgent`), `/agents`-Capabilities (L7).
+**Phase L — noch offen:** **Agent-Chat-UI** im Dashboard + **Wintermute** postMessage (L6, inkl. `denyAgent`) sowie `/agents`-Capabilities (L7). **L5 Monorepo + Shared Types** ist in der Struktur umgesetzt.
 
-Details: `patchbay/PLAN.md` Phase L, Provider-Tabelle oben, `TODO.md`
+Details: `PLAN.md` Phase L, Provider-Tabelle oben, `TODO.md`
 
 ### Nächster Schritt (Phase L — Rest)
 
-- **L5** — Monorepo wntrmte + patchbay (Wintermute: `extension.ts` bereits in `CliManager` / `AuthService` / `TerminalOrchestrator` aufgeteilt)
 - **L6** — `AgentChat.tsx`, Dispatch-Erweiterung, Wintermute-Relay (`connectAgent`, `sendAgentInput`, `approveAgent`, **`denyAgent`**, `cancelAgent`)
 - **L7** — `/agents` um Connector-Capabilities erweitern; Batch-Fallback bleibt
 
@@ -255,18 +254,18 @@ Bereits vorhanden im Backend: Live-Sessions über Server/Dashboard-APIs; die **C
 
 ## Repo-Strategie
 
-**Aktuell: Zwei separate Repos** — mit `.project-agents/` als Integrationsvertrag.
+**Aktuell: Ein Monorepo** — mit `.project-agents/` als Integrationsvertrag und gemeinsamer Package-/IDE-Struktur.
 
 ```
 repo-root/
-├── wntrmte/                  ← VS Code Build-Pipeline + Host Extension
-├── patchbay/                 ← Orchestrator, Dashboard (die App), Runner, Connectors
+├── packages/                 ← Orchestrator, Dashboard, CLI, Runner, Connectors
+├── schema/                   ← .project-agents Schema-Definitionen
+├── docs/                     ← gemeinsame Dokumentation
+├── ide/                      ← VS Code Build-Pipeline, Host-Extensions, Patches
 └── wintermute-patchbay.code-workspace
 ```
 
-**Perspektivisch: Monorepo-Konsolidierung** — da beide Projekte ein Produkt sind, erzeugt die Trennung zunehmend Reibung (duplizierte Types, getrennte Git-History, Phase L koppelt sie noch enger). Migration geplant wenn Phase L stabil ist.
-
-Patchbay ist der Schema-Owner. `.project-agents/`-Struktur, JSON-Schemas und Types werden im Patchbay-Repo definiert. Wintermute implementiert eigene kompatible Interfaces — keine harte Code-Dependency.
+Patchbay bleibt der Schema-Owner. `.project-agents/`-Struktur, JSON-Schemas und Domain-Types werden im Monorepo unter `schema/` und `packages/core` definiert. Wintermute konsumiert diese Shared Types direkt über `@patchbay/core`.
 
 ---
 
