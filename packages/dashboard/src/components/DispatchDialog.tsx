@@ -268,7 +268,7 @@ export function DispatchDialog({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={isAwaitingInput ? 'Reply to Runner' : 'Dispatch Work'}>
+    <Modal open={open} onClose={onClose} title={isAwaitingInput ? 'Reply to Runner' : 'Dispatch Run'}>
       <div className="space-y-5">
         <div>
           <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-surface-400">Task</p>
@@ -312,7 +312,7 @@ export function DispatchDialog({
               >
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Play className="h-4 w-4" />
-                  Start Run
+                  Batch Run
                 </div>
                 <p className="mt-1 text-xs text-surface-400">
                   Batch execution via `patchbay run`.
