@@ -9,12 +9,15 @@ export class Orchestrator {
     private runners: Map<string, Runner>;
     private connectorRegistry: ConnectorRegistry;
     private activeSessions: Map<string, { session: AgentSession; run: Run; taskId: string }>;
+    private recentSessions: Map<string, { session: AgentSession; expiresAt: number }>;
+    private static readonly CLOSED_SESSION_TTL_MS = 60_000;
 
     constructor(targetRepoPath: string = process.cwd()) {
         this.store = new Store(targetRepoPath);
         this.runners = new Map();
         this.connectorRegistry = new ConnectorRegistry();
         this.activeSessions = new Map();
+        this.recentSessions = new Map();
     }
 
     registerRunner(id: string, runner: Runner) {
@@ -128,7 +131,22 @@ export class Orchestrator {
 
     /** Get an active session by ID */
     getSession(sessionId: string): AgentSession | undefined {
-        return this.activeSessions.get(sessionId)?.session;
+        const active = this.activeSessions.get(sessionId)?.session;
+        if (active) {
+            return active;
+        }
+
+        const recent = this.recentSessions.get(sessionId);
+        if (!recent) {
+            return undefined;
+        }
+
+        if (recent.expiresAt <= Date.now()) {
+            this.recentSessions.delete(sessionId);
+            return undefined;
+        }
+
+        return recent.session;
     }
 
     /** List all active session IDs */
@@ -138,8 +156,9 @@ export class Orchestrator {
 
     private bridgeSessionEvents(session: AgentSession, run: Run, task: Task): void {
         const logs: string[] = [];
+        let closedHandled = false;
 
-        session.on('event', (event: AgentEvent) => {
+        const handleEvent = (event: AgentEvent) => {
             switch (event.type) {
                 case 'agent:message':
                     logs.push(event.content);
@@ -180,17 +199,47 @@ export class Orchestrator {
                     run.status = 'failed';
                     run.endTime = new Date().toISOString();
                     run.summary = `Session failed: ${event.error}`;
+                    logs.push(`[error] ${event.error}`);
                     run.logs = logs;
                     task.status = 'open';
                     this.store.saveRun(run);
                     this.store.saveTask(task);
                     break;
             }
-        });
+        };
 
-        session.on('close', () => {
-            this.activeSessions.delete(session.sessionId);
-        });
+        for (const event of session.getBufferedEvents()) {
+            handleEvent(event);
+        }
+
+        session.on('event', handleEvent);
+
+        const handleClose = () => {
+            if (closedHandled) {
+                return;
+            }
+            closedHandled = true;
+            const entry = this.activeSessions.get(session.sessionId);
+            if (entry) {
+                this.activeSessions.delete(session.sessionId);
+                this.recentSessions.set(session.sessionId, {
+                    session,
+                    expiresAt: Date.now() + Orchestrator.CLOSED_SESSION_TTL_MS,
+                });
+                setTimeout(() => {
+                    const recent = this.recentSessions.get(session.sessionId);
+                    if (recent && recent.expiresAt <= Date.now()) {
+                        this.recentSessions.delete(session.sessionId);
+                    }
+                }, Orchestrator.CLOSED_SESSION_TTL_MS + 1000);
+            }
+        };
+
+        session.on('close', handleClose);
+
+        if (session.isClosed()) {
+            handleClose();
+        }
     }
 
     private preflight(taskId: string, runnerId: string): {

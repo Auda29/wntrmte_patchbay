@@ -68,6 +68,7 @@ class AcpSession extends BaseSession {
     private child: ChildProcess | null = null;
     private acpSessionId: string | null = null;
     private pendingPermissions = new Map<string, number | string>();
+    private stderrChunks: string[] = [];
 
     constructor(sessionId: string, connectorId: string, taskId: string) {
         super();
@@ -111,6 +112,10 @@ class AcpSession extends BaseSession {
             }
         });
 
+        child.stderr?.on('data', (chunk: Buffer) => {
+            this.stderrChunks.push(chunk.toString());
+        });
+
         child.on('error', (error: Error) => {
             this.setStatus('failed');
             this.emit({
@@ -132,11 +137,14 @@ class AcpSession extends BaseSession {
                         timestamp: new Date().toISOString(),
                     });
                 } else {
+                    const detail = this.stderrChunks.join('').trim();
                     this.setStatus('failed');
                     this.emit({
                         type: 'session:failed',
                         sessionId: this.sessionId,
-                        error: `Process exited with code ${code}`,
+                        error: detail
+                            ? `Process exited with code ${code}: ${detail}`
+                            : `Process exited with code ${code}`,
                         timestamp: new Date().toISOString(),
                     });
                 }

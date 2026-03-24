@@ -23,6 +23,16 @@ export function getAgentEvents(
 
     response.write(': connected\n\n');
 
+    for (const event of session.getBufferedEvents()) {
+        response.write(`data: ${JSON.stringify(event)}\n\n`);
+    }
+
+    if (session.isClosed()) {
+        response.write(`data: ${JSON.stringify({ type: 'stream:end' })}\n\n`);
+        response.end();
+        return;
+    }
+
     const onEvent = (event: AgentEvent) => {
         try {
             response.write(`data: ${JSON.stringify(event)}\n\n`);

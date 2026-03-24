@@ -27,6 +27,7 @@ class ClaudeCodeSession extends BaseSession {
     readonly taskId: string;
 
     private child: ChildProcess | null = null;
+    private stderrChunks: string[] = [];
 
     constructor(sessionId: string, connectorId: string, taskId: string) {
         super();
@@ -60,7 +61,7 @@ class ClaudeCodeSession extends BaseSession {
         });
 
         child.stderr?.on('data', (chunk: Buffer) => {
-            // stderr lines are informational, not NDJSON — ignore silently
+            this.stderrChunks.push(chunk.toString());
         });
 
         child.on('error', (error: Error) => {
@@ -84,11 +85,14 @@ class ClaudeCodeSession extends BaseSession {
                         timestamp: new Date().toISOString(),
                     });
                 } else {
+                    const detail = this.stderrChunks.join('').trim();
                     this.setStatus('failed');
                     this.emit({
                         type: 'session:failed',
                         sessionId: this.sessionId,
-                        error: `Process exited with code ${code}`,
+                        error: detail
+                            ? `Process exited with code ${code}: ${detail}`
+                            : `Process exited with code ${code}`,
                         timestamp: new Date().toISOString(),
                     });
                 }

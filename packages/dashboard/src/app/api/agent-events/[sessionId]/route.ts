@@ -17,6 +17,20 @@ export async function GET(
     start(controller) {
       controller.enqueue(new TextEncoder().encode(': connected\n\n'));
 
+      for (const event of session.getBufferedEvents()) {
+        controller.enqueue(
+          new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`)
+        );
+      }
+
+      if (session.isClosed()) {
+        controller.enqueue(
+          new TextEncoder().encode(`data: ${JSON.stringify({ type: 'stream:end' })}\n\n`)
+        );
+        controller.close();
+        return;
+      }
+
       const onEvent = (event: AgentEvent) => {
         try {
           controller.enqueue(

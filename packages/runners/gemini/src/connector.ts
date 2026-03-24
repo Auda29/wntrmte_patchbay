@@ -26,6 +26,7 @@ class GeminiSession extends BaseSession {
     readonly taskId: string;
 
     private child: ChildProcess | null = null;
+    private stderrChunks: string[] = [];
 
     constructor(sessionId: string, connectorId: string, taskId: string) {
         super();
@@ -54,6 +55,10 @@ class GeminiSession extends BaseSession {
             }
         });
 
+        child.stderr?.on('data', (chunk: Buffer) => {
+            this.stderrChunks.push(chunk.toString());
+        });
+
         child.on('error', (error: Error) => {
             this.setStatus('failed');
             this.emit({
@@ -75,11 +80,14 @@ class GeminiSession extends BaseSession {
                         timestamp: new Date().toISOString(),
                     });
                 } else {
+                    const detail = this.stderrChunks.join('').trim();
                     this.setStatus('failed');
                     this.emit({
                         type: 'session:failed',
                         sessionId: this.sessionId,
-                        error: `Process exited with code ${code}`,
+                        error: detail
+                            ? `Process exited with code ${code}: ${detail}`
+                            : `Process exited with code ${code}`,
                         timestamp: new Date().toISOString(),
                     });
                 }

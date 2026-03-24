@@ -104,6 +104,12 @@ export interface AgentSession {
     /** Unsubscribe */
     off(event: 'event', listener: (e: AgentEvent) => void): void;
     off(event: 'close', listener: () => void): void;
+
+    /** Replayable event buffer for clients attaching after a fast-failing session. */
+    getBufferedEvents(): AgentEvent[];
+
+    /** Whether the session has already emitted its terminal close signal. */
+    isClosed(): boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -177,6 +183,8 @@ export abstract class BaseSession implements AgentSession {
 
     private _status: SessionStatus = 'connecting';
     private listeners: EventListeners = { event: new Set(), close: new Set() };
+    private eventBuffer: AgentEvent[] = [];
+    private closed = false;
 
     get status(): SessionStatus {
         return this._status;
@@ -187,15 +195,28 @@ export abstract class BaseSession implements AgentSession {
     }
 
     protected emit(event: AgentEvent): void {
+        this.eventBuffer.push(event);
         for (const listener of this.listeners.event) {
             listener(event);
         }
     }
 
     protected emitClose(): void {
+        if (this.closed) {
+            return;
+        }
+        this.closed = true;
         for (const listener of this.listeners.close) {
             listener();
         }
+    }
+
+    getBufferedEvents(): AgentEvent[] {
+        return [...this.eventBuffer];
+    }
+
+    isClosed(): boolean {
+        return this.closed;
     }
 
     on(event: 'event', listener: (e: AgentEvent) => void): void;
