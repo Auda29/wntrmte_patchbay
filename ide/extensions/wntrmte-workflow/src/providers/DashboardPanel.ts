@@ -480,7 +480,7 @@ function getAuthCardCopy(status: SetupStatus): string {
     ? `<code>${escapeHtml(status.auth.missing.join(', '))}</code>`
     : 'none';
 
-  return `Configured: ${configured}. Missing: ${missing}. Wintermute starts the CLI flow, but Patchbay remains the source of truth for auth.`;
+  return `Configured: ${configured}. Missing: ${missing}. Wintermute starts the CLI flow for Patchbay-managed auth; Claude Code keeps using the user's local CLI session directly.`;
 }
 
 function escapeHtml(value: string): string {

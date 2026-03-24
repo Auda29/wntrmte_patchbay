@@ -1,7 +1,6 @@
 import {
     BaseConnector,
     BaseSession,
-    RunnerAuth,
     RunnerInput,
     AgentSession,
     AgentEvent,
@@ -149,10 +148,6 @@ export class ClaudeCodeConnector extends BaseConnector {
         toolUseReporting: true,
     };
 
-    constructor(private readonly auth?: RunnerAuth) {
-        super();
-    }
-
     async isAvailable(): Promise<boolean> {
         try {
             await execAsync('claude --version');
@@ -166,10 +161,6 @@ export class ClaudeCodeConnector extends BaseConnector {
         const sessionId = input.resumeSessionId ?? randomUUID();
         const prompt = input.resumeSessionId ? input.goal : buildPrompt(input);
         const isWin = process.platform === 'win32';
-
-        const env = this.auth?.mode === 'apiKey'
-            ? { ...process.env, ANTHROPIC_API_KEY: this.auth.apiKey }
-            : process.env;
 
         const args: string[] = [
             '--output-format', 'stream-json',
@@ -185,7 +176,7 @@ export class ClaudeCodeConnector extends BaseConnector {
 
         const child = spawn('claude', args, {
             cwd: input.repoPath,
-            env,
+            env: process.env,
             shell: isWin,
             stdio: ['pipe', 'pipe', 'pipe'],
         });

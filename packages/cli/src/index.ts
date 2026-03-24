@@ -10,6 +10,7 @@ import { bootstrapContextFiles, detectProjectMeta } from './init-meta';
 
 const program = new Command();
 const store = new Store();
+const CLI_AUTH_ONLY_RUNNERS = new Set(['claude-code']);
 
 function getOrchestrator() {
     return createConfiguredOrchestrator();
@@ -298,6 +299,13 @@ authCmd
     .option('--api-key <key>', 'API key for the runner')
     .option('--subscription', 'Use CLI subscription/login auth')
     .action((runner: string, opts: { apiKey?: string; subscription?: boolean }) => {
+        if (CLI_AUTH_ONLY_RUNNERS.has(runner)) {
+            console.error(
+                `Runner '${runner}' must use the official local CLI login. Patchbay does not store auth for it.`
+            );
+            process.exit(1);
+        }
+
         if (!opts.apiKey && !opts.subscription) {
             console.error('Specify --api-key <key> or --subscription.');
             process.exit(1);

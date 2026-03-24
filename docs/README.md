@@ -58,7 +58,7 @@ Together: write code on the left, orchestrate AI agents on the right. No app swi
 
 | Provider | Integration layer |
 |---|---|
-| **Claude Code** | CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON) |
+| **Claude Code** | CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON), using the user's existing local Claude Code login |
 | **OpenAI Codex** | `codex app-server` (JSON-RPC, stdio, Threads, server-side approvals) |
 | **Google Gemini** | CLI Headless mode (JSON/stdin) |
 | **Cursor / ACP** | Agent Client Protocol (JSON-RPC/stdio) |
@@ -187,7 +187,7 @@ Binary: `wntrmte` | Data folder: `.wntrmte`
 | `Wintermute: Dispatch Task to Runner` | Select task + runner, opens integrated terminal |
 | `Wintermute: Open Patchbay Dashboard` | Open dashboard as webview panel |
 | `Wintermute: Initialize Patchbay Workspace` | Run `patchbay init` for the current repo |
-| `Wintermute: Configure Runner Auth` | Set up authentication for Claude, Codex, Gemini |
+| `Wintermute: Configure Runner Auth` | Set up Patchbay-managed authentication for Codex, Gemini, Cursor CLI |
 | `Wintermute: Set Task Status` | Change task status from tree view |
 | `Wintermute: Switch Connection Mode` | Toggle auto/offline/connected |
 
@@ -216,7 +216,7 @@ patchbay init           # Initialize .project-agents/ in the current repo
 patchbay task create    # Create a new task
 patchbay run <task> <runner>   # Dispatch a task to a runner
 patchbay reply <task>   # Continue a multi-turn conversation
-patchbay auth           # Configure runner authentication
+patchbay auth           # Configure Patchbay-managed runner authentication
 patchbay serve          # Start the standalone HTTP server
 ```
 

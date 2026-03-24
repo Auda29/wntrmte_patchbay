@@ -404,10 +404,10 @@ Ablauf: Builder liefert Ergebnis → Reviewer kommentiert → Mensch bestätigt 
 - [x] `RunnerAuth` type (`subscription` | `apiKey`) in `packages/core/src/auth.ts`
 - [x] `loadConfig()` / `saveConfig()` — reads/writes `~/.patchbay/config.json` (chmod 600)
 - [x] `patchbay auth set/list/clear` CLI commands
-- [x] Claude Code + Cursor CLI runners accept `RunnerAuth` constructor param
+- [x] Cursor CLI runners accept `RunnerAuth` constructor param
 - [x] Codex Runner (`codex exec`) — new package `@patchbay/runner-codex`
 - [x] Gemini Runner (`gemini -p`) — new package `@patchbay/runner-gemini`
-- [x] All 7 runners registered with auth in CLI, Dashboard dispatch + agents routes
+- [x] Patchbay-managed auth wired for the runners that support it in CLI, Dashboard dispatch + agents routes
 - [x] wntrmte extension: PatchbayRunner replaces AgentRunner/ToolRegistry/ApprovalGate
 
 ### Phase 7a: Non-Interactive Init — DONE
@@ -758,7 +758,7 @@ Das Herzstück der neuen Produktvision (vgl. `./VISION.md`): Live Agent Interact
 
 **Strategie:** Das Patchbay Dashboard ist die primäre App-UI. Wintermute bettet es als Webview-Panel ein — Agent Chat, Streaming, Approvals laufen im Dashboard und sind automatisch in Wintermute verfügbar.
 
-**Provider-Integrations-Referenz** (Details: `./VISION.md`): Connectors mappen die jeweils beste Anbieter-Schicht auf einheitliche `AgentEvent`s — **Codex:** `codex app-server` (JSON-RPC, stdio, Threads, serverseitige Approvals); **Claude Code:** CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON), ergänzend Anthropic Agent SDK wo sinnvoll; **Gemini CLI:** Headless/JSON; **lokal:** HTTP (z. B. Ollama); **HTTP APIs:** OpenAI-kompatible Integrationen eher **Responses API**; **Cursor / ACP:** **`CursorAcpConnector`** bzw. generischer **`AcpConnector`** — [Agent Client Protocol](https://agentclientprotocol.com) (JSON-RPC/stdio, `cursor agent acp`); siehe `./custom-connector.md` § ACP.
+**Provider-Integrations-Referenz** (Details: `./VISION.md`): Connectors mappen die jeweils beste Anbieter-Schicht auf einheitliche `AgentEvent`s — **Codex:** `codex app-server` (JSON-RPC, stdio, Threads, serverseitige Approvals); **Claude Code:** CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON), Auth immer über die offizielle lokale Claude-Code-CLI-Session des Users, ergänzend Anthropic Agent SDK wo sinnvoll; **Gemini CLI:** Headless/JSON; **lokal:** HTTP (z. B. Ollama); **HTTP APIs:** OpenAI-kompatible Integrationen eher **Responses API**; **Cursor / ACP:** **`CursorAcpConnector`** bzw. generischer **`AcpConnector`** — [Agent Client Protocol](https://agentclientprotocol.com) (JSON-RPC/stdio, `cursor agent acp`); siehe `./custom-connector.md` § ACP.
 
 ### L1: Core Types — Provider-agnostisches Connector-Interface — DONE
 

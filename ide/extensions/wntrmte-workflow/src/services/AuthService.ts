@@ -11,6 +11,26 @@ export function getRunnerDescription(runnerId: string): string {
   return AVAILABLE_RUNNERS.find((entry) => entry.label === runnerId)?.description ?? runnerId;
 }
 
+export async function openClaudeCodeCliTerminal(
+  setupStatus: SetupStatus,
+  promptInstallCli: () => Promise<void>,
+): Promise<void> {
+  const terminal = vscode.window.createTerminal({
+    name: 'Claude Code CLI',
+    cwd: setupStatus.workspaceRoot,
+  });
+  terminal.show(true);
+
+  const action = await vscode.window.showInformationMessage(
+    'Claude Code auth must happen in the official Claude Code CLI. Use the opened terminal to run `claude` and complete login there.',
+    'Install Claude Code CLI'
+  );
+
+  if (action === 'Install Claude Code CLI') {
+    await promptInstallCli();
+  }
+}
+
 export async function openRunnerAuthTerminal(
   runnerId: string,
   setupStatus: SetupStatus,

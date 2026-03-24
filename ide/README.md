@@ -127,9 +127,10 @@ Mode is auto-detected (probes `localhost:3000`), or configurable via `wntrmte.wo
 - `Wintermute: Switch Connection Mode` — toggle auto/offline/connected
 - `Wintermute: Initialize Patchbay Workspace` — delegates to `patchbay init` CLI when available, falls back to local bootstrap
 - `Wintermute: Set Default Runner` — choose the default runner for dispatch
-- `Wintermute: Configure Runner Auth` — QuickPick missing runners, then choose `Subscription` or `API Key`
+- `Wintermute: Configure Runner Auth` — QuickPick missing Patchbay-managed auth runners, then choose `Subscription` or `API Key`
+- `Wintermute: Open Claude Code CLI` — opens a terminal so Claude login stays inside the official Claude Code CLI
 
-`Subscription` stores the auth mode in Patchbay and assumes the underlying runner CLI already has a valid login context. It does not open an OAuth or browser sign-in flow by itself.
+`Subscription` stores the auth mode in Patchbay and assumes the underlying runner CLI already has a valid login context. It does not open an OAuth or browser sign-in flow by itself. Claude Code is the exception: Wintermute/Patchbay do not store Claude auth and rely on the user's local Claude Code CLI session directly.
 
 ## Prerequisites
 
@@ -198,7 +199,7 @@ npm run test:watch  # watch mode
 - [x] Phase D: Terminal feedback for dispatch — `wntrmte.dispatchInTerminal` opens integrated terminal with live runner output; postMessage relay bridges embedded dashboard → extension host
 - [x] Phase E: Dashboard startup via `runTerminalPlanInBackground` — no separate OS window
 - [x] Phase H: `schedulePostRunCheck()` — after dispatch, detects missing runner binary (error dialog + "Install in Terminal") and `awaiting_input` status (InputBox reply prompt + `patchbay reply` terminal)
-- [x] Phase J: Multi-turn conversation support — `awaiting_input` in TaskStatus, `comment-discussion` icon in sidebar, reply flow via InputBox + terminal, dedicated auth commands (`configureClaude`, `configureCodex`, `configureGemini`), "Open Patchbay Output" button, `toggleTerminalPanel` status bar item
+- [x] Phase J: Multi-turn conversation support — `awaiting_input` in TaskStatus, `comment-discussion` icon in sidebar, reply flow via InputBox + terminal, provider setup commands (`configureClaude`, `configureCodex`, `configureGemini`), "Open Patchbay Output" button, `toggleTerminalPanel` status bar item
 - [x] Phase K: Project import — `wntrmte.initializePatchbay` command initializes `.project-agents/` for existing repos via `patchbay init --yes` with auto-detected metadata; "Initialize Patchbay Workflow" button in Start Panel
 
 ## Companion: Patchbay

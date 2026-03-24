@@ -96,7 +96,7 @@
       },
       {
         "command": "wntrmte.configureClaude",
-        "title": "Configure Claude Auth",
+        "title": "Open Claude Code CLI",
         "category": "Wintermute"
       },
       {

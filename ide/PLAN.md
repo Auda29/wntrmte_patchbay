@@ -300,7 +300,7 @@ Eigene Icons in `icons/` erstellen → `prepare_vscode.sh` kopiert sie in `resou
 **Runner-/Provider-Konfiguration:** größtenteils erledigt
 - [x] `defaultRunner` im Panel auswählbar — `Set Default Runner` Button + Command
 - [x] Auth-Konfiguration über Patchbay-CLI — `wntrmte.configureAuth` delegiert generisch
-- [x] Provider-spezifische Einstiege: `wntrmte.configureClaude`, `wntrmte.configureCodex`, `wntrmte.configureGemini` etc. als eigene Commands in `contributes.commands` registrieren, jeweils direkt `patchbay auth set <runner>` im Terminal öffnen — aktuell nur generischer QuickPick über `configureAuth`
+- [x] Provider-spezifische Einstiege: `wntrmte.configureClaude`, `wntrmte.configureCodex`, `wntrmte.configureGemini` etc. als eigene Commands in `contributes.commands` registrieren; Claude öffnet die offizielle Claude-Code-CLI statt Patchbay-Auth, die übrigen Runner nutzen `patchbay auth set <runner>`
 
 **Panel-Polish:** größtenteils erledigt
 - [x] Refresh Button — im Panel-Header

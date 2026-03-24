@@ -37,7 +37,11 @@ import {
   getSuggestedPatchbayRepoDir,
   hasPatchbayCliPackage,
 } from './services/CliManager';
-import { configureRunnerAuth, openRunnerAuthTerminal } from './services/AuthService';
+import {
+  configureRunnerAuth,
+  openClaudeCodeCliTerminal,
+  openRunnerAuthTerminal,
+} from './services/AuthService';
 
 const ALL_STATUSES: TaskStatus[] = ['open', 'in_progress', 'blocked', 'review', 'done'];
 const PANEL_AUTO_REFRESH_MS = 3000;
@@ -591,7 +595,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
       );
     }),
     vscode.commands.registerCommand('wntrmte.configureClaude', async () => {
-      await openRunnerAuthTerminal('claude-code', await getSetupStatus(), promptCliInstall);
+      await openClaudeCodeCliTerminal(await getSetupStatus(), promptCliInstall);
     }),
     vscode.commands.registerCommand('wntrmte.configureCodex', async () => {
       await openRunnerAuthTerminal('codex', await getSetupStatus(), promptCliInstall);

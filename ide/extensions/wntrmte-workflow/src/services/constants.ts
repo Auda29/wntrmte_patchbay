@@ -9,7 +9,6 @@ export const AVAILABLE_RUNNERS = [
 ];
 
 export const AUTH_RUNNERS = [
-  'claude-code',
   'codex',
   'gemini',
   'cursor-cli',

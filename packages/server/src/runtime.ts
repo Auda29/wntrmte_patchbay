@@ -17,12 +17,12 @@ export function createConfiguredOrchestrator(repoRoot: string = process.cwd()): 
     orchestrator.registerRunner('http', new HttpRunner());
     orchestrator.registerRunner('cursor', new CursorRunner());
     orchestrator.registerRunner('cursor-cli', new CursorCliRunner(r['cursor-cli']));
-    orchestrator.registerRunner('claude-code', new ClaudeCodeRunner(r['claude-code']));
+    orchestrator.registerRunner('claude-code', new ClaudeCodeRunner());
     orchestrator.registerRunner('codex', new CodexRunner(r['codex']));
     orchestrator.registerRunner('gemini', new GeminiRunner(r['gemini']));
 
     // Streaming Connectors
-    orchestrator.registerConnector(new ClaudeCodeConnector(r['claude-code']));
+    orchestrator.registerConnector(new ClaudeCodeConnector());
     orchestrator.registerConnector(new CodexConnector(r['codex']));
     orchestrator.registerConnector(new GeminiConnector(r['gemini']));
     orchestrator.registerConnector(new CursorAcpConnector());

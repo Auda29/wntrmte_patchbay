@@ -2,7 +2,7 @@ export { ClaudeCodeConnector } from './connector';
 export { parseStreamLine } from './stream-parser';
 export { buildPrompt } from '@patchbay/core';
 
-import { Runner, RunnerInput, RunnerOutput, RunnerAuth, buildPrompt } from '@patchbay/core';
+import { Runner, RunnerInput, RunnerOutput, buildPrompt } from '@patchbay/core';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { spawn } from 'child_process';
@@ -56,8 +56,6 @@ function extractQuestion(output: string): string {
 export class ClaudeCodeRunner implements Runner {
     name = 'claude-code';
 
-    constructor(private readonly auth?: RunnerAuth) {}
-
     async execute(input: RunnerInput): Promise<RunnerOutput> {
         const logs: string[] = [];
 
@@ -80,10 +78,6 @@ export class ClaudeCodeRunner implements Runner {
             : buildPrompt(input);
         logs.push(`Prompt built (${prompt.length} chars)`);
 
-        const env = this.auth?.mode === 'apiKey'
-            ? { ...process.env, ANTHROPIC_API_KEY: this.auth.apiKey }
-            : process.env;
-
         // Pre-assign a session ID so we can resume later.
         // If resuming an existing session, use --resume instead.
         const sessionId = input.resumeSessionId ?? randomUUID();
@@ -99,7 +93,7 @@ export class ClaudeCodeRunner implements Runner {
 
             const child = spawn(bin, args, {
                 cwd: input.repoPath,
-                env,
+                env: process.env,
                 shell: isWin,
                 stdio: ['pipe', 'pipe', 'pipe'],
             });
