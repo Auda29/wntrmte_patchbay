@@ -57,9 +57,10 @@ export function AgentChat({ sessionId, onClose }: AgentChatProps) {
       try {
         const parsed = JSON.parse(message.data) as Record<string, unknown>;
         const { id: _ignoredId, ...parsedWithoutId } = parsed;
+        const eventPayload = parsedWithoutId as Omit<SessionEventRecord, 'id'>;
         const event: ChatEvent = parsed.type === 'stream:end'
           ? { id: `stream-end-${Date.now()}`, type: 'stream:end' as const, sessionId, timestamp: new Date().toISOString() }
-          : { id: `live-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`, ...(parsedWithoutId as SessionEventRecord) } as ChatEvent;
+          : { id: `live-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`, ...eventPayload } as ChatEvent;
 
         setEvents((current) => {
           if (event.type === 'agent:message' && event.partial && current.at(-1)?.type === 'agent:message') {
