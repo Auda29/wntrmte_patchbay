@@ -56,7 +56,8 @@ export function AgentChat({ sessionId, onClose }: AgentChatProps) {
     source.onmessage = (message) => {
       try {
         const parsed = JSON.parse(message.data) as Record<string, unknown>;
-        const { id: _ignoredId, ...parsedWithoutId } = parsed;
+        const parsedWithoutId = { ...parsed };
+        delete parsedWithoutId.id;
         const eventPayload = parsedWithoutId as Omit<SessionEventRecord, 'id'>;
         const event: ChatEvent = parsed.type === 'stream:end'
           ? { id: `stream-end-${Date.now()}`, type: 'stream:end' as const, sessionId, timestamp: new Date().toISOString() }
