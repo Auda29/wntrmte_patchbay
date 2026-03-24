@@ -17,6 +17,21 @@ import { parseStreamLine } from './stream-parser';
 
 const execAsync = promisify(exec);
 
+function buildClaudeUserMessage(text: string): string {
+    return JSON.stringify({
+        type: 'user',
+        message: {
+            role: 'user',
+            content: [
+                {
+                    type: 'text',
+                    text,
+                },
+            ],
+        },
+    });
+}
+
 // ---------------------------------------------------------------------------
 // ClaudeCodeSession — live session wrapping a `claude` child process
 // ---------------------------------------------------------------------------
@@ -105,27 +120,17 @@ class ClaudeCodeSession extends BaseSession {
         if (!this.child?.stdin?.writable) {
             throw new Error('Session stdin is not writable');
         }
-        const msg = JSON.stringify({ type: 'user', content: text });
+        const msg = buildClaudeUserMessage(text);
         this.child.stdin.write(msg + '\n');
         this.setStatus('active');
     }
 
     async approve(permissionId: string): Promise<void> {
-        if (!this.child?.stdin?.writable) {
-            throw new Error('Session stdin is not writable');
-        }
-        const msg = JSON.stringify({ type: 'user', permission_response: 'allow', permission_id: permissionId });
-        this.child.stdin.write(msg + '\n');
-        this.setStatus('active');
+        throw new Error(`Claude Code stream-json input currently supports text-only user messages; permission approval ${permissionId} must happen in the official Claude CLI flow.`);
     }
 
     async deny(permissionId: string): Promise<void> {
-        if (!this.child?.stdin?.writable) {
-            throw new Error('Session stdin is not writable');
-        }
-        const msg = JSON.stringify({ type: 'user', permission_response: 'deny', permission_id: permissionId });
-        this.child.stdin.write(msg + '\n');
-        this.setStatus('active');
+        throw new Error(`Claude Code stream-json input currently supports text-only user messages; permission denial ${permissionId} must happen in the official Claude CLI flow.`);
     }
 
     async cancel(): Promise<void> {
@@ -147,7 +152,7 @@ export class ClaudeCodeConnector extends BaseConnector {
     readonly name = 'Claude Code';
     readonly capabilities: ConnectorCapabilities = {
         streaming: true,
-        permissions: true,
+        permissions: false,
         multiTurn: true,
         toolUseReporting: true,
     };
@@ -167,6 +172,7 @@ export class ClaudeCodeConnector extends BaseConnector {
         const isWin = process.platform === 'win32';
 
         const args: string[] = [
+            '-p',
             '--output-format', 'stream-json',
             '--input-format', 'stream-json',
             '--verbose',
@@ -189,7 +195,7 @@ export class ClaudeCodeConnector extends BaseConnector {
         session.attach(child);
 
         // Send the initial prompt via stdin (stream-json input format)
-        const initMessage = JSON.stringify({ type: 'user', content: prompt });
+        const initMessage = buildClaudeUserMessage(prompt);
         child.stdin!.write(initMessage + '\n');
 
         return session;
