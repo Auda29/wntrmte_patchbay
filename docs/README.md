@@ -205,6 +205,7 @@ Patchbay is the orchestration backend and dashboard. It manages tasks, dispatche
 |---|---|
 | `/` | Project overview — stats, goal, tech stack, recent runs |
 | `/tasks` | Kanban board with dispatch and status controls |
+| `/sessions` | Persistent connector sessions with full chat and event history |
 | `/runs` | Run history — logs, summaries, diffs, suggested next steps |
 | `/artifacts` | File browser — context files + diff references |
 | `/decisions` | Decision log with search and creation |
@@ -233,6 +234,9 @@ patchbay serve          # Start the standalone HTTP server
     DEC-001.md             # Architecture decisions
   runs/
     2026-03-21-run.json    # Who did what, when, with what result
+  sessions/
+    SESSION-abc123.json    # Persistent session metadata
+    SESSION-abc123.events.jsonl # Append-only normalized event history
   context/
     architecture.md        # Project context for agents
     conventions.md
@@ -248,7 +252,7 @@ See [`PLAN.md`](./PLAN.md) for the full Patchbay implementation roadmap.
 
 **Phases A-K complete** — schema, orchestrator, dashboard, 7 runner adapters, CLI, extension, multi-turn conversations, project import.
 
-**Phase L1-L5 complete** — agent connector architecture (core types, all provider connectors, orchestrator with approve/deny, server streaming endpoints, dashboard API routes), monorepo consolidation with shared types from `@patchbay/core`.
+**Phase L1-L8 first slice complete** — agent connector architecture plus persistent sessions, `/sessions` dashboard UX, and connector-first data flow in the UI.
 
 **Next: L6-L7** — Agent Chat UI in the dashboard + Wintermute postMessage relay (L6), `/agents` endpoint with connector capabilities (L7).
 

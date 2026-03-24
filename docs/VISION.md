@@ -31,7 +31,7 @@ Du siehst deine Tasks als Kanban. Du klickst auf einen, wählst "Start Session m
 
 Daneben läuft parallel ein zweiter Agent (Codex) an einem anderen Task. Du wechselst zwischen den Sessions wie zwischen Tabs. Alles in einem Fenster, neben deinem Code.
 
-Alles was passiert ist — Tasks, Runs, Decisions, Konversationen — liegt in `.project-agents/` im Repo. Git-versioniert, menschenlesbar, jederzeit nachvollziehbar. Kein Cloud-Backend, keine Datenbank, keine Telemetrie.
+Alles was passiert ist — Tasks, Runs, Decisions, Sessions, Event-Historien — liegt in `.project-agents/` im Repo. Git-versioniert, menschenlesbar, jederzeit nachvollziehbar. Kein Cloud-Backend, keine Datenbank, keine Telemetrie.
 
 ### Warum diese Architektur?
 
@@ -138,6 +138,9 @@ Das Datenformat ist ein zentraler Differentiator. Wo andere Tools State in SQLit
     DEC-001.md             ← Architektur-Entscheidung
   runs/
     2026-03-21-auth-run.json ← Wer hat was wann gemacht, mit welchem Ergebnis
+  sessions/
+    SESSION-abc123.json       ← Session-Metadaten
+    SESSION-abc123.events.jsonl ← append-only Event-Historie
   context/
     architecture.md        ← Projekt-Kontext für Agents
     conventions.md
@@ -230,16 +233,16 @@ Fast alle Konkurrenten sind closed source (ZenFlow, Cursor, T3 Code, Codex App) 
 
 **Phase L (L1–L7, umgesetzt):** `AgentConnector` / `AgentEvent`, Connectors für **Claude Code** (stream-json), **Codex** (`app-server`), **Gemini** (Headless), **`HttpConnector`**, **Cursor ACP** (`CursorAcpConnector` / `AcpConnector`), Orchestrator inkl. **approve/deny**, Server (`/connect`, SSE, `/agent-*`, `/connectors`), Dashboard-API-Routen, Agent Chat im Dashboard, Wintermute postMessage-Relay und `/agents`-Capabilities. Die Dashboard-Connector-Routen teilen sich eine Runtime-Orchestrator-Instanz, damit Live-Sessions über `/connect`, `/agent-input` und `/agent-events` konsistent bleiben.
 
-**Phase L8 (offen):** Vision-Alignment nach dem ersten End-to-End-Live-Chat-Stand. Ziel ist nicht mehr der Connector-Unterbau, sondern die konsequente Produktform.
+**Phase L8 (im ersten Schnitt umgesetzt):** Vision-Alignment nach dem ersten End-to-End-Live-Chat-Stand. Persistente Sessions unter `.project-agents/sessions/`, eigene `/sessions`-Fläche im Dashboard und connector-first Datenfluss im UI.
 
 Details: `./PLAN.md` Phase L, Provider-Tabelle oben.
 
 ### Nächster Schritt (Phase L8)
 
-- **Persistenter Agent Chat** — Konversationen und strukturierte Events nicht nur live streamen, sondern als dauerhafte primäre Oberfläche modellieren. Bevorzugte Richtung: eigenes Session-/Chat-Modell unter `.project-agents/` statt die Historie in `Run.logs` oder ein überladenes `Run`-Objekt zu drücken.
-- **Connector-first UX** — Connector-Sessions nicht nur als Modus im Runner-Dialog, sondern als eigene, chat-zentrierte Interaktion präsentieren
-- **Klarerer Connector-Vertrag im UI** — Connector-Auswahl und Capabilities konsequent über einen Connector-Layer statt über angereicherte Runner-Metadaten
-- **Doku-Disziplin** — Vision, Pläne und Implementierung ohne Drift weiterführen
+- **Persistenter Agent Chat** — Konversationen und strukturierte Events leben jetzt als eigenes Session-/Chat-Modell unter `.project-agents/sessions/`, nicht als primäre Historie in `Run.logs`.
+- **Connector-first UX** — Connector-Sessions haben mit `/sessions` eine eigene chat-zentrierte Hauptfläche im Dashboard.
+- **Klarerer Connector-Vertrag im UI** — Connector-Auswahl und Capabilities laufen primär über einen Connector-Layer statt über angereicherte Runner-Metadaten.
+- **Doku-Disziplin** — Vision, Pläne und Implementierung wurden für den ersten L8-Schnitt gemeinsam nachgezogen.
 
 ### Darüber hinaus (Evaluierung)
 

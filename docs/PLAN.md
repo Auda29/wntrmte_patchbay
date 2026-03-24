@@ -838,11 +838,11 @@ Wintermute + Patchbay liegen in **einem Monorepo** (Root-`package.json` mit Work
 
 Die erste komplette Live-Agent-Version ist funktional, weicht aber an einigen Produktkanten noch von der Zielvision ab.
 
-- [ ] Persistenter Agent Chat: strukturierte Event-/Message-Historie statt nur Live-Stream im lokalen Component-State (`AgentChat.tsx`, `packages/core/src/types.ts`)
+- [x] Persistenter Agent Chat: strukturierte Event-/Message-Historie statt nur Live-Stream im lokalen Component-State (`AgentChat.tsx`, `packages/core/src/types.ts`)
 - Empfehlung für den ersten L8-Schnitt:
   Chat-Historie nicht in `Run.logs` hineinpressen, sondern als eigenes persistentes Session-/Chat-Modell unter `.project-agents/` evaluieren.
   Bevorzugte Richtung: `sessions/<SESSION>.json` für Session-Metadaten plus `sessions/<SESSION>.events.jsonl` für append-only Event-Historie.
   `Run` bleibt dabei Ausführungsjournal und verweist nur auf `sessionId`, statt selbst die komplette Interaktionshistorie zu tragen.
-- [ ] Connector-first UX: Connector-Sessions als eigene chat-zentrierte Interaktion statt primär als Modus im runner-zentrierten `DispatchDialog.tsx`
-- [ ] Klarerer Connector-Vertrag im UI: Connector-Datenquelle konsequent modellieren, statt den Dialog primär über `/api/agents` mit ergänzten Connector-Metadaten zu speisen
-- [ ] Doku-Drift vermeiden: `docs/VISION.md`, `docs/PLAN.md` und `ide/PLAN.md` bei weiteren Phase-L-Änderungen gemeinsam fortschreiben
+- [x] Connector-first UX: Connector-Sessions als eigene chat-zentrierte Interaktion statt primär als Modus im runner-zentrierten `DispatchDialog.tsx`
+- [x] Klarerer Connector-Vertrag im UI: Connector-Datenquelle konsequent modellieren, statt den Dialog primär über `/api/agents` mit ergänzten Connector-Metadaten zu speisen
+- [x] Doku-Drift vermeiden: `docs/VISION.md`, `docs/PLAN.md` und `ide/PLAN.md` bei weiteren Phase-L-Änderungen gemeinsam fortschreiben

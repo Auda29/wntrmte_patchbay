@@ -5,6 +5,7 @@ import * as path from 'path';
 import { Orchestrator } from './orchestrator';
 import { Store } from './store';
 import type { Runner, RunnerInput, RunnerOutput } from './runner';
+import { BaseSession, type AgentConnector, type AgentEvent } from './connector';
 
 const makeCompletedRunner = (): Runner => ({
     name: 'mock',
@@ -61,10 +62,64 @@ const makeThrowingRunner = (delayMs: number): Runner => ({
     },
 });
 
+class MockInteractiveSession extends BaseSession {
+    readonly sessionId: string;
+    readonly connectorId: string;
+    readonly taskId: string;
+
+    constructor(sessionId: string, connectorId: string, taskId: string) {
+        super();
+        this.sessionId = sessionId;
+        this.connectorId = connectorId;
+        this.taskId = taskId;
+        this.setStatus('active');
+    }
+
+    emitEvent(event: AgentEvent) {
+        this.emit(event);
+    }
+
+    finish() {
+        this.emitClose();
+    }
+
+    async sendInput(_text: string): Promise<void> {}
+    async approve(_permissionId: string): Promise<void> {}
+    async deny(_permissionId: string): Promise<void> {}
+    async cancel(): Promise<void> {
+        this.setStatus('cancelled');
+        this.emitClose();
+    }
+}
+
+class MockConnector implements AgentConnector {
+    readonly id = 'mock-connector';
+    readonly name = 'Mock Connector';
+    readonly capabilities = {
+        streaming: true,
+        permissions: true,
+        multiTurn: true,
+        toolUseReporting: true,
+    };
+
+    lastSession: MockInteractiveSession | null = null;
+
+    async connect(input: RunnerInput) {
+        const session = new MockInteractiveSession(input.sessionId ?? 'fallback-session', this.id, input.taskId);
+        this.lastSession = session;
+        return session;
+    }
+
+    async isAvailable(): Promise<boolean> {
+        return true;
+    }
+}
+
 describe('Orchestrator', () => {
     let tmpDir: string;
     let store: Store;
     let orchestrator: Orchestrator;
+    let mockConnector: MockConnector;
 
     beforeEach(() => {
         tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'patchbay-orch-test-'));
@@ -75,6 +130,49 @@ describe('Orchestrator', () => {
         orchestrator.registerRunner('blocker', makeBlockedRunner());
         orchestrator.registerRunner('failer', makeFailedRunner());
         orchestrator.registerRunner('asker', makeAwaitingInputRunner());
+        mockConnector = new MockConnector();
+        orchestrator.registerConnector(mockConnector);
+    });
+
+    describe('connectAgent', () => {
+        it('creates a persistent session record and run before live events arrive', async () => {
+            const task = store.createTask('Interactive task', 'Goal');
+            const session = await orchestrator.connectAgent(task.id, 'mock-connector');
+            const savedSession = store.getSession(session.sessionId);
+            const savedRun = store.listRuns().find((run) => run.sessionId === session.sessionId);
+
+            expect(savedSession?.taskId).toBe(task.id);
+            expect(savedSession?.connectorId).toBe('mock-connector');
+            expect(savedSession?.status).toBe('running');
+            expect(savedRun?.runner).toBe('mock-connector');
+        });
+
+        it('persists connector events and updates session status', async () => {
+            const task = store.createTask('Needs answer', 'Goal');
+            const session = await orchestrator.connectAgent(task.id, 'mock-connector');
+            const now = new Date().toISOString();
+
+            mockConnector.lastSession?.emitEvent({
+                type: 'agent:question',
+                sessionId: session.sessionId,
+                question: 'Proceed?',
+                timestamp: now,
+            });
+            mockConnector.lastSession?.emitEvent({
+                type: 'session:completed',
+                sessionId: session.sessionId,
+                summary: 'Done',
+                timestamp: now,
+            });
+            mockConnector.lastSession?.finish();
+
+            const savedSession = store.getSession(session.sessionId);
+            const events = store.listSessionEvents(session.sessionId);
+
+            expect(savedSession?.status).toBe('completed');
+            expect(savedSession?.summary).toBe('Done');
+            expect(events.map((event) => event.type)).toEqual(['agent:question', 'session:completed']);
+        });
     });
 
     afterEach(() => {

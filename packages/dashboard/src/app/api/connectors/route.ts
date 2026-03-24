@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { getStore } from '@/lib/store';
 import { getOrchestrator } from '@/lib/runtime';
 
+const installHints: Record<string, string> = {
+  'claude-code': 'npm install -g @anthropic-ai/claude-code',
+  codex: 'npm install -g @openai/codex',
+  gemini: 'npm install -g @google/gemini-cli',
+  'cursor-cli': 'https://cursor.com/download',
+};
+
 export async function GET() {
     try {
         const store = getStore();
@@ -25,6 +32,7 @@ export async function GET() {
                     name: c.name,
                     capabilities: c.capabilities,
                     available,
+                    installHint: available ? undefined : installHints[c.id],
                 };
             })
         );

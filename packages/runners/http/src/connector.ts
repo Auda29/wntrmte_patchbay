@@ -307,7 +307,7 @@ export class HttpConnector extends BaseConnector {
     }
 
     async connect(input: RunnerInput): Promise<AgentSession> {
-        const sessionId = randomUUID();
+        const sessionId = input.sessionId ?? randomUUID();
         const prompt = buildPrompt(input);
 
         const session = new HttpSession(sessionId, this.id, input.taskId, this.config);

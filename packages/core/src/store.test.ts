@@ -25,6 +25,7 @@ describe('Store', () => {
             const base = path.join(tmpDir, '.project-agents');
             expect(fs.existsSync(path.join(base, 'tasks'))).toBe(true);
             expect(fs.existsSync(path.join(base, 'runs'))).toBe(true);
+            expect(fs.existsSync(path.join(base, 'sessions'))).toBe(true);
             expect(fs.existsSync(path.join(base, 'decisions'))).toBe(true);
             expect(fs.existsSync(path.join(base, 'agents'))).toBe(true);
             expect(fs.existsSync(path.join(base, 'context'))).toBe(true);
@@ -39,6 +40,61 @@ describe('Store', () => {
         it('throws if called twice', () => {
             store.init({ name: 'Test', goal: 'Test goal' });
             expect(() => store.init({ name: 'Test', goal: 'Test goal' })).toThrow();
+        });
+    });
+
+    // --------------------------------------------------------------- sessions
+
+    describe('sessions', () => {
+        beforeEach(() => {
+            store.init({ name: 'Test', goal: 'Test goal' });
+        });
+
+        it('saveSession and listSessions round-trip', () => {
+            const session = {
+                id: 'session-001',
+                taskId: 'TASK-001',
+                connectorId: 'claude-code',
+                status: 'running' as const,
+                startTime: new Date().toISOString(),
+                title: 'Investigate auth flow',
+                lastEventAt: new Date().toISOString(),
+            };
+            store.saveSession(session);
+            const sessions = store.listSessions();
+            expect(sessions).toHaveLength(1);
+            expect(sessions[0].id).toBe('session-001');
+        });
+
+        it('appendSessionEvent and listSessionEvents preserve append order', () => {
+            const now = new Date().toISOString();
+            store.saveSession({
+                id: 'session-ordered',
+                taskId: 'TASK-001',
+                connectorId: 'codex',
+                status: 'running',
+                startTime: now,
+                title: 'Ordered events',
+                lastEventAt: now,
+            });
+
+            store.appendSessionEvent({
+                id: 'event-1',
+                type: 'session:started',
+                sessionId: 'session-ordered',
+                timestamp: now,
+                connectorId: 'codex',
+            });
+            store.appendSessionEvent({
+                id: 'event-2',
+                type: 'agent:message',
+                sessionId: 'session-ordered',
+                timestamp: now,
+                content: 'hello',
+            });
+
+            const events = store.listSessionEvents('session-ordered');
+            expect(events.map((event) => event.id)).toEqual(['event-1', 'event-2']);
         });
     });
 

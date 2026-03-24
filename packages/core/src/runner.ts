@@ -6,6 +6,8 @@ export interface ConversationTurn {
 
 export interface RunnerInput {
     taskId: string;
+    /** Stable Patchbay session ID for interactive connectors. */
+    sessionId?: string;
     repoPath: string;
     branch: string;
     affectedFiles?: string[];

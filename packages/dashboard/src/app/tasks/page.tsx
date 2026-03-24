@@ -3,9 +3,9 @@ import useSWR from 'swr';
 import { Task } from '@patchbay/core';
 import { Play, ChevronDown, MessageSquare } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { NewTaskModal } from '@/components/NewTaskModal';
 import { DispatchDialog } from '@/components/DispatchDialog';
-import { AgentChat } from '@/components/AgentChat';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 const columns = [
@@ -18,10 +18,10 @@ const columns = [
 ] as const;
 
 export default function TasksBoard() {
+    const router = useRouter();
     const { data, error, isLoading, mutate } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
     const [showNewTask, setShowNewTask] = useState(false);
     const [dispatchTarget, setDispatchTarget] = useState<{ id: string; title: string; status: string } | null>(null);
-    const [chatTarget, setChatTarget] = useState<{ id: string; title: string } | null>(null);
     const [statusMenu, setStatusMenu] = useState<string | null>(null);
     const [statusMenuPlacement, setStatusMenuPlacement] = useState<'bottom' | 'top'>('bottom');
     const statusButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -133,9 +133,9 @@ export default function TasksBoard() {
                                                     </button>
                                                 )}
                                                 <button
-                                                    onClick={() => setChatTarget({ id: task.id, title: task.title })}
+                                                    onClick={() => router.push(`/sessions?taskId=${encodeURIComponent(task.id)}`)}
                                                     className="p-1.5 rounded-md text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors"
-                                                    title="Open agent chat"
+                                                    title="Open session history"
                                                 >
                                                     <MessageSquare className="w-3.5 h-3.5" />
                                                 </button>
@@ -200,18 +200,13 @@ export default function TasksBoard() {
                     onDispatched={(meta) => {
                         void mutate();
                         if (meta?.interactive) {
-                            setChatTarget({ id: dispatchTarget.id, title: dispatchTarget.title });
+                            if (meta.sessionId) {
+                                router.push(`/sessions?sessionId=${encodeURIComponent(meta.sessionId)}`);
+                            } else {
+                                router.push(`/sessions?taskId=${encodeURIComponent(dispatchTarget.id)}`);
+                            }
                         }
                     }}
-                />
-            )}
-
-            {chatTarget && (
-                <AgentChat
-                    open={!!chatTarget}
-                    taskId={chatTarget.id}
-                    taskTitle={chatTarget.title}
-                    onClose={() => setChatTarget(null)}
                 />
             )}
         </div>

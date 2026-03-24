@@ -2,6 +2,13 @@ import { Orchestrator } from '@patchbay/core';
 import { ServerResponse } from 'http';
 import { sendJson } from '../utils';
 
+const installHints: Record<string, string> = {
+    'claude-code': 'npm install -g @anthropic-ai/claude-code',
+    'codex': 'npm install -g @openai/codex',
+    'gemini': 'npm install -g @google/gemini-cli',
+    'cursor-cli': 'https://cursor.com/download',
+};
+
 export async function getConnectors(
     orchestrator: Orchestrator,
     response: ServerResponse
@@ -21,6 +28,7 @@ export async function getConnectors(
                 name: c.name,
                 capabilities: c.capabilities,
                 available,
+                installHint: available ? undefined : installHints[c.id],
             };
         })
     );

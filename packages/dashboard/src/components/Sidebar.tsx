@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { LayoutDashboard, CheckCircle2, PlayCircle, GitMerge, FileCode2, History } from 'lucide-react';
+import { LayoutDashboard, CheckCircle2, PlayCircle, GitMerge, FileCode2, History, MessageSquareMore } from 'lucide-react';
 
 export function Sidebar() {
     const navItems = [
         { label: 'Overview', icon: LayoutDashboard, href: '/' },
         { label: 'Tasks', icon: CheckCircle2, href: '/tasks' },
+        { label: 'Sessions', icon: MessageSquareMore, href: '/sessions' },
         { label: 'Runs', icon: PlayCircle, href: '/runs' },
         { label: 'Artifacts', icon: FileCode2, href: '/artifacts' },
         { label: 'Decisions', icon: GitMerge, href: '/decisions' },

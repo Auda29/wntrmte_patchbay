@@ -668,6 +668,6 @@ Gefunden beim manuellen Testen: nach dem Dispatch-Dialog gibt es kein Live-Feedb
 
 ### L8: Vision Alignment — Host-Anteil offen
 
-- [ ] Wintermute bleibt beim weiteren Ausbau strikt Host + Glue Layer; keine zweite Connector-/Chat-UX neben dem Dashboard aufbauen
-- [ ] Eingebettete Connector-Sessions weiter am Dashboard orientieren, damit eine künftige connector-first UX nicht wieder runner-zentriert in der Extension landet
-- [ ] Doku-Referenzen zu `../docs/VISION.md` und `../docs/PLAN.md` konsistent halten
+- [x] Wintermute bleibt beim weiteren Ausbau strikt Host + Glue Layer; keine zweite Connector-/Chat-UX neben dem Dashboard aufbauen
+- [x] Eingebettete Connector-Sessions weiter am Dashboard orientieren, damit eine künftige connector-first UX nicht wieder runner-zentriert in der Extension landet
+- [x] Doku-Referenzen zu `../docs/VISION.md` und `../docs/PLAN.md` konsistent halten

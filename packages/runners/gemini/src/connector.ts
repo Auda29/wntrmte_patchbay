@@ -152,7 +152,7 @@ export class GeminiConnector extends BaseConnector {
     }
 
     async connect(input: RunnerInput): Promise<AgentSession> {
-        const sessionId = randomUUID();
+        const sessionId = input.sessionId ?? randomUUID();
         const prompt = buildPrompt(input);
         const isWin = process.platform === 'win32';
 

@@ -50,6 +50,28 @@ export interface Run {
     turnIndex?: number;
 }
 
+export interface SessionRecord {
+    id: string;
+    taskId: string;
+    connectorId: string;
+    status: 'running' | 'awaiting_input' | 'completed' | 'failed' | 'cancelled';
+    startTime: string;
+    endTime?: string;
+    title: string;
+    conversationId?: string;
+    providerSessionId?: string;
+    lastEventAt: string;
+    summary?: string;
+}
+
+export interface SessionEventRecord {
+    id: string;
+    type: string;
+    sessionId: string;
+    timestamp: string;
+    [key: string]: unknown;
+}
+
 export interface Decision {
     id: string;
     title: string;

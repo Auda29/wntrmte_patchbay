@@ -1,0 +1,24 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Session",
+    "description": "Persistent metadata for an interactive agent session",
+    "type": "object",
+    "properties": {
+        "id": { "type": "string" },
+        "taskId": { "type": "string" },
+        "connectorId": { "type": "string" },
+        "status": {
+            "type": "string",
+            "enum": ["running", "awaiting_input", "completed", "failed", "cancelled"]
+        },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "title": { "type": "string" },
+        "conversationId": { "type": "string" },
+        "providerSessionId": { "type": "string" },
+        "lastEventAt": { "type": "string", "format": "date-time" },
+        "summary": { "type": "string" }
+    },
+    "required": ["id", "taskId", "connectorId", "status", "startTime", "title", "lastEventAt"],
+    "additionalProperties": false
+}

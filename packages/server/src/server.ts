@@ -5,6 +5,7 @@ import type { CreateServerOptions } from './types';
 import { getState } from './handlers/state';
 import { getTasks, getTask, postTask, patchTask } from './handlers/tasks';
 import { getRuns, postRun } from './handlers/runs';
+import { getSessions, getSession, getSessionEvents } from './handlers/sessions';
 import { getDecisions, postDecision } from './handlers/decisions';
 import { getAgents } from './handlers/agents';
 import { getArtifacts } from './handlers/artifacts';
@@ -68,6 +69,24 @@ export async function createServer(opts: CreateServerOptions): Promise<Server> {
             if (urlPath === '/runs') {
                 if (method === 'GET') { const { taskId } = parseQueryString(rawUrl); getRuns(store, response, taskId); return; }
                 if (method === 'POST') { await postRun(store, request, response); return; }
+            }
+
+            if (urlPath === '/sessions' && method === 'GET') {
+                const { taskId } = parseQueryString(rawUrl);
+                getSessions(store, response, taskId);
+                return;
+            }
+
+            const sessionMatch = urlPath.match(/^\/sessions\/([^/]+)$/);
+            if (sessionMatch && method === 'GET') {
+                getSession(store, response, sessionMatch[1]);
+                return;
+            }
+
+            const sessionEventsMatch = urlPath.match(/^\/sessions\/([^/]+)\/events$/);
+            if (sessionEventsMatch && method === 'GET') {
+                getSessionEvents(store, response, sessionEventsMatch[1]);
+                return;
             }
 
             if (urlPath === '/decisions') {

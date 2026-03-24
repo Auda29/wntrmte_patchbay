@@ -1,14 +1,14 @@
 import { Store } from './store';
 import { Runner, RunnerInput, RunnerOutput, ConversationTurn } from './runner';
 import { AgentConnector, AgentSession, AgentEvent, ConnectorRegistry } from './connector';
-import { Run, Task } from './types';
+import { Run, Task, SessionRecord, SessionEventRecord } from './types';
 import { randomUUID } from 'crypto';
 
 export class Orchestrator {
     private store: Store;
     private runners: Map<string, Runner>;
     private connectorRegistry: ConnectorRegistry;
-    private activeSessions: Map<string, { session: AgentSession; run: Run; taskId: string }>;
+    private activeSessions: Map<string, { session: AgentSession; run: Run; task: Task; sessionRecord: SessionRecord }>;
     private recentSessions: Map<string, { session: AgentSession; expiresAt: number }>;
     private static readonly CLOSED_SESSION_TTL_MS = 60_000;
 
@@ -64,6 +64,7 @@ export class Orchestrator {
         const contextFiles = this.store.getContextFiles();
 
         const startTimeLabel = new Date().toISOString();
+        const sessionId = randomUUID();
         const runId = `${startTimeLabel.replace(/[:.]/g, '-')}-${taskId}-${connectorId}`;
         const conversationId = randomUUID();
 
@@ -75,11 +76,26 @@ export class Orchestrator {
             status: 'running',
             conversationId,
             turnIndex: 0,
+            sessionId,
         };
         this.store.saveRun(run);
 
+        const sessionRecord: SessionRecord = {
+            id: sessionId,
+            taskId,
+            connectorId,
+            status: 'running',
+            startTime: startTimeLabel,
+            title: task.title,
+            conversationId,
+            providerSessionId: sessionId,
+            lastEventAt: startTimeLabel,
+        };
+        this.store.saveSession(sessionRecord);
+
         const input: RunnerInput = {
             taskId,
+            sessionId,
             repoPath,
             branch: 'main',
             affectedFiles: task.affectedFiles,
@@ -91,12 +107,19 @@ export class Orchestrator {
         const session = await connector.connect(input);
 
         // Track the active session
-        this.activeSessions.set(session.sessionId, { session, run, taskId });
+        this.activeSessions.set(session.sessionId, { session, run, task, sessionRecord });
         run.sessionId = session.sessionId;
         this.store.saveRun(run);
+        if (sessionRecord.id !== session.sessionId) {
+            sessionRecord.id = session.sessionId;
+            sessionRecord.providerSessionId = session.sessionId;
+            run.sessionId = session.sessionId;
+            this.store.saveSession(sessionRecord);
+            this.store.saveRun(run);
+        }
 
         // Bridge session events to store updates
-        this.bridgeSessionEvents(session, run, task);
+        this.bridgeSessionEvents(session, run, task, sessionRecord);
 
         return session;
     }
@@ -106,6 +129,7 @@ export class Orchestrator {
         const entry = this.activeSessions.get(sessionId);
         if (!entry) throw new Error(`No active session ${sessionId}`);
         await entry.session.sendInput(text);
+        this.markSessionRunning(entry);
     }
 
     /** Approve a pending permission request in an active session */
@@ -113,6 +137,7 @@ export class Orchestrator {
         const entry = this.activeSessions.get(sessionId);
         if (!entry) throw new Error(`No active session ${sessionId}`);
         await entry.session.approve(permissionId);
+        this.markSessionRunning(entry);
     }
 
     /** Deny a pending permission request in an active session */
@@ -120,6 +145,7 @@ export class Orchestrator {
         const entry = this.activeSessions.get(sessionId);
         if (!entry) throw new Error(`No active session ${sessionId}`);
         await entry.session.deny(permissionId);
+        this.markSessionRunning(entry);
     }
 
     /** Cancel / abort an active session */
@@ -127,6 +153,18 @@ export class Orchestrator {
         const entry = this.activeSessions.get(sessionId);
         if (!entry) throw new Error(`No active session ${sessionId}`);
         await entry.session.cancel();
+        const now = new Date().toISOString();
+        entry.run.status = 'cancelled';
+        entry.run.endTime = now;
+        entry.run.summary = entry.run.summary ?? 'Session cancelled.';
+        this.store.saveRun(entry.run);
+        entry.task.status = 'open';
+        this.store.saveTask(entry.task);
+        entry.sessionRecord.status = 'cancelled';
+        entry.sessionRecord.endTime = now;
+        entry.sessionRecord.lastEventAt = now;
+        entry.sessionRecord.summary = entry.sessionRecord.summary ?? 'Session cancelled.';
+        this.store.saveSession(entry.sessionRecord);
     }
 
     /** Get an active session by ID */
@@ -154,35 +192,51 @@ export class Orchestrator {
         return Array.from(this.activeSessions.keys());
     }
 
-    private bridgeSessionEvents(session: AgentSession, run: Run, task: Task): void {
+    private bridgeSessionEvents(session: AgentSession, run: Run, task: Task, sessionRecord: SessionRecord): void {
         const logs: string[] = [];
         let closedHandled = false;
 
         const handleEvent = (event: AgentEvent) => {
+            this.appendSessionEvent(event);
+            sessionRecord.lastEventAt = event.timestamp;
+
             switch (event.type) {
+                case 'session:started':
+                    sessionRecord.status = 'running';
+                    this.store.saveSession(sessionRecord);
+                    break;
+
                 case 'agent:message':
                     logs.push(event.content);
+                    this.store.saveSession(sessionRecord);
                     break;
 
                 case 'agent:tool_use':
                     if (event.status === 'started') {
                         logs.push(`[tool] ${event.toolName}`);
                     }
+                    this.store.saveSession(sessionRecord);
                     break;
 
                 case 'agent:question':
                     run.status = 'awaiting_input';
                     run.question = event.question;
                     task.status = 'awaiting_input';
+                    sessionRecord.status = 'awaiting_input';
+                    sessionRecord.summary = event.question;
                     this.store.saveRun(run);
                     this.store.saveTask(task);
+                    this.store.saveSession(sessionRecord);
                     break;
 
                 case 'agent:permission':
                     run.status = 'awaiting_input';
                     task.status = 'awaiting_input';
+                    sessionRecord.status = 'awaiting_input';
+                    sessionRecord.summary = event.description;
                     this.store.saveRun(run);
                     this.store.saveTask(task);
+                    this.store.saveSession(sessionRecord);
                     break;
 
                 case 'session:completed':
@@ -191,8 +245,12 @@ export class Orchestrator {
                     run.summary = event.summary ?? (logs.join('').slice(0, 500) || 'Session completed.');
                     run.logs = logs;
                     task.status = 'review';
+                    sessionRecord.status = 'completed';
+                    sessionRecord.endTime = run.endTime;
+                    sessionRecord.summary = run.summary;
                     this.store.saveRun(run);
                     this.store.saveTask(task);
+                    this.store.saveSession(sessionRecord);
                     break;
 
                 case 'session:failed':
@@ -202,8 +260,12 @@ export class Orchestrator {
                     logs.push(`[error] ${event.error}`);
                     run.logs = logs;
                     task.status = 'open';
+                    sessionRecord.status = 'failed';
+                    sessionRecord.endTime = run.endTime;
+                    sessionRecord.summary = run.summary;
                     this.store.saveRun(run);
                     this.store.saveTask(task);
+                    this.store.saveSession(sessionRecord);
                     break;
             }
         };
@@ -240,6 +302,26 @@ export class Orchestrator {
         if (session.isClosed()) {
             handleClose();
         }
+    }
+
+    private appendSessionEvent(event: AgentEvent): void {
+        const record: SessionEventRecord = {
+            id: randomUUID(),
+            ...event,
+        };
+        this.store.appendSessionEvent(record);
+    }
+
+    private markSessionRunning(entry: { run: Run; task: Task; sessionRecord: SessionRecord }): void {
+        const now = new Date().toISOString();
+        entry.run.status = 'running';
+        entry.run.question = undefined;
+        this.store.saveRun(entry.run);
+        entry.task.status = 'in_progress';
+        this.store.saveTask(entry.task);
+        entry.sessionRecord.status = 'running';
+        entry.sessionRecord.lastEventAt = now;
+        this.store.saveSession(entry.sessionRecord);
     }
 
     private preflight(taskId: string, runnerId: string): {

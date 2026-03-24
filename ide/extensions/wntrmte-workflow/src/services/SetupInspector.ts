@@ -314,12 +314,14 @@ export async function createPatchbayWorkspace(workspaceRoot: string, agentsDirNa
   const agentsDir = path.join(workspaceRoot, agentsDirName);
   const tasksDir = path.join(agentsDir, 'tasks');
   const runsDir = path.join(agentsDir, 'runs');
+  const sessionsDir = path.join(agentsDir, 'sessions');
   const agentProfilesDir = path.join(agentsDir, 'agents');
   const decisionsDir = path.join(agentsDir, 'decisions');
   const contextDir = path.join(agentsDir, 'context');
 
   await fsPromises.mkdir(tasksDir, { recursive: true });
   await fsPromises.mkdir(runsDir, { recursive: true });
+  await fsPromises.mkdir(sessionsDir, { recursive: true });
   await fsPromises.mkdir(agentProfilesDir, { recursive: true });
   await fsPromises.mkdir(decisionsDir, { recursive: true });
   await fsPromises.mkdir(contextDir, { recursive: true });

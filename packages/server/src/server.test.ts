@@ -85,4 +85,38 @@ describe('createServer', () => {
             await new Promise<void>((resolve, reject) => server.close((err) => err ? reject(err) : resolve()));
         }
     });
+
+    it('serves persistent sessions via GET /sessions', async () => {
+        const store = new Store(tmpDir);
+        store.saveSession({
+            id: 'session-001',
+            taskId: 'TASK-1',
+            connectorId: 'claude-code',
+            status: 'completed',
+            startTime: '2026-03-24T10:00:00.000Z',
+            endTime: '2026-03-24T10:05:00.000Z',
+            title: 'Investigate list repo items',
+            lastEventAt: '2026-03-24T10:05:00.000Z',
+        });
+
+        const { createServer } = await import('./server');
+        const server = await createServer({ repoRoot: tmpDir });
+
+        try {
+            await new Promise<void>((resolve) => server.listen(0, resolve));
+            const address = server.address() as AddressInfo;
+
+            const response = await fetch(`http://127.0.0.1:${address.port}/sessions`);
+
+            expect(response.status).toBe(200);
+            expect(await response.json()).toEqual([
+                expect.objectContaining({
+                    id: 'session-001',
+                    connectorId: 'claude-code',
+                }),
+            ]);
+        } finally {
+            await new Promise<void>((resolve, reject) => server.close((err) => err ? reject(err) : resolve()));
+        }
+    });
 });

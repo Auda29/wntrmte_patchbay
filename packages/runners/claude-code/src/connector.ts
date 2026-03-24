@@ -162,7 +162,7 @@ export class ClaudeCodeConnector extends BaseConnector {
     }
 
     async connect(input: RunnerInput): Promise<AgentSession> {
-        const sessionId = input.resumeSessionId ?? randomUUID();
+        const sessionId = input.sessionId ?? input.resumeSessionId ?? randomUUID();
         const prompt = input.resumeSessionId ? input.goal : buildPrompt(input);
         const isWin = process.platform === 'win32';
 

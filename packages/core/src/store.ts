@@ -4,7 +4,7 @@ import * as yaml from 'yaml';
 import { randomUUID } from 'crypto';
 import Ajv, { ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
-import { Project, Task, Run, Decision, AgentProfile } from './types';
+import { Project, Task, Run, Decision, SessionRecord, SessionEventRecord } from './types';
 
 function slugifyTaskTitle(title: string): string {
     const slug = title
@@ -23,6 +23,8 @@ export class Store {
     private validateTask: ValidateFunction;
     private validateRun: ValidateFunction;
     private validateDecision: ValidateFunction;
+    private validateSession: ValidateFunction;
+    private validateSessionEvent: ValidateFunction;
 
     constructor(targetRepoPath: string = process.cwd()) {
         this.baseDir = path.join(targetRepoPath, '.project-agents');
@@ -51,6 +53,8 @@ export class Store {
         this.validateTask = this.ajv.compile(loadSchema('task.schema.json'));
         this.validateRun = this.ajv.compile(loadSchema('run.schema.json'));
         this.validateDecision = this.ajv.compile(loadSchema('decision.schema.json'));
+        this.validateSession = this.ajv.compile(loadSchema('session.schema.json'));
+        this.validateSessionEvent = this.ajv.compile(loadSchema('session-event.schema.json'));
     }
 
     get isInitialized(): boolean {
@@ -68,6 +72,7 @@ export class Store {
         fs.mkdirSync(path.join(this.baseDir, 'tasks'));
         fs.mkdirSync(path.join(this.baseDir, 'decisions'));
         fs.mkdirSync(path.join(this.baseDir, 'runs'));
+        fs.mkdirSync(path.join(this.baseDir, 'sessions'));
         fs.mkdirSync(path.join(this.baseDir, 'context'));
 
         // Write initial project file
@@ -135,6 +140,68 @@ export class Store {
         }
         const runsDir = path.join(this.baseDir, 'runs');
         fs.writeFileSync(path.join(runsDir, `${run.id}.json`), JSON.stringify(run, null, 2));
+    }
+
+    saveSession(session: SessionRecord) {
+        if (!this.validateSession(session)) {
+            const sessionId = (session as any).id || 'unknown';
+            console.error(`Session ${sessionId} schema validation errors:`, this.ajv.errorsText(this.validateSession.errors));
+            throw new Error(`Session ${sessionId} fails schema validation`);
+        }
+        const sessionsDir = path.join(this.baseDir, 'sessions');
+        fs.mkdirSync(sessionsDir, { recursive: true });
+        fs.writeFileSync(path.join(sessionsDir, `${session.id}.json`), JSON.stringify(session, null, 2));
+    }
+
+    getSession(id: string): SessionRecord | null {
+        const sessionsDir = path.join(this.baseDir, 'sessions');
+        const sessionFile = path.join(sessionsDir, `${id}.json`);
+        if (!fs.existsSync(sessionFile)) {
+            return null;
+        }
+
+        return JSON.parse(fs.readFileSync(sessionFile, 'utf-8')) as SessionRecord;
+    }
+
+    listSessions(taskId?: string): SessionRecord[] {
+        const sessionsDir = path.join(this.baseDir, 'sessions');
+        if (!fs.existsSync(sessionsDir)) return [];
+
+        let sessions = fs.readdirSync(sessionsDir)
+            .filter(f => f.endsWith('.json') && !f.endsWith('.events.jsonl'))
+            .map(f => JSON.parse(fs.readFileSync(path.join(sessionsDir, f), 'utf-8')) as SessionRecord);
+        if (taskId) {
+            sessions = sessions.filter((session) => session.taskId === taskId);
+        }
+        return sessions;
+    }
+
+    appendSessionEvent(event: SessionEventRecord) {
+        if (!this.validateSessionEvent(event)) {
+            const eventId = (event as any).id || 'unknown';
+            console.error(`Session event ${eventId} schema validation errors:`, this.ajv.errorsText(this.validateSessionEvent.errors));
+            throw new Error(`Session event ${eventId} fails schema validation`);
+        }
+
+        const sessionsDir = path.join(this.baseDir, 'sessions');
+        fs.mkdirSync(sessionsDir, { recursive: true });
+        fs.appendFileSync(
+            path.join(sessionsDir, `${event.sessionId}.events.jsonl`),
+            JSON.stringify(event) + '\n',
+            'utf-8'
+        );
+    }
+
+    listSessionEvents(sessionId: string): SessionEventRecord[] {
+        const sessionsDir = path.join(this.baseDir, 'sessions');
+        const eventsFile = path.join(sessionsDir, `${sessionId}.events.jsonl`);
+        if (!fs.existsSync(eventsFile)) return [];
+
+        return fs.readFileSync(eventsFile, 'utf-8')
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => JSON.parse(line) as SessionEventRecord);
     }
 
     listRuns(taskId?: string): Run[] {
