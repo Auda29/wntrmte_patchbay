@@ -40,6 +40,9 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 
+# Test workspace
+WintermuteTest/
+
 # Logs
 *.log
 npm-debug.log*

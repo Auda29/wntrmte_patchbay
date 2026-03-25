@@ -25,7 +25,8 @@
       "Bash(npx tsc:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:code.visualstudio.com)"
+      "WebFetch(domain:code.visualstudio.com)",
+      "Bash(grep -E '\\\\.tsx$|\\\\.ts$')"
     ]
   }
 }

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
 import { Bot, Check, Send, Square, User, X } from 'lucide-react';
 import type { SessionEventRecord, SessionRecord } from '@patchbay/core';
+import { Markdown } from '@/components/Markdown';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -37,67 +38,91 @@ export function AgentChat({ sessionId, onClose }: AgentChatProps) {
   const { data: storedEvents, mutate: mutateEvents } = useSWR<ChatEvent[]>(
     sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/events` : null,
     fetcher,
+    { refreshInterval: session?.status === 'running' || session?.status === 'awaiting_input' ? 5000 : 0 },
   );
 
   useEffect(() => {
     setEvents(storedEvents ?? []);
   }, [storedEvents, sessionId]);
 
-  useEffect(() => {
-    if (!sessionId || !session) {
-      return;
-    }
+  const isSessionActive = session?.status === 'running' || session?.status === 'awaiting_input';
+  const mutateSessionRef = useRef(mutateSession);
+  const mutateEventsRef = useRef(mutateEvents);
+  mutateSessionRef.current = mutateSession;
+  mutateEventsRef.current = mutateEvents;
 
-    if (session.status !== 'running' && session.status !== 'awaiting_input') {
-      return;
-    }
+  const handleSseMessage = useCallback((message: MessageEvent, sid: string) => {
+    try {
+      const parsed = JSON.parse(message.data) as Record<string, unknown>;
+      const parsedWithoutId = { ...parsed };
+      delete parsedWithoutId.id;
+      const eventPayload = parsedWithoutId as Omit<SessionEventRecord, 'id'>;
+      const event: ChatEvent = parsed.type === 'stream:end'
+        ? { id: `stream-end-${Date.now()}`, type: 'stream:end' as const, sessionId: sid, timestamp: new Date().toISOString() }
+        : { id: `live-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`, ...eventPayload } as ChatEvent;
 
-    const source = new EventSource(`/api/agent-events/${encodeURIComponent(sessionId)}`);
-    source.onmessage = (message) => {
-      try {
-        const parsed = JSON.parse(message.data) as Record<string, unknown>;
-        const parsedWithoutId = { ...parsed };
-        delete parsedWithoutId.id;
-        const eventPayload = parsedWithoutId as Omit<SessionEventRecord, 'id'>;
-        const event: ChatEvent = parsed.type === 'stream:end'
-          ? { id: `stream-end-${Date.now()}`, type: 'stream:end' as const, sessionId, timestamp: new Date().toISOString() }
-          : { id: `live-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`, ...eventPayload } as ChatEvent;
-
-        setEvents((current) => {
-          if (event.type === 'agent:message' && event.partial && current.at(-1)?.type === 'agent:message') {
-            const previous = current.at(-1);
-            if (previous?.type === 'agent:message') {
-              return [
-                ...current.slice(0, -1),
-                {
-                  ...previous,
-                  content: event.content,
-                  partial: true,
-                  timestamp: event.timestamp,
-                },
-              ];
-            }
+      setEvents((current) => {
+        if (event.type === 'agent:message' && event.partial && current.at(-1)?.type === 'agent:message') {
+          const previous = current.at(-1);
+          if (previous?.type === 'agent:message') {
+            return [
+              ...current.slice(0, -1),
+              {
+                ...previous,
+                content: event.content,
+                partial: true,
+                timestamp: event.timestamp,
+              },
+            ];
           }
-          return [...current, event as ChatEvent];
-        });
-
-        if (event.type === 'session:completed' || event.type === 'session:failed' || event.type === 'stream:end') {
-          void mutateSession();
-          void mutateEvents();
         }
-      } catch {
-        // Ignore malformed SSE payloads.
+        return [...current, event as ChatEvent];
+      });
+
+      if (event.type === 'session:completed' || event.type === 'session:failed' || event.type === 'stream:end') {
+        void mutateSessionRef.current();
+        void mutateEventsRef.current();
       }
+    } catch {
+      // Ignore malformed SSE payloads.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!sessionId || !isSessionActive) {
+      return;
+    }
+
+    let disposed = false;
+    let source: EventSource | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = () => {
+      if (disposed) {
+        return;
+      }
+
+      source = new EventSource(`/api/agent-events/${encodeURIComponent(sessionId)}`);
+      source.onmessage = (msg) => handleSseMessage(msg, sessionId);
+      source.onerror = () => {
+        source?.close();
+        source = null;
+        if (!disposed) {
+          retryTimer = setTimeout(connect, 3000);
+        }
+      };
     };
 
-    source.onerror = () => {
-      source.close();
-    };
+    connect();
 
     return () => {
-      source.close();
+      disposed = true;
+      source?.close();
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
     };
-  }, [mutateEvents, mutateSession, session, sessionId]);
+  }, [handleSseMessage, isSessionActive, sessionId]);
 
   useEffect(() => {
     if (!scrollerRef.current) {
@@ -107,7 +132,7 @@ export function AgentChat({ sessionId, onClose }: AgentChatProps) {
     scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
   }, [events]);
 
-  const hasLiveSession = session?.status === 'running' || session?.status === 'awaiting_input';
+  const hasLiveSession = isSessionActive;
 
   const statusCopy = useMemo(() => {
     switch (session?.status) {
@@ -228,7 +253,7 @@ export function AgentChat({ sessionId, onClose }: AgentChatProps) {
                     <Bot className="h-4 w-4" />
                   </div>
                   <div className="glass-card flex-1 rounded-xl border border-surface-800/70 p-4">
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-surface-100">{event.content}</p>
+                    <Markdown className="text-sm text-surface-100">{event.content}</Markdown>
                   </div>
                 </div>
               );
@@ -282,7 +307,7 @@ export function AgentChat({ sessionId, onClose }: AgentChatProps) {
             if (event.type === 'session:completed') {
               return (
                 <div key={event.id} className="rounded-xl border border-green-900/50 bg-green-950/20 px-4 py-4 text-sm text-green-100">
-                  {event.summary ?? 'Session completed.'}
+                  <Markdown>{event.summary ?? 'Session completed.'}</Markdown>
                 </div>
               );
             }

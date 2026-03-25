@@ -839,8 +839,28 @@ export function activate(ctx: vscode.ExtensionContext): void {
         .getConfiguration('wntrmte.workflow')
         .get<boolean>('openDashboardOnStartup', true);
 
-      if (openOnStartup) {
-        await refreshPanel(true);
+      if (!openOnStartup) {
+        return;
+      }
+
+      const status = await refreshPanel(true);
+
+      if (
+        status.hasWorkspace
+        && status.workspaceReady
+        && status.cli.available
+        && !status.dashboard.reachable
+      ) {
+        const startPlan = getDashboardStartPlan(
+          status.workspaceRoot,
+          status.dashboard.url,
+          ctx.extensionUri.fsPath,
+        );
+
+        if (startPlan) {
+          runTerminalPlanInBackground(startPlan);
+          scheduleDelayedPanelRefresh(3000, 6000, 12000);
+        }
       }
     } catch (error) {
       void vscode.window.showErrorMessage(`Failed to initialize Wintermute Workflow: ${String(error)}`);

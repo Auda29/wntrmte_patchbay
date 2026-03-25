@@ -2,6 +2,7 @@
 import useSWR from 'swr';
 import { Run } from '@patchbay/core';
 import { TerminalSquare, Clock, CheckCircle2, XCircle, AlertCircle, FileCode2, AlertTriangle, Lightbulb } from 'lucide-react';
+import { Markdown } from '@/components/Markdown';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -73,7 +74,7 @@ export default function RunsViewer() {
                                 {run.summary && (
                                     <div>
                                         <h4 className="text-xs font-medium text-surface-500 uppercase tracking-wider mb-2">Summary</h4>
-                                        <p className="text-sm text-surface-200 leading-relaxed">{run.summary}</p>
+                                        <Markdown className="text-sm text-surface-200 leading-relaxed">{run.summary}</Markdown>
                                     </div>
                                 )}
 
@@ -91,7 +92,7 @@ export default function RunsViewer() {
                                         <h4 className="text-xs font-medium text-surface-500 uppercase tracking-wider mb-2">Logs</h4>
                                         <div className="bg-surface-950 rounded-lg p-4 font-mono text-xs text-surface-300 overflow-x-auto border border-surface-900 max-h-96 overflow-y-auto">
                                             {run.logs.map((log, i) => (
-                                                <div key={i} className="mb-2 whitespace-pre-wrap">{log}</div>
+                                                <Markdown key={i} className="mb-2">{log}</Markdown>
                                             ))}
                                         </div>
                                     </div>
