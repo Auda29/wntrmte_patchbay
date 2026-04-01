@@ -46,7 +46,14 @@ class CodexSession extends BaseSession {
     private child: ChildProcess | null = null;
     private stderrChunks: string[] = [];
     private pendingRequests = new Map<number | string, string>();
-    private pendingFollowupMessage: string | null = null;
+    private pendingApprovalRequests = new Map<string, number | string>();
+    private threadId: string | null = null;
+    private currentTurnId: string | null = null;
+    private initialInput: string | null = null;
+    private repoPath: string | null = null;
+    private startupMode: 'start' | 'resume' | 'fork' = 'start';
+    private startupThreadId: string | null = null;
+    private started = false;
 
     constructor(sessionId: string, connectorId: string, taskId: string) {
         super();
@@ -55,8 +62,10 @@ class CodexSession extends BaseSession {
         this.taskId = taskId;
     }
 
-    attach(child: ChildProcess): void {
+    attach(child: ChildProcess, repoPath: string, initialInput: string): void {
         this.child = child;
+        this.repoPath = repoPath;
+        this.initialInput = initialInput;
         this.setStatus('active');
 
         const rl = createInterface({ input: child.stdout! });
@@ -64,11 +73,18 @@ class CodexSession extends BaseSession {
         rl.on('line', (line: string) => {
             const events = this.parseLine(line);
             for (const event of events) {
-                if (event.type === 'agent:permission') {
+                if (event.type === 'session:started') {
+                    if (this.started) {
+                        continue;
+                    }
+                    this.started = true;
+                } else if (event.type === 'agent:permission') {
                     this.setStatus('awaiting_permission');
                 } else if (event.type === 'session:completed') {
+                    this.currentTurnId = null;
                     this.setStatus('completed');
                 } else if (event.type === 'session:failed') {
+                    this.currentTurnId = null;
                     this.setStatus('failed');
                 }
                 this.emit(event);
@@ -116,8 +132,16 @@ class CodexSession extends BaseSession {
         });
     }
 
-    queueFollowupMessage(text: string): void {
-        this.pendingFollowupMessage = text;
+    beginHandshake(mode: 'start' | 'resume' | 'fork', threadId?: string): void {
+        this.startupMode = mode;
+        this.startupThreadId = threadId ?? null;
+        this.sendRequest('initialize', {
+            clientInfo: {
+                name: 'patchbay',
+                title: 'Patchbay',
+                version: '0.1.0',
+            },
+        });
     }
 
     sendRequest(method: string, params: Record<string, unknown> = {}): void {
@@ -127,6 +151,93 @@ class CodexSession extends BaseSession {
         const request = jsonRpcRequest(method, params);
         this.pendingRequests.set(request.id, method);
         this.child.stdin.write(request.payload + '\n');
+    }
+
+    private sendResponse(id: number | string, result: unknown): void {
+        if (!this.child?.stdin?.writable) {
+            throw new Error('Session stdin is not writable');
+        }
+        this.child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, result }) + '\n');
+    }
+
+    private sendNotification(method: string, params: Record<string, unknown> = {}): void {
+        if (!this.child?.stdin?.writable) {
+            throw new Error('Session stdin is not writable');
+        }
+        this.child.stdin.write(jsonRpcNotification(method, params) + '\n');
+    }
+
+    private startTurn(text: string): void {
+        if (!this.threadId) {
+            throw new Error('Codex thread is not initialized');
+        }
+        const params: Record<string, unknown> = {
+            threadId: this.threadId,
+            input: [{ type: 'text', text }],
+        };
+        if (this.repoPath) {
+            params.cwd = this.repoPath;
+        }
+        this.sendRequest('turn/start', params);
+        this.setStatus('active');
+    }
+
+    private resumeActiveTurn(text: string): void {
+        if (!this.threadId || !this.currentTurnId) {
+            this.startTurn(text);
+            return;
+        }
+        this.sendRequest('turn/steer', {
+            threadId: this.threadId,
+            expectedTurnId: this.currentTurnId,
+            input: [{ type: 'text', text }],
+        });
+        this.setStatus('active');
+    }
+
+    private parseServerRequest(raw: {
+        jsonrpc: '2.0';
+        id: number | string;
+        method: string;
+        params?: Record<string, unknown>;
+    }) {
+        const now = new Date().toISOString();
+        const params = raw.params ?? {};
+        const permissionId = String(raw.id);
+
+        if (raw.method === 'item/commandExecution/requestApproval' || raw.method === 'item/fileChange/requestApproval') {
+            this.pendingApprovalRequests.set(permissionId, raw.id);
+            const description = [
+                typeof params.reason === 'string' ? params.reason : undefined,
+                typeof params.command === 'string' ? params.command : undefined,
+                typeof params.cwd === 'string' ? `cwd: ${params.cwd}` : undefined,
+            ].filter(Boolean).join('\n') || 'Approval requested';
+
+            return [{
+                type: 'agent:permission' as const,
+                sessionId: this.sessionId,
+                description,
+                permissionId,
+                toolName: typeof params.command === 'string' ? params.command : undefined,
+                timestamp: now,
+            }];
+        }
+
+        if (raw.method === 'item/tool/requestUserInput') {
+            const question = typeof params.prompt === 'string'
+                ? params.prompt
+                : typeof params.message === 'string'
+                    ? params.message
+                    : 'Codex is requesting more input.';
+            return [{
+                type: 'agent:question' as const,
+                sessionId: this.sessionId,
+                question,
+                timestamp: now,
+            }];
+        }
+
+        return [];
     }
 
     private parseLine(line: string) {
@@ -146,6 +257,15 @@ class CodexSession extends BaseSession {
             return [];
         }
 
+        if (raw.id !== undefined && typeof raw.method === 'string') {
+            return this.parseServerRequest(raw as {
+                jsonrpc: '2.0';
+                id: number | string;
+                method: string;
+                params?: Record<string, unknown>;
+            });
+        }
+
         if (raw.id !== undefined) {
             const requestMethod = this.pendingRequests.get(raw.id as number | string);
             if (requestMethod) {
@@ -158,50 +278,103 @@ class CodexSession extends BaseSession {
                 error?: { code?: number; message?: string; data?: unknown };
             }, this.sessionId, this.connectorId, requestMethod);
 
-            if (
-                (requestMethod === 'thread.resume' || requestMethod === 'thread.fork')
-                && this.pendingFollowupMessage
-                && !('error' in raw && raw.error)
-            ) {
-                const followupMessage = this.pendingFollowupMessage;
-                this.pendingFollowupMessage = null;
-                this.child?.stdin?.write(jsonRpcNotification('user.message', { content: followupMessage }) + '\n');
-            } else if ((requestMethod === 'thread.resume' || requestMethod === 'thread.fork') && 'error' in raw && raw.error) {
-                this.pendingFollowupMessage = null;
+            if ('error' in raw && raw.error) {
+                return events;
+            }
+
+            if (requestMethod === 'initialize') {
+                this.sendNotification('initialized');
+                if (this.startupMode === 'resume' && this.startupThreadId) {
+                    this.sendRequest('thread/resume', { threadId: this.startupThreadId });
+                } else if (this.startupMode === 'fork' && this.startupThreadId) {
+                    this.sendRequest('thread/fork', { threadId: this.startupThreadId });
+                } else {
+                    this.sendRequest('thread/start', this.repoPath ? { cwd: this.repoPath } : {});
+                }
+            } else if (requestMethod === 'thread/start') {
+                const result = raw.result as Record<string, unknown> | undefined;
+                const thread = result?.thread as Record<string, unknown> | undefined;
+                this.threadId = typeof thread?.id === 'string' ? thread.id : null;
+                if (this.threadId && this.initialInput) {
+                    const initialInput = this.initialInput;
+                    this.initialInput = null;
+                    this.startTurn(initialInput);
+                }
+            } else if (requestMethod === 'thread/resume' || requestMethod === 'thread/fork') {
+                const result = raw.result as Record<string, unknown> | undefined;
+                const thread = result?.thread as Record<string, unknown> | undefined;
+                this.threadId = typeof thread?.id === 'string' ? thread.id : null;
+                if (this.threadId && this.initialInput) {
+                    const initialInput = this.initialInput;
+                    this.initialInput = null;
+                    this.startTurn(initialInput);
+                }
+            } else if (requestMethod === 'turn/start') {
+                const result = raw.result as Record<string, unknown> | undefined;
+                const turn = result?.turn as Record<string, unknown> | undefined;
+                this.currentTurnId = typeof turn?.id === 'string' ? turn.id : this.currentTurnId;
+            } else if (requestMethod === 'turn/steer') {
+                const result = raw.result as Record<string, unknown> | undefined;
+                if (typeof result?.turnId === 'string') {
+                    this.currentTurnId = result.turnId;
+                }
             }
 
             return events;
         }
 
-        return parseCodexLine(trimmed, this.sessionId, this.connectorId);
+        const notificationEvents = parseCodexLine(trimmed, this.sessionId, this.connectorId);
+        for (const event of notificationEvents) {
+            if (event.type === 'session:started' && event.providerSessionId) {
+                this.threadId = event.providerSessionId;
+            } else if (event.type === 'session:completed' || event.type === 'session:failed') {
+                this.currentTurnId = null;
+            }
+        }
+
+        if (typeof raw.method === 'string' && raw.method === 'turn/started') {
+            const turn = raw.params && typeof raw.params === 'object'
+                ? (raw.params as Record<string, unknown>).turn as Record<string, unknown> | undefined
+                : undefined;
+            this.currentTurnId = typeof turn?.id === 'string' ? turn.id : this.currentTurnId;
+        }
+
+        return notificationEvents;
     }
 
     async sendInput(text: string): Promise<void> {
-        if (!this.child?.stdin?.writable) {
-            throw new Error('Session stdin is not writable');
-        }
-        this.child.stdin.write(jsonRpcNotification('user.message', { content: text }) + '\n');
-        this.setStatus('active');
+        this.resumeActiveTurn(text);
     }
 
     async approve(permissionId: string): Promise<void> {
-        if (!this.child?.stdin?.writable) {
-            throw new Error('Session stdin is not writable');
+        const requestId = this.pendingApprovalRequests.get(permissionId);
+        if (requestId === undefined) {
+            throw new Error(`Unknown approval request ${permissionId}`);
         }
-        this.child.stdin.write(jsonRpcNotification('approval.response', { id: permissionId, approved: true }) + '\n');
+        this.pendingApprovalRequests.delete(permissionId);
+        this.sendResponse(requestId, 'accept');
         this.setStatus('active');
     }
 
     async deny(permissionId: string): Promise<void> {
-        if (!this.child?.stdin?.writable) {
-            throw new Error('Session stdin is not writable');
+        const requestId = this.pendingApprovalRequests.get(permissionId);
+        if (requestId === undefined) {
+            throw new Error(`Unknown approval request ${permissionId}`);
         }
-        this.child.stdin.write(jsonRpcNotification('approval.response', { id: permissionId, approved: false }) + '\n');
+        this.pendingApprovalRequests.delete(permissionId);
+        this.sendResponse(requestId, 'decline');
         this.setStatus('active');
     }
 
     async cancel(): Promise<void> {
         this.setStatus('cancelled');
+        if (this.threadId && this.currentTurnId) {
+            try {
+                this.sendRequest('turn/interrupt', { threadId: this.threadId, turnId: this.currentTurnId });
+            } catch {
+                // Fall through to process termination below.
+            }
+        }
         if (this.child) {
             this.child.kill();
             this.child = null;
@@ -254,17 +427,11 @@ export class CodexConnector extends BaseConnector {
         });
 
         const session = new CodexSession(sessionId, this.id, input.taskId);
-        session.attach(child);
-
-        if (input.forkSessionId) {
-            session.queueFollowupMessage(prompt);
-            session.sendRequest('thread.fork', { threadId: input.forkSessionId });
-        } else if (input.resumeSessionId) {
-            session.queueFollowupMessage(prompt);
-            session.sendRequest('thread.resume', { threadId: input.resumeSessionId });
-        } else {
-            session.sendRequest('thread.create', { prompt });
-        }
+        session.attach(child, input.repoPath, prompt);
+        session.beginHandshake(
+            input.forkSessionId ? 'fork' : input.resumeSessionId ? 'resume' : 'start',
+            input.forkSessionId ?? input.resumeSessionId,
+        );
 
         return session;
     }

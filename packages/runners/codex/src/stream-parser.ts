@@ -27,6 +27,48 @@ export interface JsonRpcResponse {
     };
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+    return value && typeof value === 'object' && !Array.isArray(value)
+        ? value as Record<string, unknown>
+        : undefined;
+}
+
+function stringifyValue(value: unknown): string | undefined {
+    if (typeof value === 'string' && value.trim()) {
+        return value;
+    }
+    if (value === undefined || value === null) {
+        return undefined;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+        return String(value);
+    }
+    try {
+        return JSON.stringify(value);
+    } catch {
+        return undefined;
+    }
+}
+
+function getToolName(item?: Record<string, unknown>): string {
+    if (!item) {
+        return 'unknown';
+    }
+
+    if (typeof item.tool === 'string' && item.tool.trim()) {
+        if (typeof item.server === 'string' && item.server.trim()) {
+            return `${item.server}/${item.tool}`;
+        }
+        return item.tool;
+    }
+
+    if (typeof item.command === 'string' && item.command.trim()) {
+        return item.command;
+    }
+
+    return 'unknown';
+}
+
 function extractProviderSessionId(payload?: Record<string, unknown>): string | undefined {
     if (!payload) return undefined;
 
@@ -71,7 +113,7 @@ export function parseCodexResponse(
         }];
     }
 
-    if (requestMethod === 'thread.create' || requestMethod === 'thread.resume' || requestMethod === 'thread.fork') {
+    if (requestMethod === 'thread/start' || requestMethod === 'thread/resume' || requestMethod === 'thread/fork') {
         return [{
             type: 'session:started',
             sessionId,
@@ -100,12 +142,12 @@ export function parseCodexLine(line: string, sessionId: string, connectorId: str
 
     const now = new Date().toISOString();
     const params = (raw.params ?? {}) as Record<string, unknown>;
+    const item = asRecord(params.item);
     const events: AgentEvent[] = [];
 
     switch (raw.method) {
         // --- session lifecycle ---
-        case 'thread.created':
-        case 'session.created':
+        case 'thread/started':
             events.push({
                 type: 'session:started',
                 sessionId,
@@ -116,10 +158,14 @@ export function parseCodexLine(line: string, sessionId: string, connectorId: str
             break;
 
         // --- assistant text ---
-        case 'thread.message.delta':
-        case 'message.delta': {
-            const delta = params.delta as Record<string, unknown> | undefined;
-            const content = (delta?.content ?? delta?.text ?? params.content ?? params.text ?? '') as string;
+        case 'item/agentMessage/delta': {
+            const content = stringifyValue(
+                params.delta
+                ?? params.textDelta
+                ?? params.text
+                ?? params.content
+                ?? asRecord(params.delta)?.text
+            );
             if (content) {
                 events.push({
                     type: 'agent:message',
@@ -132,83 +178,91 @@ export function parseCodexLine(line: string, sessionId: string, connectorId: str
             break;
         }
 
-        case 'thread.message.completed':
-        case 'message.completed': {
-            const message = params.message as Record<string, unknown> | undefined;
-            const content = (message?.content ?? params.content ?? params.text ?? '') as string;
-            if (content) {
+        case 'item/completed': {
+            const itemType = item?.type;
+            if (itemType === 'agentMessage') {
+                const content = stringifyValue(item?.text ?? item?.content ?? params.text ?? params.content);
+                if (content) {
+                    events.push({
+                        type: 'agent:message',
+                        sessionId,
+                        content,
+                        partial: false,
+                        timestamp: now,
+                    });
+                }
+                break;
+            }
+
+            if (itemType === 'commandExecution' || itemType === 'mcpToolCall' || itemType === 'dynamicToolCall') {
+                const status = item?.status === 'failed' || item?.status === 'declined' ? 'failed' : 'completed';
+                const toolName = getToolName(item);
+                const toolOutput = stringifyValue(
+                    item?.aggregatedOutput
+                    ?? item?.result
+                    ?? asRecord(item?.error)?.message
+                    ?? item?.error
+                    ?? item?.contentItems
+                );
+
                 events.push({
-                    type: 'agent:message',
+                    type: 'agent:tool_use',
                     sessionId,
-                    content,
-                    partial: false,
+                    toolName,
+                    toolOutput,
+                    status,
+                    timestamp: now,
+                });
+                break;
+            }
+            break;
+        }
+
+        case 'item/started': {
+            const itemType = item?.type;
+            if (itemType === 'commandExecution' || itemType === 'mcpToolCall' || itemType === 'dynamicToolCall') {
+                const toolName = getToolName(item);
+                const toolInput = asRecord(item?.arguments);
+
+                events.push({
+                    type: 'agent:tool_use',
+                    sessionId,
+                    toolName,
+                    toolInput,
+                    status: 'started',
                     timestamp: now,
                 });
             }
             break;
         }
 
-        // --- tool use ---
-        case 'tool.call.started':
-        case 'function.call.started': {
-            events.push({
-                type: 'agent:tool_use',
-                sessionId,
-                toolName: (params.name ?? params.tool ?? 'unknown') as string,
-                toolInput: params.arguments as Record<string, unknown> | undefined,
-                status: 'started',
-                timestamp: now,
-            });
-            break;
-        }
-
-        case 'tool.call.completed':
-        case 'function.call.completed': {
-            events.push({
-                type: 'agent:tool_use',
-                sessionId,
-                toolName: (params.name ?? params.tool ?? 'unknown') as string,
-                toolOutput: (params.output ?? params.result ?? '') as string,
-                status: (params.error ? 'failed' : 'completed') as 'completed' | 'failed',
-                timestamp: now,
-            });
-            break;
-        }
-
-        // --- approval / permission ---
-        case 'approval.requested':
-        case 'permission.requested': {
-            events.push({
-                type: 'agent:permission',
-                sessionId,
-                description: (params.description ?? params.message ?? 'Approval requested') as string,
-                permissionId: (params.id ?? params.approval_id ?? '') as string,
-                toolName: params.tool as string | undefined,
-                timestamp: now,
-            });
-            break;
-        }
-
         // --- session end ---
-        case 'thread.completed':
-        case 'session.completed': {
-            events.push({
-                type: 'session:completed',
-                sessionId,
-                summary: (params.summary ?? params.result) as string | undefined,
-                timestamp: now,
-            });
-            break;
-        }
+        case 'turn/completed': {
+            const turn = asRecord(params.turn);
+            const turnStatus = turn?.status;
+            if (turnStatus === 'failed') {
+                const error = stringifyValue(
+                    asRecord(turn?.error)?.message
+                    ?? turn?.error
+                    ?? params.error
+                ) ?? 'Turn failed';
+                events.push({
+                    type: 'session:failed',
+                    sessionId,
+                    error,
+                    timestamp: now,
+                });
+                break;
+            }
 
-        case 'thread.failed':
-        case 'session.failed': {
-            events.push({
-                type: 'session:failed',
-                sessionId,
-                error: (params.error ?? params.message ?? 'Session failed') as string,
-                timestamp: now,
-            });
+            if (turnStatus === 'completed' || turnStatus === 'interrupted') {
+                events.push({
+                    type: 'session:completed',
+                    sessionId,
+                    summary: stringifyValue(turn?.result ?? turn?.summary),
+                    timestamp: now,
+                });
+            }
             break;
         }
     }

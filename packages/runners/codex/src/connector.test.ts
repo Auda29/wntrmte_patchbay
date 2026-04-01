@@ -6,8 +6,8 @@ describe('Codex stream parser', () => {
         const [event] = parseCodexLine(
             JSON.stringify({
                 jsonrpc: '2.0',
-                method: 'thread.created',
-                params: { threadId: 'thread-abc' },
+                method: 'thread/started',
+                params: { thread: { id: 'thread-abc' } },
             }),
             'session-1',
             'codex',
@@ -17,16 +17,16 @@ describe('Codex stream parser', () => {
         expect(event && 'providerSessionId' in event ? event.providerSessionId : undefined).toBe('thread-abc');
     });
 
-    it('maps thread.create responses to session started with provider session id', () => {
+    it('maps thread/start responses to session started with provider session id', () => {
         const [event] = parseCodexResponse(
             {
                 jsonrpc: '2.0',
                 id: 1,
-                result: { threadId: 'thread-xyz' },
+                result: { thread: { id: 'thread-xyz' } },
             },
             'session-1',
             'codex',
-            'thread.create',
+            'thread/start',
         );
 
         expect(event?.type).toBe('session:started');
@@ -42,7 +42,7 @@ describe('Codex stream parser', () => {
             },
             'session-1',
             'codex',
-            'thread.fork',
+            'thread/fork',
         );
 
         expect(event?.type).toBe('session:started');
@@ -58,12 +58,46 @@ describe('Codex stream parser', () => {
             },
             'session-1',
             'codex',
-            'thread.resume',
+            'thread/resume',
         );
 
         expect(event).toEqual(expect.objectContaining({
             type: 'session:failed',
             error: 'resume failed',
+        }));
+    });
+
+    it('maps agent message deltas from item notifications', () => {
+        const [event] = parseCodexLine(
+            JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'item/agentMessage/delta',
+                params: { delta: 'Hello world' },
+            }),
+            'session-1',
+            'codex',
+        );
+
+        expect(event).toEqual(expect.objectContaining({
+            type: 'agent:message',
+            content: 'Hello world',
+            partial: true,
+        }));
+    });
+
+    it('maps turn completion to a completed session event', () => {
+        const [event] = parseCodexLine(
+            JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'turn/completed',
+                params: { turn: { status: 'completed' } },
+            }),
+            'session-1',
+            'codex',
+        );
+
+        expect(event).toEqual(expect.objectContaining({
+            type: 'session:completed',
         }));
     });
 });
