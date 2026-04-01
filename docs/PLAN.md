@@ -758,7 +758,7 @@ Das Herzstück der neuen Produktvision (vgl. `./VISION.md`): Live Agent Interact
 
 **Strategie:** Das Patchbay Dashboard ist die primäre App-UI. Wintermute bettet es als Webview-Panel ein — Agent Chat, Streaming, Approvals laufen im Dashboard und sind automatisch in Wintermute verfügbar.
 
-**Provider-Integrations-Referenz** (Details: `./VISION.md`): Connectors mappen die jeweils beste Anbieter-Schicht auf einheitliche `AgentEvent`s — **Codex:** `codex app-server` (JSON-RPC, stdio, Threads, serverseitige Approvals); **Claude Code:** CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON), Auth immer über die offizielle lokale Claude-Code-CLI-Session des Users, ergänzend Anthropic Agent SDK wo sinnvoll; **Gemini CLI:** Headless/JSON; **lokal:** HTTP (z. B. Ollama); **HTTP APIs:** OpenAI-kompatible Integrationen eher **Responses API**; **Cursor / ACP:** **`CursorAcpConnector`** bzw. generischer **`AcpConnector`** — [Agent Client Protocol](https://agentclientprotocol.com) (JSON-RPC/stdio, `cursor agent acp`); siehe `./custom-connector.md` § ACP.
+**Provider-Integrations-Referenz** (Details: `./VISION.md`): Connectors mappen die jeweils beste Anbieter-Schicht auf einheitliche `AgentEvent`s — **Codex:** `codex app-server` (JSON-RPC über stdio, `initialize`-Handshake, `thread/start|resume|fork`, `turn/start|steer`, serverseitige Approvals); **Claude Code:** CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON), Auth immer über die offizielle lokale Claude-Code-CLI-Session des Users, ergänzend Anthropic Agent SDK wo sinnvoll; **Gemini CLI:** Headless/JSON; **lokal:** HTTP (z. B. Ollama); **HTTP APIs:** OpenAI-kompatible Integrationen eher **Responses API**; **Cursor / ACP:** **`CursorAcpConnector`** bzw. generischer **`AcpConnector`** — [Agent Client Protocol](https://agentclientprotocol.com) (JSON-RPC/stdio, `cursor agent acp`); siehe `./custom-connector.md` § ACP.
 
 ### L1: Core Types — Provider-agnostisches Connector-Interface — DONE
 
@@ -778,7 +778,7 @@ Reihenfolge: **L2a** Claude Code (PoC), **L2b** Codex bevorzugt **`codex app-ser
 
 #### L2b: Codex Connector — DONE
 
-- [x] `packages/runners/codex/src/connector.ts` — `CodexConnector` an **`codex app-server`** (JSON-RPC über stdio/JSONL, Thread-APIs, serverinitiierte Approvals → `AgentEvent`)
+- [x] `packages/runners/codex/src/connector.ts` — `CodexConnector` an **`codex app-server`** (JSON-RPC über stdio/JSONL, `initialize`-Handshake, `thread/*` + `turn/*`, serverinitiierte Approvals → `AgentEvent`)
 - [x] `packages/runners/codex/src/stream-parser.ts` — JSON-RPC Notifications → AgentEvent Mapping
 - [x] Bestehender Batch-Runner (`codex exec` + Noise-Filter) bleibt als Fallback
 
@@ -847,7 +847,7 @@ Die erste komplette Live-Agent-Version ist funktional, weicht aber an einigen Pr
 - [x] Klarerer Connector-Vertrag im UI: Connector-Datenquelle konsequent modellieren, statt den Dialog primär über `/api/agents` mit ergänzten Connector-Metadaten zu speisen
 - [x] Doku-Drift vermeiden: `docs/VISION.md`, `docs/PLAN.md` und `ide/PLAN.md` bei weiteren Phase-L-Änderungen gemeinsam fortschreiben
 
-### L9: Connector-First Default Flow — in Arbeit
+### L9: Connector-First Default Flow — DONE
 
 Produktentscheidung nach dem ersten L8-Schnitt: Patchbay verschiebt den Standardfluss im Dashboard und in Wintermute endgültig von **Runner-first** zu **Connector-first**.
 
@@ -874,7 +874,7 @@ Produktentscheidung nach dem ersten L8-Schnitt: Patchbay verschiebt den Standard
 
 - [x] `packages/runners/codex/src/connector.ts` — Codex als Referenzpfad für den Standard-Session-Flow härten
 - [x] Server-/Provider-Session-ID sauber aus dem App-Server übernehmen und in `SessionRecord.providerSessionId` persistieren
-- [x] Resume-Basis für Codex-Threads produktseitig nutzbar machen: persistierte `providerSessionId` wird beim Reconnect eines `awaiting_input`-Tasks als `resumeSessionId` an den Connector weitergereicht; `thread.create`- und `thread.resume`-Responses werden ausgewertet
+- [x] Resume-Basis für Codex-Threads produktseitig nutzbar machen: persistierte `providerSessionId` wird beim Reconnect eines `awaiting_input`-Tasks als `resumeSessionId` an den Connector weitergereicht; `thread/start`- und `thread/resume`-Responses werden ausgewertet
 - [x] Reattach/Fork für Codex-Threads ausbauen: expliziter `mode: resume|fork`-Pfad über `/connect`, Reattach/Fork-Aktionen in `/sessions`, `thread.fork`-Pfad im Codex-Connector
 - [x] Codex-spezifische Capabilities im UI sichtbarer machen: Session-Meta-Rail inkl. `providerSessionId`, direkte Reattach-/Fork-Aktionen aus dem Sessions-Workspace
 - [x] Reconnect-Semantik finalisiert: Auto-Reconnect im `default`-Pfad übernimmt bestehende Session-ID/Conversation bei `awaiting_input`; `fork` erzeugt immer einen neuen lokalen Session-Record und verwendet nur die Provider-Thread-Referenz als Quelle
@@ -884,3 +884,29 @@ Produktentscheidung nach dem ersten L8-Schnitt: Patchbay verschiebt den Standard
 - [x] Batch-Runner im Produkt klar als `One-off Run`, Automationspfad oder Fallback benennen
 - [x] Bestehende `/dispatch`, `/reply` und Runner-Historie erhalten, aber nicht mehr als primären mentalen Produktfluss darstellen
 - [x] Doku, Copy und Navigation an das neue Primärmodell `Task -> Session -> Review` anpassen
+
+#### L9.5: MCP-Erweiterbarkeit vorbereiten
+
+- [ ] Produktpfad definieren, wie User zusätzliche MCP-Server für Agent-Sessions registrieren und verwalten können
+- [ ] Klären, welche MCP-Server projektlokal in `.project-agents/` beschrieben werden und welche als User-Setup gelten
+- [ ] Connector-/Session-Modell so erweitern, dass freigegebene MCP-Server kontrolliert an Agents durchgereicht werden können
+- [ ] Dashboard-/Wintermute-UX für Sichtbarkeit, Freigabe und Diagnose von angebundenen MCP-Servern entwerfen
+
+### L10: Dashboard UI/UX Overhaul & Performance — DONE
+
+Das Dashboard wurde überarbeitet, um der `VISION.md` besser zu entsprechen (weniger Komplexität, intuitiver) und Performance-Probleme innerhalb der Extension zu beheben.
+
+#### L10.1: Performance & State Management
+- [x] Globaler `SWRProvider` mit `keepPreviousData: true` eingeführt.
+- [x] Blockierende `if (isLoading)`-Checks aus den Seiten entfernt, um sofortige (instant) Tabwechsel zu ermöglichen.
+- [x] Auto-Refresh-Problem behoben: Dialoge (wie Dispatch oder Edit) werden bei Hintergrund-Updates nicht mehr ungewollt geschlossen.
+
+#### L10.2: Navigation & Layout
+- [x] Sidebar-Navigation logisch gruppiert: **Workflow** (Overview, Tasks, Sessions), **Knowledge Base** (Artifacts, Decisions), **Diagnostics** (Runs, History).
+- [x] Visuelles Feedback für den aktiven Tab in der Sidebar verbessert.
+
+#### L10.3: Sessions Workspace (Minimalismus)
+- [x] Sessions-Tab von einem klobigen 3-Spalten-Layout auf ein fokussiertes 2-Spalten-Layout umgebaut.
+- [x] Erklärende "Workspace Focus" / "Workflow" Sidebars entfernt, um Platz für den eigentlichen Chat zu schaffen.
+- [x] Session-Metadaten (Status, Connector, Task-ID) und Aktionen (Reattach/Fork) in einen kompakten Header direkt über dem Chat verschoben.
+- [x] Chat-UI aufgeräumt (Messenger-Stil für Nachrichten, Tool-Use und Permissions) mit integriertem, einzeiligem Composer.

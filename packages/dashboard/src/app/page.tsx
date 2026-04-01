@@ -5,13 +5,10 @@ import { Project, Task, Run } from '@patchbay/core';
 import { Activity, GitMerge, FileCode2, CheckCircle2, Clock, Pencil } from 'lucide-react';
 import { EditProjectModal } from '@/components/EditProjectModal';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
 export default function DashboardHome() {
-  const { data, error, isLoading, mutate } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
+  const { data, error, mutate } = useSWR('/api/state');
   const [showEditProject, setShowEditProject] = React.useState(false);
 
-  if (isLoading) return <div className="p-8 text-surface-400">Loading live data...</div>;
   if (error) return <div className="p-8 text-red-400">Error connecting to Patchbay backend</div>;
 
   const projectOptions: Project | undefined = data?.project;

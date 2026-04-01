@@ -59,7 +59,7 @@ Together: write code on the left, orchestrate AI agents on the right. No app swi
 | Provider | Integration layer |
 |---|---|
 | **Claude Code** | CLI `--input-format stream-json` / `--output-format stream-json` (NDJSON), using the user's existing local Claude Code login |
-| **OpenAI Codex** | `codex app-server` (JSON-RPC, stdio, Threads, server-side approvals) |
+| **OpenAI Codex** | `codex app-server` (JSON-RPC over stdio: `initialize` -> `thread/start|resume|fork` -> `turn/start|steer`, plus server-side approvals) |
 | **Google Gemini** | CLI Headless mode (JSON/stdin) |
 | **Cursor / ACP** | Agent Client Protocol (JSON-RPC/stdio) |
 | **HTTP / local** | OpenAI-compatible APIs (Ollama, LM Studio, OpenRouter, vLLM) |
@@ -199,6 +199,10 @@ See [`ide/README.md`](../ide/README.md) for full build instructions and extensio
 
 Patchbay is the orchestration backend and dashboard. It manages tasks, dispatches runners, streams agent sessions, and persists everything in `.project-agents/`.
 
+For the preferred Codex session path, Patchbay talks to `codex app-server` over JSON-RPC, performs the app-server handshake, opens or resumes a thread, then starts a turn and streams the resulting `item/*` and `turn/*` events into the dashboard chat UI.
+
+Longer term, Patchbay should also let users add MCP servers that connected agents can use as part of their workspace tooling, so project-specific capabilities can be exposed without hardcoding every integration into Patchbay itself.
+
 ### Dashboard pages
 
 | Route | Description |
@@ -253,9 +257,9 @@ See [`PLAN.md`](./PLAN.md) for the full Patchbay implementation roadmap.
 
 **Phases A-K complete** — schema, orchestrator, dashboard, runner adapters, CLI, extension, multi-turn conversations, project import.
 
-**Phase L1-L9 complete** — connector architecture, persistent sessions, connector-first default flow, Codex reattach/fork semantics, and runner positioning as secondary fallback path.
+**Phase L1-L10 complete** — connector architecture, persistent sessions, connector-first default flow, Codex reattach/fork semantics, runner positioning as secondary fallback path, and a major UI/UX overhaul for better performance and a minimalist agent workspace.
 
-**Current focus:** post-L9 polish (session workspace quality, diagnostics UX, and build/test hardening).
+**Current focus:** post-L10 polish (diagnostics UX, build/test hardening, and tightening the extensibility story around user-added MCP servers for agent workflows).
 
 See [`VISION.md`](./VISION.md) for the full product vision and market positioning.
 

@@ -28,7 +28,7 @@ export function SessionsPageClient() {
   const taskId = searchParams.get('taskId') || undefined;
   const selectedSessionId = searchParams.get('sessionId');
   const query = taskId ? `/api/sessions?taskId=${encodeURIComponent(taskId)}` : '/api/sessions';
-  const { data, error, isLoading } = useSWR<SessionRecord[]>(query, fetcher, { refreshInterval: 2000 });
+  const { data, error } = useSWR<SessionRecord[]>(query);
   const [actionBusy, setActionBusy] = useState<'resume' | 'fork' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -75,10 +75,6 @@ export function SessionsPageClient() {
           ? 'border-brand-900/60 bg-brand-950/30 text-brand-100'
           : 'border-blue-900/60 bg-blue-950/20 text-blue-100';
 
-  if (isLoading) {
-    return <div className="p-8 text-surface-400">Loading sessions...</div>;
-  }
-
   if (error) {
     return <div className="p-8 text-red-400">Error connecting to backend</div>;
   }
@@ -122,229 +118,156 @@ export function SessionsPageClient() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <header>
-        <h1 className="mb-2 text-3xl font-semibold tracking-tight text-white">Sessions</h1>
-        <p className="text-surface-400">
-          Primary workspace for connector sessions, live agent transcripts, approvals, and resume points.
-        </p>
+    <div className="flex h-full flex-col animate-in fade-in duration-500">
+      <header className="mb-6 flex items-end justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-semibold tracking-tight text-white">Sessions</h1>
+          <p className="text-surface-400">
+            Interactive workspaces for live agent sessions and transcripts.
+          </p>
+        </div>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="glass-card rounded-2xl border border-surface-800/70 p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-brand-300">Live Workspace</p>
-              <h2 className="mt-2 text-3xl font-semibold text-surface-50">{activeSessions.length}</h2>
-            </div>
-            <Bot className="h-5 w-5 text-brand-300" />
+      <div className="flex flex-1 gap-6 overflow-hidden">
+        {/* Left Sidebar: Session List */}
+        <aside className="flex w-80 flex-col overflow-hidden rounded-2xl border border-surface-800/70 bg-surface-950/30 shadow-lg">
+          <div className="border-b border-surface-800/70 bg-surface-950/50 px-4 py-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-surface-400">All Sessions</h3>
           </div>
-          <p className="mt-3 text-sm text-surface-400">
-            Active or waiting connector sessions that can be resumed right away.
-          </p>
-        </div>
-        <div className="glass-card rounded-2xl border border-surface-800/70 p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-surface-400">Completed</p>
-              <h2 className="mt-2 text-3xl font-semibold text-surface-50">{completedSessions.length}</h2>
-            </div>
-            <PlayCircle className="h-5 w-5 text-surface-300" />
-          </div>
-          <p className="mt-3 text-sm text-surface-400">
-            Finished sessions kept as durable chat history and review context.
-          </p>
-        </div>
-        <div className="glass-card rounded-2xl border border-surface-800/70 p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-surface-400">Preferred Flow</p>
-              <h2 className="mt-2 text-lg font-semibold text-surface-50">Codex first</h2>
-            </div>
-            <FolderKanban className="h-5 w-5 text-surface-300" />
-          </div>
-          <p className="mt-3 text-sm text-surface-400">
-            Start sessions from tasks, land here, then review in Runs only when you need execution history.
-          </p>
-        </div>
-      </section>
+          <div className="flex-1 overflow-y-auto p-3 space-y-6">
+            {sessions.length === 0 ? (
+              <div className="p-4 text-center text-sm text-surface-500">No sessions yet.</div>
+            ) : (
+              <>
+                {activeSessions.length > 0 && (
+                  <div>
+                    <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-brand-400">Active</div>
+                    <div className="space-y-1">
+                      {activeSessions.map((session) => (
+                        <button
+                          key={session.id}
+                          type="button"
+                          onClick={() => {
+                            const next = new URLSearchParams(searchParams.toString());
+                            next.set('sessionId', session.id);
+                            router.push(`/sessions?${next.toString()}`);
+                          }}
+                          className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
+                            selectedSession?.id === session.id
+                              ? 'bg-brand-950/40 border border-brand-500/50 shadow-sm'
+                              : 'border border-transparent hover:bg-surface-900/50'
+                          }`}
+                        >
+                          <div className="truncate text-sm font-medium text-surface-100">{session.title}</div>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-surface-500">
+                            <span className="truncate">{session.connectorId}</span>
+                            <span>•</span>
+                            <span className="truncate">{session.taskId}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_280px]">
-        <section className="glass-card rounded-2xl border border-surface-800/70 p-4">
-          {sessions.length === 0 ? (
-            <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
-              <MessageSquareMore className="mb-4 h-12 w-12 text-surface-700" />
-              <h2 className="text-lg font-medium text-surface-200">No sessions yet</h2>
-              <p className="mt-2 max-w-xs text-sm text-surface-500">
-                Start an interactive connector session from the task board to see it here.
-              </p>
-              <Link
-                href="/tasks"
-                className="mt-5 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-500"
-              >
-                Open Task Board
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div>
-                <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-brand-300">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  Active
+                {pastSessions.length > 0 && (
+                  <div>
+                    <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Past</div>
+                    <div className="space-y-1">
+                      {pastSessions.map((session) => (
+                        <button
+                          key={session.id}
+                          type="button"
+                          onClick={() => {
+                            const next = new URLSearchParams(searchParams.toString());
+                            next.set('sessionId', session.id);
+                            router.push(`/sessions?${next.toString()}`);
+                          }}
+                          className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
+                            selectedSession?.id === session.id
+                              ? 'bg-brand-950/40 border border-brand-500/50 shadow-sm'
+                              : 'border border-transparent hover:bg-surface-900/50'
+                          }`}
+                        >
+                          <div className="truncate text-sm font-medium text-surface-100">{session.title}</div>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-surface-500">
+                            <span className="truncate">{session.connectorId}</span>
+                            <span>•</span>
+                            <span className="truncate">{new Date(session.lastEventAt).toLocaleDateString()}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </aside>
+
+        {/* Main Content: Active Session */}
+        <main className="flex flex-1 flex-col overflow-hidden">
+          {selectedSession ? (
+            <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-surface-800/70 bg-[linear-gradient(180deg,rgba(10,14,20,0.98)_0%,rgba(13,17,23,0.96)_100%)] shadow-xl">
+              {/* Session Header */}
+              <div className="flex items-center justify-between border-b border-surface-800/70 bg-surface-950/50 px-6 py-4">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-surface-50">{selectedSession.title}</h2>
+                    <div className="mt-1 flex items-center gap-3 text-xs text-surface-400">
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${selectedStatusTone}`}>
+                        {selectedSession.status}
+                      </span>
+                      <span className="font-mono text-brand-400">{selectedSession.connectorId}</span>
+                      <span>Task: {selectedSession.taskId}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {activeSessions.length === 0 ? (
-                    <p className="text-sm text-surface-500">No active sessions.</p>
-                  ) : activeSessions.map((session) => (
-                    <button
-                      key={session.id}
-                      type="button"
-                      onClick={() => {
-                        const next = new URLSearchParams(searchParams.toString());
-                        next.set('sessionId', session.id);
-                        router.push(`/sessions?${next.toString()}`);
-                      }}
-                      className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
-                        selectedSession?.id === session.id
-                          ? 'border-brand-500 bg-brand-950/35'
-                          : 'border-surface-800/70 bg-surface-950/50 hover:border-surface-700'
-                      }`}
-                    >
-                      <div className="text-sm font-medium text-surface-50">{session.title}</div>
-                      <div className="mt-1 text-xs text-surface-400">{session.connectorId} • {session.taskId}</div>
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  {selectedSession.providerSessionId && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => void startFromSession('resume')}
+                        disabled={actionBusy !== null}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-surface-700 bg-surface-900 px-3 py-1.5 text-xs font-medium text-surface-200 transition-colors hover:bg-surface-800 hover:text-white disabled:opacity-50"
+                      >
+                        {actionBusy === 'resume' ? 'Reattaching...' : 'Reattach'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void startFromSession('fork')}
+                        disabled={actionBusy !== null}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-surface-700 bg-surface-900 px-3 py-1.5 text-xs font-medium text-surface-200 transition-colors hover:bg-surface-800 hover:text-white disabled:opacity-50"
+                      >
+                        {actionBusy === 'fork' ? 'Forking...' : 'Fork'}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
+              
+              {actionError && (
+                <div className="border-b border-red-900/30 bg-red-950/20 px-6 py-2 text-xs text-red-400">
+                  {actionError}
+                </div>
+              )}
 
-              <div>
-                <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-surface-400">
-                  <Clock3 className="h-3.5 w-3.5" />
-                  Past Sessions
-                </div>
-                <div className="space-y-2">
-                  {pastSessions.map((session) => (
-                    <button
-                      key={session.id}
-                      type="button"
-                      onClick={() => {
-                        const next = new URLSearchParams(searchParams.toString());
-                        next.set('sessionId', session.id);
-                        router.push(`/sessions?${next.toString()}`);
-                      }}
-                      className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
-                        selectedSession?.id === session.id
-                          ? 'border-brand-500 bg-brand-950/35'
-                          : 'border-surface-800/70 bg-surface-950/50 hover:border-surface-700'
-                      }`}
-                    >
-                      <div className="text-sm font-medium text-surface-50">{session.title}</div>
-                      <div className="mt-1 text-xs text-surface-400">{session.connectorId} • {new Date(session.lastEventAt).toLocaleString()}</div>
-                    </button>
-                  ))}
-                </div>
+              {/* Chat Area */}
+              <div className="flex-1 overflow-hidden">
+                <AgentChat sessionId={selectedSession.id} />
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center rounded-2xl border border-surface-800/50 bg-surface-950/20">
+              <div className="text-center">
+                <MessageSquareMore className="mx-auto mb-4 h-12 w-12 text-surface-700" />
+                <h3 className="text-lg font-medium text-surface-300">No session selected</h3>
+                <p className="mt-2 text-sm text-surface-500">Choose a session from the sidebar or start a new one from a task.</p>
               </div>
             </div>
           )}
-        </section>
-
-        <AgentChat sessionId={selectedSession?.id} />
-
-        <aside className="space-y-4">
-          <section className="glass-card rounded-2xl border border-surface-800/70 p-5">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-brand-300">Workspace Focus</p>
-            {selectedSession ? (
-              <>
-                <h2 className="mt-2 text-lg font-semibold text-surface-50">{selectedSession.title}</h2>
-                <div className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-medium ${selectedStatusTone}`}>
-                  {selectedSession.status}
-                </div>
-                <div className="mt-4 space-y-3 text-sm text-surface-300">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-surface-500">Connector</p>
-                    <p className="mt-1">{selectedSession.connectorId}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-surface-500">Task</p>
-                    <p className="mt-1">{selectedSession.taskId}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-surface-500">Started</p>
-                    <p className="mt-1">{new Date(selectedSession.startTime).toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-surface-500">Last Activity</p>
-                    <p className="mt-1">{new Date(selectedSession.lastEventAt).toLocaleString()}</p>
-                  </div>
-                  {selectedSession.providerSessionId ? (
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-surface-500">Provider Session</p>
-                      <p className="mt-1 break-all font-mono text-xs text-surface-400">{selectedSession.providerSessionId}</p>
-                    </div>
-                  ) : null}
-                  {selectedSession.summary ? (
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-surface-500">Summary</p>
-                      <p className="mt-1 text-surface-400">{selectedSession.summary}</p>
-                    </div>
-                  ) : null}
-                </div>
-                <div className="mt-5 space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => void startFromSession('resume')}
-                    disabled={actionBusy !== null || !selectedSession.providerSessionId}
-                    className="inline-flex w-full items-center justify-between rounded-md border border-surface-800 bg-surface-950/50 px-3 py-2 text-sm text-surface-200 transition-colors hover:border-surface-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {actionBusy === 'resume' ? 'Reattaching...' : 'Reattach Session'}
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void startFromSession('fork')}
-                    disabled={actionBusy !== null || !selectedSession.providerSessionId}
-                    className="inline-flex w-full items-center justify-between rounded-md border border-surface-800 bg-surface-950/50 px-3 py-2 text-sm text-surface-200 transition-colors hover:border-surface-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {actionBusy === 'fork' ? 'Forking...' : 'Fork From Session'}
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                  {actionError ? (
-                    <p className="rounded-md border border-red-900/60 bg-red-950/20 px-3 py-2 text-xs text-red-200">
-                      {actionError}
-                    </p>
-                  ) : null}
-                  <Link
-                    href={`/tasks`}
-                    className="inline-flex w-full items-center justify-between rounded-md border border-surface-800 bg-surface-950/50 px-3 py-2 text-sm text-surface-200 transition-colors hover:border-surface-700 hover:text-white"
-                  >
-                    Open task board
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href={`/sessions?taskId=${encodeURIComponent(selectedSession.taskId)}`}
-                    className="inline-flex w-full items-center justify-between rounded-md border border-surface-800 bg-surface-950/50 px-3 py-2 text-sm text-surface-200 transition-colors hover:border-surface-700 hover:text-white"
-                  >
-                    View task sessions
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <p className="mt-3 text-sm text-surface-400">
-                Pick a session to inspect its transcript, state, and connector metadata.
-              </p>
-            )}
-          </section>
-
-          <section className="glass-card rounded-2xl border border-surface-800/70 p-5">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-surface-400">Workflow</p>
-            <ol className="mt-3 space-y-3 text-sm text-surface-300">
-              <li>1. Start a connector session from the task board.</li>
-              <li>2. Use this workspace for chat, approvals, tool activity, and resume.</li>
-              <li>3. Check Runs only for execution history or batch fallback details.</li>
-            </ol>
-          </section>
-        </aside>
+        </main>
       </div>
     </div>
   );

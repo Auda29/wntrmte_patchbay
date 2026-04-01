@@ -203,7 +203,7 @@ registry.register(new MyConnector());
 | Connector          | Provider          | Protocol                          |
 |--------------------|-------------------|-----------------------------------|
 | `ClaudeCodeConnector` | Claude Code CLI | `--input/output-format stream-json` (NDJSON) |
-| `CodexConnector`      | OpenAI Codex    | `codex app-server` (JSON-RPC/stdio)          |
+| `CodexConnector`      | OpenAI Codex    | `codex app-server` (JSON-RPC/stdio, `initialize` handshake, `thread/*`, `turn/*`, server-request approvals) |
 | `GeminiConnector`     | Google Gemini   | Headless mode (`--json`, stdin)               |
 | `HttpConnector`       | Any OpenAI-compatible API | `POST /chat/completions` (SSE)   |
 | `AcpConnector`        | Any ACP-compliant agent | [Agent Client Protocol](https://agentclientprotocol.com) (JSON-RPC/stdio) |
@@ -215,6 +215,15 @@ registry.register(new MyConnector());
 - **Call `emitClose()`** after the terminal event so listeners can clean up.
 - **Use `setStatus()`** to keep session status in sync — the orchestrator reads this.
 - **Permissions**: If your provider doesn't support granular permissions, implement `approve()`/`deny()` as no-ops or plain text stdin fallbacks.
+
+## JSON-RPC Connector Notes
+
+For JSON-RPC based providers, don't assume "one request starts the whole session". Codex is the reference example here:
+
+- Send the transport handshake first if the provider requires it. For Codex App Server this means `initialize`, then `initialized`.
+- Separate "conversation identity" from "user input". With Codex, `thread/start`, `thread/resume`, or `thread/fork` establishes the thread, while `turn/start` or `turn/steer` sends the actual user message.
+- Distinguish server notifications from server-initiated requests. Codex approvals arrive as JSON-RPC requests that the client must answer with a JSON-RPC response payload, not as fire-and-forget notifications.
+- Treat item lifecycle events as the source of truth for streaming state. Codex emits `item/started`, `item/agentMessage/delta`, `item/completed`, and `turn/completed`; map those into `agent:message`, `agent:tool_use`, `agent:permission`, `session:completed`, and `session:failed`.
 
 ## ACP (Agent Client Protocol)
 

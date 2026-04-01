@@ -7,11 +7,10 @@ import { DiffViewer } from '@/components/DiffViewer';
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function ArtifactsViewer() {
-    const { data, error, isLoading } = useSWR('/api/artifacts', fetcher, { refreshInterval: 3000 });
+    const { data, error } = useSWR('/api/artifacts');
     const [selectedFile, setSelectedFile] = useState<{ name: string; content: string } | null>(null);
     const [selectedDiff, setSelectedDiff] = useState<{ runId: string; taskId: string; diffRef: string } | null>(null);
 
-    if (isLoading) return <div className="p-8 text-surface-400">Loading artifacts...</div>;
     if (error) return <div className="p-8 text-red-400">Error loading artifacts</div>;
 
     const contextFiles: { name: string; content: string }[] = data?.contextFiles || [];

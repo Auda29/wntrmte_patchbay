@@ -7,9 +7,8 @@ import { Markdown } from '@/components/Markdown';
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function RunsViewer() {
-    const { data, error, isLoading } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
+    const { data, error } = useSWR('/api/state');
 
-    if (isLoading) return <div className="p-8 text-surface-400">Loading runs...</div>;
     if (error) return <div className="p-8 text-red-400">Error connecting to backend</div>;
 
     const runs: Run[] = data?.runs || [];

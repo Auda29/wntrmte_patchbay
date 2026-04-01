@@ -57,9 +57,8 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function HistoryPage() {
-    const { data, error, isLoading } = useSWR('/api/runs', fetcher, { refreshInterval: 3000 });
+    const { data, error } = useSWR('/api/runs');
 
-    if (isLoading) return <div className="p-8 text-surface-400">Loading history...</div>;
     if (error) return <div className="p-8 text-red-400">Error connecting to backend</div>;
 
     const runs: Run[] = [...(data || [])].sort(

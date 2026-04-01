@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { NewTaskModal } from '@/components/NewTaskModal';
 import { DispatchDialog } from '@/components/DispatchDialog';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
 const columns = [
     { id: 'open', title: 'Open', color: 'border-surface-600' },
     { id: 'in_progress', title: 'In Progress', color: 'border-blue-500' },
@@ -19,7 +18,7 @@ const columns = [
 
 export default function TasksBoard() {
     const router = useRouter();
-    const { data, error, isLoading, mutate } = useSWR('/api/state', fetcher, { refreshInterval: 2000 });
+    const { data, error, mutate } = useSWR('/api/state');
     const [showNewTask, setShowNewTask] = useState(false);
     const [dispatchTarget, setDispatchTarget] = useState<{ id: string; title: string; status: string } | null>(null);
     const [statusMenu, setStatusMenu] = useState<string | null>(null);
@@ -61,7 +60,6 @@ export default function TasksBoard() {
         setStatusMenu(taskId);
     };
 
-    if (isLoading) return <div className="p-8 text-surface-400">Loading tasks...</div>;
     if (error) return <div className="p-8 text-red-400">Error connecting to backend</div>;
 
     const tasks: Task[] = data?.tasks || [];

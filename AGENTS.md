@@ -1,72 +1,77 @@
 # Patchbay — Agent Context
 
-## What is this project?
+## What this repo is
 
-Patchbay is the **agent orchestration app** inside Wintermute. It provides the dashboard UI, the orchestrator backend, and the provider connectors that let users interact with AI coding agents (Claude Code, Codex, Gemini, and others) from within the IDE.
+Patchbay is the agent orchestration app inside Wintermute. It owns the dashboard UI, the orchestrator, session state, and the provider connectors for Codex, Claude Code, Gemini, ACP/Cursor, and HTTP-compatible backends.
 
-Together with Wintermute, it forms an open-source, IDE-native, model-agnostic agent orchestration platform — comparable to ZenFlow or Codex App, but integrated into the editor. See `./docs/VISION.md` for the full product vision.
+Together, Wintermute + Patchbay form an open-source, IDE-native, model-agnostic agent workspace. Wintermute is the host editor; Patchbay is the app inside it.
 
-## Companion: Wintermute
+## Source of truth
 
-Wintermute (`wntrmte`) is a minimalist VS Code distribution that serves as the **host** for Patchbay. It embeds the Patchbay Dashboard as a Webview panel, provides the IDE context (workspace, terminal, file system), and relays commands via postMessage.
+- Product vision: `docs/VISION.md`
+- Current overview and setup: `docs/README.md`
+- Implementation roadmap: `docs/PLAN.md`
+- Connector implementation details: `docs/custom-connector.md`
+- Wintermute host code: `ide/`
 
-- Wintermute IDE code: `./ide/`
-- Shared vision: `./docs/VISION.md`
-- Wintermute plan: `./ide/PLAN.md`
+## Non-negotiables
 
-### Key rules
+1. Patchbay owns the orchestration UX and logic. Wintermute should host and relay it, not reimplement it.
+2. The dashboard is the primary surface. Agent chat, sessions, approvals, task flow, and history belong there.
+3. `.project-agents/` is the persistence and integration contract. Keep it git-versioned and human-readable.
+4. The product is connector-first. Interactive sessions are the preferred path; batch runners are secondary fallback/automation tools.
+5. Extensibility matters: the long-term platform direction includes user-addable MCP servers that agents can use in a controlled way.
 
-1. Patchbay **owns** the orchestration logic, the `.project-agents/` schema, and the Dashboard UI.
-2. The Dashboard is the **primary app surface** — Agent Chat, Kanban, Dispatch, Streaming, Approvals all live here.
-3. Wintermute embeds the Dashboard as an iframe. It does **not** build its own orchestration UI.
-4. The `.project-agents/` file format is the integration contract between `packages/` and `ide/`.
-
-## Project structure
+## Monorepo map
 
 ```text
 patchbay/
-├── schema/           # .project-agents/ JSON Schemas
-├── docs/
-│   └── custom-connector.md  # How to build a custom Connector
 ├── packages/
-│   ├── core/         # Orchestrator, Store (ajv-validated), Runner + AgentConnector interfaces, Types
-│   │   └── src/
-│   │       ├── runner.ts     # Runner types + shared `buildPrompt()` (CLI runners + connectors)
-│   │       ├── connector.ts  # AgentConnector, AgentSession, AgentEvent, ConnectorRegistry, BaseSession
-│   │       └── ...
+│   ├── core/         # Orchestrator, store, runner/connector interfaces, shared types
 │   ├── cli/          # patchbay init, task, run, reply, auth, serve
-│   ├── dashboard/    # Next.js + Tailwind dashboard (THE APP)
-│   │   └── src/app/api/  # API routes: state, dispatch, reply, agents, events (SSE), connect, agent-input, connectors
-│   ├── server/       # Standalone HTTP server (@patchbay/server)
-│   │   └── src/      # createServer(), all routes including streaming + connector endpoints
+│   ├── dashboard/    # Next.js dashboard UI and API routes
+│   ├── server/       # Standalone HTTP server wrapper around the orchestrator
 │   └── runners/
-│       ├── bash/         # Shell command execution (batch)
-│       ├── http/         # GET URL fetch (batch) + HttpConnector (OpenAI-compatible APIs)
-│       ├── cursor/       # File-based handoff (batch)
-│       ├── cursor-cli/   # Batch runner (immediate fail) + CursorAcpConnector (ACP JSON-RPC/stdio)
-│       ├── claude-code/  # Batch runner + ClaudeCodeConnector (streaming, CLI stream-json)
-│       ├── codex/        # Batch runner + CodexConnector (streaming, codex app-server JSON-RPC)
-│       └── gemini/       # Batch runner + GeminiConnector (streaming, Headless/JSON)
-├── docs/
-│   ├── README.md
-│   ├── PLAN.md
-│   └── VISION.md
+│       ├── bash/         # Batch runner
+│       ├── http/         # Batch HTTP runner + HTTP connector
+│       ├── cursor/       # File-based batch handoff
+│       ├── cursor-cli/   # ACP-based Cursor connector
+│       ├── claude-code/  # Claude Code runner + connector
+│       ├── codex/        # Codex runner + app-server connector
+│       └── gemini/       # Gemini runner + connector
+├── ide/              # Wintermute host/editor integration
+├── docs/             # README, PLAN, VISION, connector docs
+├── schema/           # .project-agents schemas
 └── AGENTS.md
 ```
 
-## Architecture: Two execution models
+## Execution model
 
-**Batch Runner** — `execute(): Promise<RunnerOutput>`. Fire-and-forget. For bash, http, cursor, simple one-shot tasks.
+### Agent connectors
 
-**Agent Connector** — `connect(): AgentSession`. Event-based, session-oriented. Streams messages, handles permissions, accepts replies in a live session. Implementations differ per vendor (e.g. Claude Code stream-json, **Codex `app-server`** JSON-RPC, Gemini Headless, **Cursor `CursorAcpConnector` / generic `AcpConnector`** for [ACP](https://agentclientprotocol.com), HTTP for local routers). Provider-agnostic: the `AgentConnector` interface is generic; each provider maps its best available layer. See `./docs/VISION.md` (Provider-Schichten) and `docs/custom-connector.md` (ACP section).
+Use `connect(): AgentSession` when the provider supports a real session model with streaming, approvals, and follow-up input.
 
-## Principles
+- Codex: `codex app-server` over JSON-RPC/stdio with `initialize`, `thread/start|resume|fork`, `turn/start|steer`, item events, and server-side approvals
+- Claude Code: CLI `stream-json` input/output
+- Gemini: headless JSON/stdio flow
+- Cursor/ACP: ACP over JSON-RPC/stdio
+- HTTP/local: adapter-based, capability-dependent
 
-- **Dashboard-first** — the dashboard is the app, not decoration
-- **Provider-agnostic** — any AI agent is an interchangeable worker, no vendor lock-in
-- **Repo-first** — state in `.project-agents/`, git-versioned, no cloud required
-- **Open source** — community can build custom connectors for any provider
+### Batch runners
+
+Use `execute(): Promise<RunnerOutput>` for fire-and-forget jobs, scripts, fetches, or fallback execution when no suitable connector is available.
+
+## Product shape
+
+- Session-first workflow: task -> session -> review
+- `/sessions` is the primary live workspace
+- `/runs` remains history and diagnostics
+- Codex via `codex app-server` is the preferred default connector path
+- One-off runs stay available, but as a secondary path
+- User-added MCP servers are a planned future capability for expanding what agents can do inside a workspace
 
 ## Current status
 
-Phases A–K complete. **Phase L1–L7 done** — core connector types, all provider connectors, orchestrator incl. approve/deny, server + dashboard API routes, Agent Chat UI, Wintermute relay, `/agents` capabilities, and monorepo consolidation with shared types from `@patchbay/core`. **Open:** L8 Vision Alignment (persistent chat history, connector-first UX, cleaner connector contract in the UI, doc discipline). See `./docs/PLAN.md` Phase L.
+Phases A-K are complete. Phase L is substantially complete through the connector-first/session-first product direction, including persistent sessions, provider session IDs, resume/fork flows, dashboard session UX, and Wintermute embedding/relay behavior.
+
+The active focus is post-L10 polish: diagnostics UX, build/test hardening, and tightening docs so they match the shipped connector behavior.
