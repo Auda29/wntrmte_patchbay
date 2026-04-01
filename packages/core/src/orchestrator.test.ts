@@ -216,6 +216,38 @@ describe('Orchestrator', () => {
             expect(mockConnector.lastSession?.sessionId).toBe('session-existing');
             expect(mockConnector.lastInput?.resumeSessionId).toBe('provider-thread-existing');
         });
+
+        it('forks from an explicit source session by using providerSessionId and a new local session id', async () => {
+            const task = store.createTask('Fork task', 'Goal');
+            const sourceSession = {
+                id: 'session-source',
+                taskId: task.id,
+                connectorId: 'mock-connector',
+                status: 'completed' as const,
+                startTime: new Date(Date.now() - 120_000).toISOString(),
+                endTime: new Date(Date.now() - 60_000).toISOString(),
+                title: task.title,
+                conversationId: 'conv-source',
+                providerSessionId: 'provider-thread-source',
+                lastEventAt: new Date(Date.now() - 30_000).toISOString(),
+                summary: 'Original completed session.',
+            };
+            store.saveSession(sourceSession);
+            store.saveTask({ ...task, status: 'review' });
+
+            const session = await orchestrator.connectAgent(task.id, 'mock-connector', {
+                mode: 'fork',
+                sessionId: sourceSession.id,
+            });
+
+            expect(session.sessionId).not.toBe(sourceSession.id);
+            expect(mockConnector.lastInput?.resumeSessionId).toBeUndefined();
+            expect(mockConnector.lastInput?.forkSessionId).toBe('provider-thread-source');
+            expect(store.getSession(sourceSession.id)?.status).toBe('completed');
+            expect(store.getSession(sourceSession.id)?.providerSessionId).toBe('provider-thread-source');
+            expect(store.getSession(session.sessionId)?.id).toBe(session.sessionId);
+            expect(store.getTask(task.id)?.status).toBe('in_progress');
+        });
     });
 
     afterEach(() => {

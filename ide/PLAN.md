@@ -678,7 +678,7 @@ Wintermute folgt der Produktentscheidung aus `../docs/PLAN.md`: Der eingebettete
 
 Aktueller Stand:
 - Dashboard-seitig ist der connector-first Standardfluss umgesetzt.
-- Codex übernimmt bereits echte Provider-Session-IDs und den ersten Resume-Flow über persistierte Threads im Patchbay-Core/Connector-Layer.
+- Codex übernimmt echte Provider-Session-IDs sowie explizite Reattach/Fork-Flows (`mode: resume|fork`) über persistierte Sessions im Patchbay-Core/Connector-Layer.
 - Vor weiterem Host-Polish gehen aktuell Build-/Test-Fixes vor.
 
 - [ ] `DashboardPanel` und eingebettete Flows auf die neue Standardaktion `Start Session` ausrichten

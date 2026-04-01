@@ -237,14 +237,14 @@ Fast alle Konkurrenten sind closed source (ZenFlow, Cursor, T3 Code, Codex App) 
 
 **Phase L8 (im ersten Schnitt umgesetzt):** Vision-Alignment nach dem ersten End-to-End-Live-Chat-Stand. Persistente Sessions unter `.project-agents/sessions/`, eigene `/sessions`-Fläche im Dashboard und connector-first Datenfluss im UI.
 
-**Phase L9 (im erweiterten ersten Schnitt umgesetzt):** Connector-first als Standardfluss im Produkt. Dispatch und Entry-Flow bevorzugen jetzt interaktive Sessions, `codex app-server` ist der bevorzugte Default-Connector, `/sessions` wird als primäre Arbeitsfläche gegenüber `/runs` gestärkt, und der Codex-Pfad übernimmt bereits echte Provider-Session-IDs sowie den ersten Resume-Flow über persistierte Threads.
+**Phase L9 (im erweiterten ersten Schnitt umgesetzt):** Connector-first als Standardfluss im Produkt. Dispatch und Entry-Flow bevorzugen jetzt interaktive Sessions, `codex app-server` ist der bevorzugte Default-Connector, `/sessions` wird als primäre Arbeitsfläche gegenüber `/runs` gestärkt, und der Codex-Pfad übernimmt echte Provider-Session-IDs inkl. explizitem Reattach/Fork-Flow über persistierte Sessions.
 
 Details: `./PLAN.md` Phase L, Provider-Tabelle oben.
 
 ### Nächster Schritt (Phase L9)
 
 - **Persistenter Agent Chat** — Konversationen und strukturierte Events leben jetzt als eigenes Session-/Chat-Modell unter `.project-agents/sessions/`, nicht als primäre Historie in `Run.logs`.
-- **Codex als Referenz-Connector vertiefen** — `codex app-server` bleibt der bevorzugte Standardpfad; Provider-Session-ID und erster Resume-Flow sind jetzt angebunden, als Nächstes fehlen vor allem Reattach/Fork, robustere Thread-Metadaten und weitere App-Server-Semantik.
+- **Codex als Referenz-Connector vertiefen** — `codex app-server` bleibt der bevorzugte Standardpfad; Provider-Session-ID, Resume und Fork sind jetzt über persistierte Sessions und explizite Connect-Modi nutzbar.
 - **Sessions als Workspace verfeinern** — `/sessions` ist jetzt die primäre Fläche; als Nächstes geht es um noch stärkere Workspace-Qualität bei Transcript, Tool-Use, Permissions und Meta-Rail.
 - **Runner als Fallback stabil halten** — Batch-Runs bleiben als `One-off Run` / Fallback erhalten, sind aber nicht mehr das primäre mentale Modell des Produkts.
 - **Doku-Disziplin** — Vision, Pläne und Implementierung wurden für den ersten L8-Schnitt gemeinsam nachgezogen.

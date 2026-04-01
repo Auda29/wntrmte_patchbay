@@ -875,11 +875,9 @@ Produktentscheidung nach dem ersten L8-Schnitt: Patchbay verschiebt den Standard
 - [x] `packages/runners/codex/src/connector.ts` — Codex als Referenzpfad für den Standard-Session-Flow härten
 - [x] Server-/Provider-Session-ID sauber aus dem App-Server übernehmen und in `SessionRecord.providerSessionId` persistieren
 - [x] Resume-Basis für Codex-Threads produktseitig nutzbar machen: persistierte `providerSessionId` wird beim Reconnect eines `awaiting_input`-Tasks als `resumeSessionId` an den Connector weitergereicht; `thread.create`- und `thread.resume`-Responses werden ausgewertet
-- [ ] Reattach/Fork für Codex-Threads weiter ausbauen, damit Sessions nicht nur lokal/transient behandelt werden
-- [ ] Codex-spezifische Capabilities (Streaming, Tool-Use, serverseitige Approvals) im UI stärker als First-Class-Erlebnis ausspielen
-
-Status-Hinweis:
-- Die L9.3-Codeänderungen sind umgesetzt, aber lokale Testausführung war in dieser Umgebung blockiert (`npm test` scheitert aktuell an der WSL/Node-Umgebung: `WSL 1 is not supported`). Build-/Test-Fixes haben deshalb Vorrang vor weiterem L9.3-Polish.
+- [x] Reattach/Fork für Codex-Threads ausbauen: expliziter `mode: resume|fork`-Pfad über `/connect`, Reattach/Fork-Aktionen in `/sessions`, `thread.fork`-Pfad im Codex-Connector
+- [x] Codex-spezifische Capabilities im UI sichtbarer machen: Session-Meta-Rail inkl. `providerSessionId`, direkte Reattach-/Fork-Aktionen aus dem Sessions-Workspace
+- [x] Reconnect-Semantik finalisiert: Auto-Reconnect im `default`-Pfad übernimmt bestehende Session-ID/Conversation bei `awaiting_input`; `fork` erzeugt immer einen neuen lokalen Session-Record und verwendet nur die Provider-Thread-Referenz als Quelle
 
 #### L9.4: Runner-Rolle neu positionieren
 

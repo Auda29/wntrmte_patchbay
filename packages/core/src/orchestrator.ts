@@ -40,7 +40,11 @@ export class Orchestrator {
     // Live Agent Sessions
     // -----------------------------------------------------------------------
 
-    async connectAgent(taskId: string, connectorId: string): Promise<AgentSession> {
+    async connectAgent(
+        taskId: string,
+        connectorId: string,
+        options: { mode?: 'default' | 'resume' | 'fork'; sessionId?: string } = {},
+    ): Promise<AgentSession> {
         if (!this.store.isInitialized) {
             throw new Error('Patchbay is not initialized.');
         }
@@ -51,11 +55,24 @@ export class Orchestrator {
         const connector = this.connectorRegistry.get(connectorId);
         if (!connector) throw new Error(`Connector ${connectorId} not registered.`);
 
-        if (task.status !== 'open' && task.status !== 'blocked' && task.status !== 'awaiting_input') {
+        const mode = options.mode ?? 'default';
+        const hasExplicitSource = typeof options.sessionId === 'string' && options.sessionId.length > 0;
+        const sourcedSession = hasExplicitSource ? this.store.getSession(options.sessionId!) : null;
+        if (hasExplicitSource && !sourcedSession) {
+            throw new Error(`Session ${options.sessionId} not found.`);
+        }
+        if (sourcedSession && sourcedSession.taskId !== taskId) {
+            throw new Error(`Session ${options.sessionId} does not belong to task ${taskId}.`);
+        }
+        if (sourcedSession && sourcedSession.connectorId !== connectorId) {
+            throw new Error(`Session ${options.sessionId} does not belong to connector ${connectorId}.`);
+        }
+
+        if (!hasExplicitSource && task.status !== 'open' && task.status !== 'blocked' && task.status !== 'awaiting_input') {
             throw new Error(`Cannot connect agent for task in status ${task.status}.`);
         }
 
-        const shouldResumeSession = task.status === 'awaiting_input';
+        const shouldResumeSession = mode === 'default' && task.status === 'awaiting_input';
 
         task.status = 'in_progress';
         this.store.saveTask(task);
@@ -66,10 +83,21 @@ export class Orchestrator {
         const contextFiles = this.store.getContextFiles();
 
         const startTimeLabel = new Date().toISOString();
-        const resumableSession = this.findResumableSession(taskId, connectorId, shouldResumeSession);
-        const sessionId = resumableSession?.id ?? randomUUID();
-        const conversationId = resumableSession?.conversationId ?? randomUUID();
+        const resumableSession = this.findResumableSession(
+            taskId,
+            connectorId,
+            shouldResumeSession,
+            mode,
+            sourcedSession ?? undefined,
+        );
+        const reusesExistingSession = mode !== 'fork' && !!resumableSession;
+        const sessionId = reusesExistingSession && resumableSession ? resumableSession.id : randomUUID();
+        const conversationId = reusesExistingSession && resumableSession
+            ? (resumableSession.conversationId ?? randomUUID())
+            : randomUUID();
+        const reuseSessionRecord = reusesExistingSession;
         const runId = `${startTimeLabel.replace(/[:.]/g, '-')}-${taskId}-${connectorId}`;
+        const turnIndex = this.getNextTurnIndex(conversationId);
 
         const run: Run = {
             id: runId,
@@ -78,12 +106,12 @@ export class Orchestrator {
             startTime: startTimeLabel,
             status: 'running',
             conversationId,
-            turnIndex: resumableSession ? 1 : 0,
+            turnIndex,
             sessionId,
         };
         this.store.saveRun(run);
 
-        const sessionRecord: SessionRecord = resumableSession
+        const sessionRecord: SessionRecord = reuseSessionRecord
             ? {
                 ...resumableSession,
                 status: 'running',
@@ -112,7 +140,8 @@ export class Orchestrator {
             contextFiles,
             projectRules,
             goal: task.goal || task.description || task.title || '',
-            resumeSessionId: resumableSession?.providerSessionId,
+            resumeSessionId: mode === 'fork' ? undefined : resumableSession?.providerSessionId,
+            forkSessionId: mode === 'fork' ? resumableSession?.providerSessionId : undefined,
         };
 
         const session = await connector.connect(input);
@@ -338,8 +367,18 @@ export class Orchestrator {
         this.store.saveSession(entry.sessionRecord);
     }
 
-    private findResumableSession(taskId: string, connectorId: string, allowResume: boolean): SessionRecord | undefined {
-        if (!allowResume) {
+    private findResumableSession(
+        taskId: string,
+        connectorId: string,
+        allowResume: boolean,
+        mode: 'default' | 'resume' | 'fork',
+        sourcedSession?: SessionRecord,
+    ): SessionRecord | undefined {
+        if ((mode === 'resume' || mode === 'fork') && sourcedSession) {
+            return sourcedSession.providerSessionId ? sourcedSession : undefined;
+        }
+
+        if (!allowResume || mode !== 'default') {
             return undefined;
         }
 
@@ -350,6 +389,13 @@ export class Orchestrator {
                 && !!session.providerSessionId
             )
             .sort((a, b) => new Date(b.lastEventAt).getTime() - new Date(a.lastEventAt).getTime())[0];
+    }
+
+    private getNextTurnIndex(conversationId: string): number {
+        const existing = this.store.listRuns().filter((run) => run.conversationId === conversationId);
+        if (existing.length === 0) return 0;
+        const maxTurn = existing.reduce((acc, run) => Math.max(acc, run.turnIndex ?? 0), 0);
+        return maxTurn + 1;
     }
 
     private preflight(taskId: string, runnerId: string): {
