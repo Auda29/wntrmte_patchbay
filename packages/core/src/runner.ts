@@ -19,6 +19,8 @@ export interface RunnerInput {
     conversationId?: string;
     /** Runner-native session ID to resume (e.g. claude --resume <id>). */
     resumeSessionId?: string;
+    /** Runner-native source session/thread ID to fork from when supported. */
+    forkSessionId?: string;
     /** Previous turns for context injection (fallback when native resume is unavailable). */
     previousTurns?: ConversationTurn[];
 }

@@ -71,7 +71,7 @@ export function parseCodexResponse(
         }];
     }
 
-    if (requestMethod === 'thread.create' || requestMethod === 'thread.resume') {
+    if (requestMethod === 'thread.create' || requestMethod === 'thread.resume' || requestMethod === 'thread.fork') {
         return [{
             type: 'session:started',
             sessionId,

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MessageSquareMore, Clock3, AlertCircle, ArrowRight, Bot, PlayCircle, FolderKanban } from 'lucide-react';
@@ -29,6 +29,8 @@ export function SessionsPageClient() {
   const selectedSessionId = searchParams.get('sessionId');
   const query = taskId ? `/api/sessions?taskId=${encodeURIComponent(taskId)}` : '/api/sessions';
   const { data, error, isLoading } = useSWR<SessionRecord[]>(query, fetcher, { refreshInterval: 2000 });
+  const [actionBusy, setActionBusy] = useState<'resume' | 'fork' | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const sessions = useMemo(() => sortSessions(data ?? []), [data]);
   const selectedSession = useMemo(() => {
@@ -80,6 +82,44 @@ export function SessionsPageClient() {
   if (error) {
     return <div className="p-8 text-red-400">Error connecting to backend</div>;
   }
+
+  const startFromSession = async (mode: 'resume' | 'fork') => {
+    if (!selectedSession) {
+      return;
+    }
+
+    setActionBusy(mode);
+    setActionError(null);
+    try {
+      const response = await fetch('/api/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId: selectedSession.taskId,
+          connectorId: selectedSession.connectorId,
+          mode,
+          sessionId: selectedSession.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(typeof payload.error === 'string' ? payload.error : `Failed to ${mode} session`);
+      }
+
+      const payload = await response.json() as { sessionId?: string };
+      if (payload.sessionId) {
+        const next = new URLSearchParams(searchParams.toString());
+        next.set('sessionId', payload.sessionId);
+        next.delete('taskId');
+        router.push(`/sessions?${next.toString()}`);
+      }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : `Failed to ${mode} session`);
+    } finally {
+      setActionBusy(null);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -250,6 +290,29 @@ export function SessionsPageClient() {
                   ) : null}
                 </div>
                 <div className="mt-5 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => void startFromSession('resume')}
+                    disabled={actionBusy !== null || !selectedSession.providerSessionId}
+                    className="inline-flex w-full items-center justify-between rounded-md border border-surface-800 bg-surface-950/50 px-3 py-2 text-sm text-surface-200 transition-colors hover:border-surface-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {actionBusy === 'resume' ? 'Reattaching...' : 'Reattach Session'}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void startFromSession('fork')}
+                    disabled={actionBusy !== null || !selectedSession.providerSessionId}
+                    className="inline-flex w-full items-center justify-between rounded-md border border-surface-800 bg-surface-950/50 px-3 py-2 text-sm text-surface-200 transition-colors hover:border-surface-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {actionBusy === 'fork' ? 'Forking...' : 'Fork From Session'}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                  {actionError ? (
+                    <p className="rounded-md border border-red-900/60 bg-red-950/20 px-3 py-2 text-xs text-red-200">
+                      {actionError}
+                    </p>
+                  ) : null}
                   <Link
                     href={`/tasks`}
                     className="inline-flex w-full items-center justify-between rounded-md border border-surface-800 bg-surface-950/50 px-3 py-2 text-sm text-surface-200 transition-colors hover:border-surface-700 hover:text-white"

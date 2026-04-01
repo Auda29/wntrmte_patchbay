@@ -33,6 +33,22 @@ describe('Codex stream parser', () => {
         expect(event && 'providerSessionId' in event ? event.providerSessionId : undefined).toBe('thread-xyz');
     });
 
+    it('maps thread.fork responses to session started with provider session id', () => {
+        const [event] = parseCodexResponse(
+            {
+                jsonrpc: '2.0',
+                id: 2,
+                result: { threadId: 'thread-forked' },
+            },
+            'session-1',
+            'codex',
+            'thread.fork',
+        );
+
+        expect(event?.type).toBe('session:started');
+        expect(event && 'providerSessionId' in event ? event.providerSessionId : undefined).toBe('thread-forked');
+    });
+
     it('maps JSON-RPC errors to failed session events', () => {
         const [event] = parseCodexResponse(
             {

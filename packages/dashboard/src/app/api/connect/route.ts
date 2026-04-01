@@ -17,13 +17,22 @@ export async function POST(request: Request) {
             }, { status: 404 });
         }
 
-        const { taskId, connectorId } = await request.json();
+        const { taskId, connectorId, mode, sessionId } = await request.json();
         if (!taskId || !connectorId) {
             return NextResponse.json({ error: 'Missing taskId or connectorId' }, { status: 400 });
         }
+        if (mode !== undefined && mode !== 'default' && mode !== 'resume' && mode !== 'fork') {
+            return NextResponse.json({ error: 'Invalid mode. Expected default | resume | fork' }, { status: 400 });
+        }
+        if (sessionId !== undefined && typeof sessionId !== 'string') {
+            return NextResponse.json({ error: 'Invalid sessionId' }, { status: 400 });
+        }
 
         const orchestrator = getOrchestrator();
-        const session = await orchestrator.connectAgent(taskId, connectorId);
+        const session = await orchestrator.connectAgent(taskId, connectorId, {
+            mode: mode ?? 'default',
+            sessionId,
+        });
         return NextResponse.json(
             { sessionId: session.sessionId, connectorId: session.connectorId },
             { status: 202 }

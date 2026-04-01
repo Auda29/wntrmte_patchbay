@@ -15,14 +15,25 @@ export async function postConnect(
         return;
     }
 
-    const { taskId, connectorId } = body as Record<string, unknown>;
+    const { taskId, connectorId, mode, sessionId } = body as Record<string, unknown>;
     if (typeof taskId !== 'string' || typeof connectorId !== 'string') {
         sendJson(response, 400, { error: 'Missing or invalid taskId / connectorId' });
         return;
     }
+    if (mode !== undefined && mode !== 'default' && mode !== 'resume' && mode !== 'fork') {
+        sendJson(response, 400, { error: 'Invalid mode. Expected default | resume | fork' });
+        return;
+    }
+    if (sessionId !== undefined && typeof sessionId !== 'string') {
+        sendJson(response, 400, { error: 'Invalid sessionId' });
+        return;
+    }
 
     try {
-        const session = await orchestrator.connectAgent(taskId, connectorId);
+        const session = await orchestrator.connectAgent(taskId, connectorId, {
+            mode: (mode as 'default' | 'resume' | 'fork' | undefined) ?? 'default',
+            sessionId: sessionId as string | undefined,
+        });
         sendJson(response, 202, { sessionId: session.sessionId, connectorId: session.connectorId });
     } catch (error) {
         const err = error instanceof Error ? error : new Error('Internal error');

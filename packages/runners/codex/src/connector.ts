@@ -46,7 +46,7 @@ class CodexSession extends BaseSession {
     private child: ChildProcess | null = null;
     private stderrChunks: string[] = [];
     private pendingRequests = new Map<number | string, string>();
-    private pendingResumeMessage: string | null = null;
+    private pendingFollowupMessage: string | null = null;
 
     constructor(sessionId: string, connectorId: string, taskId: string) {
         super();
@@ -116,8 +116,8 @@ class CodexSession extends BaseSession {
         });
     }
 
-    queueResumeMessage(text: string): void {
-        this.pendingResumeMessage = text;
+    queueFollowupMessage(text: string): void {
+        this.pendingFollowupMessage = text;
     }
 
     sendRequest(method: string, params: Record<string, unknown> = {}): void {
@@ -158,12 +158,16 @@ class CodexSession extends BaseSession {
                 error?: { code?: number; message?: string; data?: unknown };
             }, this.sessionId, this.connectorId, requestMethod);
 
-            if (requestMethod === 'thread.resume' && this.pendingResumeMessage && !('error' in raw && raw.error)) {
-                const resumeMessage = this.pendingResumeMessage;
-                this.pendingResumeMessage = null;
-                this.child?.stdin?.write(jsonRpcNotification('user.message', { content: resumeMessage }) + '\n');
-            } else if (requestMethod === 'thread.resume' && 'error' in raw && raw.error) {
-                this.pendingResumeMessage = null;
+            if (
+                (requestMethod === 'thread.resume' || requestMethod === 'thread.fork')
+                && this.pendingFollowupMessage
+                && !('error' in raw && raw.error)
+            ) {
+                const followupMessage = this.pendingFollowupMessage;
+                this.pendingFollowupMessage = null;
+                this.child?.stdin?.write(jsonRpcNotification('user.message', { content: followupMessage }) + '\n');
+            } else if ((requestMethod === 'thread.resume' || requestMethod === 'thread.fork') && 'error' in raw && raw.error) {
+                this.pendingFollowupMessage = null;
             }
 
             return events;
@@ -235,7 +239,7 @@ export class CodexConnector extends BaseConnector {
 
     async connect(input: RunnerInput): Promise<AgentSession> {
         const sessionId = input.sessionId ?? randomUUID();
-        const prompt = input.resumeSessionId ? input.goal : buildPrompt(input);
+        const prompt = input.resumeSessionId || input.forkSessionId ? input.goal : buildPrompt(input);
         const isWin = process.platform === 'win32';
 
         const env = this.auth?.mode === 'apiKey'
@@ -252,8 +256,11 @@ export class CodexConnector extends BaseConnector {
         const session = new CodexSession(sessionId, this.id, input.taskId);
         session.attach(child);
 
-        if (input.resumeSessionId) {
-            session.queueResumeMessage(prompt);
+        if (input.forkSessionId) {
+            session.queueFollowupMessage(prompt);
+            session.sendRequest('thread.fork', { threadId: input.forkSessionId });
+        } else if (input.resumeSessionId) {
+            session.queueFollowupMessage(prompt);
             session.sendRequest('thread.resume', { threadId: input.resumeSessionId });
         } else {
             session.sendRequest('thread.create', { prompt });
