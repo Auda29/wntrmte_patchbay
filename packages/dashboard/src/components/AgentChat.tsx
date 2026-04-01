@@ -261,9 +261,23 @@ export function AgentChat({ sessionId, onClose }: AgentChatProps) {
 
             if (event.type === 'agent:tool_use') {
               return (
-                <div key={event.id} className="rounded-xl border border-surface-800/70 bg-surface-950/50 px-4 py-3 text-sm text-surface-300">
-                  <span className="font-medium text-surface-100">{event.toolName}</span> {event.status}
-                  {event.toolOutput ? <pre className="mt-2 whitespace-pre-wrap text-xs text-surface-400">{event.toolOutput}</pre> : null}
+                <div key={event.id} className="rounded-xl border border-surface-800/70 bg-surface-950/50 px-4 py-4 text-sm text-surface-300">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-surface-500">Tool Activity</p>
+                      <p className="mt-1 font-medium text-surface-100">{event.toolName}</p>
+                    </div>
+                    <span className={`rounded-full border px-2 py-1 text-xs ${
+                      event.status === 'completed'
+                        ? 'border-green-900/50 bg-green-950/20 text-green-100'
+                        : event.status === 'failed'
+                          ? 'border-red-900/50 bg-red-950/20 text-red-100'
+                          : 'border-blue-900/50 bg-blue-950/20 text-blue-100'
+                    }`}>
+                      {event.status}
+                    </span>
+                  </div>
+                  {event.toolOutput ? <pre className="mt-3 whitespace-pre-wrap rounded-lg border border-surface-800/70 bg-black/20 p-3 text-xs text-surface-400">{event.toolOutput}</pre> : null}
                 </div>
               );
             }
@@ -326,7 +340,13 @@ export function AgentChat({ sessionId, onClose }: AgentChatProps) {
       </div>
 
       <div className="border-t border-surface-800/70 px-6 py-4">
-        <div className="mb-3 flex justify-end">
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-surface-500">Composer</p>
+            <p className="mt-1 text-sm text-surface-400">
+              Continue the live session here. The transcript above remains the primary working memory.
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => void sendAction({ action: 'cancel' })}

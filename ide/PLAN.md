@@ -672,12 +672,12 @@ Gefunden beim manuellen Testen: nach dem Dispatch-Dialog gibt es kein Live-Feedb
 - [x] Eingebettete Connector-Sessions weiter am Dashboard orientieren, damit eine künftige connector-first UX nicht wieder runner-zentriert in der Extension landet
 - [x] Doku-Referenzen zu `../docs/VISION.md` und `../docs/PLAN.md` konsistent halten
 
-### L9: Connector-First Default Flow — Host-Anteil geplant
+### L9: Connector-First Default Flow — Host-Anteil in Arbeit
 
 Wintermute folgt der Produktentscheidung aus `../docs/PLAN.md`: Der eingebettete Patchbay-Flow wird standardmäßig **connector-first**, mit **Codex** als bevorzugtem Default-Connector, danach Claude Code und weitere verfügbare Connectoren. Wintermute bleibt Host + Glue Layer und bildet diese Priorisierung im Dashboard-Embedding ab, ohne eine zweite eigene Session-UX aufzubauen.
 
 - [ ] `DashboardPanel` und eingebettete Flows auf die neue Standardaktion `Start Session` ausrichten
-- [ ] Runner-zentrierte Begriffe im Host-Kontext reduzieren; Batch-Runs als Fallback / One-off-Pfad behandeln
-- [ ] Eingebetteter Dispatch soll nach Session-Start konsequent in die Session-Fläche führen statt gedanklich im Run-Flow zu bleiben
+- [x] Runner-zentrierte Begriffe im Host-Kontext reduzieren; Batch-Runs als Fallback / One-off-Pfad behandeln
+- [x] Eingebetteter Dispatch soll nach Session-Start konsequent in die Session-Fläche führen statt gedanklich im Run-Flow zu bleiben
 - [ ] Start-/Setup-Hinweise im Panel auf Connector-Verfügbarkeit priorisieren, besonders für Codex als Standardpfad
 - [ ] Relay-Integration (`wntrmte.connectAgent`, `wntrmte.sendAgentInput`, ...) als primäre eingebettete Interaktion behandeln; Batch-Dispatch bleibt erhalten, aber sekundär

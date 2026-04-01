@@ -4,8 +4,8 @@ import { LayoutDashboard, CheckCircle2, PlayCircle, GitMerge, FileCode2, History
 export function Sidebar() {
     const navItems = [
         { label: 'Overview', icon: LayoutDashboard, href: '/' },
-        { label: 'Tasks', icon: CheckCircle2, href: '/tasks' },
         { label: 'Sessions', icon: MessageSquareMore, href: '/sessions' },
+        { label: 'Tasks', icon: CheckCircle2, href: '/tasks' },
         { label: 'Runs', icon: PlayCircle, href: '/runs' },
         { label: 'Artifacts', icon: FileCode2, href: '/artifacts' },
         { label: 'Decisions', icon: GitMerge, href: '/decisions' },

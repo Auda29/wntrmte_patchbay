@@ -30,7 +30,7 @@ interface DispatchDialogProps {
   onDispatched: (meta?: { interactive?: boolean; sessionId?: string }) => void;
 }
 
-const preferredRunnerOrder = ['claude-code', 'codex', 'gemini', 'cursor-cli', 'cursor'];
+const preferredRunnerOrder = ['codex', 'claude-code', 'gemini', 'cursor-cli', 'cursor'];
 
 function sortByPreference<T extends { id: string }>(items: T[]): T[] {
   return [...items].sort((a, b) => {
@@ -58,7 +58,7 @@ export function DispatchDialog({
   const isAwaitingInput = taskStatus === 'awaiting_input';
   const [selectedRunnerId, setSelectedRunnerId] = useState('bash');
   const [selectedConnectorId, setSelectedConnectorId] = useState('');
-  const [dispatchMode, setDispatchMode] = useState<'run' | 'interactive'>('run');
+  const [dispatchMode, setDispatchMode] = useState<'run' | 'interactive'>('interactive');
   const [runners, setRunners] = useState<RunnerInfo[]>([]);
   const [connectors, setConnectors] = useState<ConnectorInfo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,6 +74,7 @@ export function DispatchDialog({
   const selectedRunner = runners.find((runner) => runner.id === selectedRunnerId);
   const selectedConnector = connectors.find((connector) => connector.id === selectedConnectorId);
   const selectedInstallTarget = dispatchMode === 'interactive' ? selectedConnector : selectedRunner;
+  const hasAvailableConnector = connectors.some((connector) => connector.available !== false);
   const canStartInteractiveSession = !isAwaitingInput
     && !!selectedConnector
     && selectedConnector.available !== false;
@@ -88,7 +89,7 @@ export function DispatchDialog({
     setErrorDetails('');
     setShowErrorDetails(false);
     setReplyText('');
-    setDispatchMode('run');
+    setDispatchMode('interactive');
 
     fetch('/api/agents')
       .then((response) => response.json())
@@ -110,6 +111,10 @@ export function DispatchDialog({
         if (nextConnectors.length > 0) {
           const firstAvailable = nextConnectors.find((connector) => connector.available !== false);
           setSelectedConnectorId((firstAvailable ?? nextConnectors[0]).id);
+          setDispatchMode(firstAvailable ? 'interactive' : 'run');
+        } else {
+          setSelectedConnectorId('');
+          setDispatchMode('run');
         }
       })
       .catch(() => {});
@@ -136,6 +141,16 @@ export function DispatchDialog({
   }, [open, isAwaitingInput, taskId]);
 
   const isVsCodeWebview = typeof window !== 'undefined' && window.parent !== window;
+
+  useEffect(() => {
+    if (isAwaitingInput) {
+      return;
+    }
+
+    if (dispatchMode === 'interactive' && !hasAvailableConnector) {
+      setDispatchMode('run');
+    }
+  }, [dispatchMode, hasAvailableConnector, isAwaitingInput]);
 
   const handleInstall = (hint: string) => {
     if (isVsCodeWebview) {
@@ -268,7 +283,7 @@ export function DispatchDialog({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={isAwaitingInput ? 'Reply to Runner' : 'Dispatch Run'}>
+    <Modal open={open} onClose={onClose} title={isAwaitingInput ? 'Reply to Runner' : 'Start Agent Session'}>
       <div className="space-y-5">
         <div>
           <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-surface-400">Task</p>
@@ -300,7 +315,30 @@ export function DispatchDialog({
           </div>
         ) : (
           <div className="space-y-4">
+            {!hasAvailableConnector && (
+              <div className="rounded-md border border-blue-900/50 bg-blue-950/30 px-3 py-2 text-sm text-blue-200">
+                No connector is currently available, so Patchbay will fall back to a one-off runner for this task.
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setDispatchMode('interactive')}
+                disabled={!hasAvailableConnector}
+                className={`rounded-md border px-3 py-2 text-left transition-colors ${
+                  dispatchMode === 'interactive'
+                    ? 'border-brand-500 bg-brand-950/40 text-surface-50'
+                    : 'border-surface-800 bg-surface-950/40 text-surface-300 hover:border-surface-700'
+                } disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Terminal className="h-4 w-4" />
+                  Start Session
+                </div>
+                <p className="mt-1 text-xs text-surface-400">
+                  Preferred path: live connector session with chat, tools, approvals, and resume.
+                </p>
+              </button>
               <button
                 type="button"
                 onClick={() => setDispatchMode('run')}
@@ -312,28 +350,10 @@ export function DispatchDialog({
               >
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Play className="h-4 w-4" />
-                  Batch Run
+                  One-off Run
                 </div>
                 <p className="mt-1 text-xs text-surface-400">
-                  Batch execution via `patchbay run`.
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDispatchMode('interactive')}
-                disabled={connectors.length === 0}
-                className={`rounded-md border px-3 py-2 text-left transition-colors ${
-                  dispatchMode === 'interactive'
-                    ? 'border-brand-500 bg-brand-950/40 text-surface-50'
-                    : 'border-surface-800 bg-surface-950/40 text-surface-300 hover:border-surface-700'
-                } disabled:cursor-not-allowed disabled:opacity-50`}
-              >
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Terminal className="h-4 w-4" />
-                  Interactive Session
-                </div>
-                <p className="mt-1 text-xs text-surface-400">
-                  Connector-backed live session for chat, approvals, and resume.
+                  Secondary path for batch execution, automation, or connector fallback.
                 </p>
               </button>
             </div>
@@ -354,6 +374,14 @@ export function DispatchDialog({
                     </option>
                   ))}
                 </select>
+                <p className="mt-2 text-xs text-surface-400">
+                  Default order prefers `codex`, then `claude-code`, then other available connectors.
+                </p>
+                {selectedConnector?.id === 'codex' && selectedConnector.available !== false && (
+                  <p className="mt-2 text-xs text-brand-300">
+                    `codex app-server` is the preferred default for the standard session workflow.
+                  </p>
+                )}
                 {selectedConnector?.capabilities && (
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     <span className="rounded-full border border-surface-800 bg-surface-950/50 px-2 py-1 text-surface-300">
@@ -374,7 +402,7 @@ export function DispatchDialog({
             ) : (
               <div>
                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-surface-400">
-                  Runner
+                  Batch Runner
                 </label>
                 <select
                   className="select"
@@ -470,7 +498,7 @@ export function DispatchDialog({
               ) : (
                 <Play className="h-4 w-4" />
               )}
-              {dispatchMode === 'interactive' ? 'Start Session' : 'Start Run'}
+              {dispatchMode === 'interactive' ? 'Start Session' : 'Start One-off Run'}
             </button>
           )}
         </div>

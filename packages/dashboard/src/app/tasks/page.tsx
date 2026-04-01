@@ -122,12 +122,12 @@ export default function TasksBoard() {
                                         <div className="flex justify-between items-center text-xs text-surface-500">
                                             <span>{task.affectedFiles?.length || 0} files</span>
                                             <div className="flex gap-1.5">
-                                                {/* Dispatch/Reply button */}
+                                                {/* Session / reply entry point */}
                                                 {(task.status === 'open' || task.status === 'blocked' || task.status === 'awaiting_input') && (
                                                     <button
                                                         onClick={() => setDispatchTarget({ id: task.id, title: task.title, status: task.status })}
                                                         className="p-1.5 rounded-md text-brand-400 hover:bg-brand-950/50 hover:text-brand-300 transition-colors"
-                                                        title={task.status === 'awaiting_input' ? 'Reply to runner' : 'Run task'}
+                                                        title={task.status === 'awaiting_input' ? 'Reply to runner' : 'Start session or one-off run'}
                                                     >
                                                         <Play className="w-3.5 h-3.5" />
                                                     </button>
@@ -135,7 +135,7 @@ export default function TasksBoard() {
                                                 <button
                                                     onClick={() => router.push(`/sessions?taskId=${encodeURIComponent(task.id)}`)}
                                                     className="p-1.5 rounded-md text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors"
-                                                    title="Open session history"
+                                                    title="Open sessions"
                                                 >
                                                     <MessageSquare className="w-3.5 h-3.5" />
                                                 </button>
