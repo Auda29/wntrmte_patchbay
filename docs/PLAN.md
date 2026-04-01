@@ -846,3 +846,39 @@ Die erste komplette Live-Agent-Version ist funktional, weicht aber an einigen Pr
 - [x] Connector-first UX: Connector-Sessions als eigene chat-zentrierte Interaktion statt primär als Modus im runner-zentrierten `DispatchDialog.tsx`
 - [x] Klarerer Connector-Vertrag im UI: Connector-Datenquelle konsequent modellieren, statt den Dialog primär über `/api/agents` mit ergänzten Connector-Metadaten zu speisen
 - [x] Doku-Drift vermeiden: `docs/VISION.md`, `docs/PLAN.md` und `ide/PLAN.md` bei weiteren Phase-L-Änderungen gemeinsam fortschreiben
+
+### L9: Connector-First Default Flow — geplant
+
+Produktentscheidung nach dem ersten L8-Schnitt: Patchbay verschiebt den Standardfluss im Dashboard und in Wintermute endgültig von **Runner-first** zu **Connector-first**.
+
+**Zielbild:**
+- Interaktive Session ist die Standardaktion im Produkt.
+- **Codex via `codex app-server`** ist der bevorzugte Default-Connector.
+- Danach folgen **Claude Code**, **Gemini** und weitere verfügbare Connectoren.
+- Batch-Runner bleiben verfügbar, aber als Fallback für One-off-Ausführung, Automation und Anbieter ohne brauchbaren Session-Layer.
+
+#### L9.1: Dispatch- und Entry-Flow auf Connector-First umstellen
+
+- [ ] `packages/dashboard/src/components/DispatchDialog.tsx` — Default-Modus auf interaktive Session umstellen statt Batch-Run
+- [ ] `packages/dashboard/src/components/DispatchDialog.tsx` — Connector-Reihenfolge und Vorauswahl: `codex` → `claude-code` → `gemini` → weitere
+- [ ] UI-Copy von runner-zentrierter Sprache lösen (`Start Session` als Standard, Batch-Run als sekundäre Aktion)
+- [ ] Wenn kein Connector verfügbar ist, automatischer und verständlicher Fallback auf Batch-Runner
+
+#### L9.2: Sessions zur primären Arbeitsfläche machen
+
+- [ ] `/sessions` als primäre chat-zentrierte Arbeitsfläche weiter ausbauen; `/runs` bleibt Historie/Diagnose
+- [ ] Task-Entry-Points nach Start einer interaktiven Session direkt auf `/sessions` führen
+- [ ] Session-Liste, Transcript, Tool-Use und Permission-Status stärker wie eine Agent-Workspace-UI behandeln statt wie einen reinen Event-Viewer
+
+#### L9.3: Codex als Referenz-Connector vertiefen
+
+- [ ] `packages/runners/codex/src/connector.ts` — Codex als Referenzpfad für den Standard-Session-Flow härten
+- [ ] Server-/Provider-Session-ID sauber aus dem App-Server übernehmen und in `SessionRecord.providerSessionId` persistieren
+- [ ] Resume/Reattach/Fork für Codex-Threads produktseitig nutzbar machen statt Sessions nur lokal/transient zu behandeln
+- [ ] Codex-spezifische Capabilities (Streaming, Tool-Use, serverseitige Approvals) im UI stärker als First-Class-Erlebnis ausspielen
+
+#### L9.4: Runner-Rolle neu positionieren
+
+- [ ] Batch-Runner im Produkt klar als `One-off Run`, Automationspfad oder Fallback benennen
+- [ ] Bestehende `/dispatch`, `/reply` und Runner-Historie erhalten, aber nicht mehr als primären mentalen Produktfluss darstellen
+- [ ] Doku, Copy und Navigation an das neue Primärmodell `Task -> Session -> Review` anpassen

@@ -82,9 +82,11 @@ Man hat die Freiheit einer eigenständigen App (Dashboard = beliebige Web-UI) mi
 
 Zwei Execution-Modelle für zwei Arten von Tools:
 
-**Batch-Runner** (Bash, HTTP, Cursor) — `execute(): Promise<RunnerOutput>`. Fire-and-forget. Input rein, Output raus, fertig. Gut für Skripte, API-Calls, einfache One-Shot-Tasks.
+**Agent-Connectors** (Codex, Claude Code, Gemini, Cursor ACP, HTTP-kompatible Agenten) — `connect(): AgentSession`. Event-basiert, session-orientiert. Streamen Messages, fragen nach Permissions, akzeptieren Replies — alles in einer laufenden Session. Kein Regex-Raten, keine Heuristik, sondern strukturierte Events.
 
-**Agent-Connectors** (Claude Code, perspektivisch Codex, Gemini) — `connect(): AgentSession`. Event-basiert, session-orientiert. Streamen Messages, fragen nach Permissions, akzeptieren Replies — alles in einer laufenden Session. Kein Regex-Raten, keine Heuristik, sondern strukturierte Events.
+**Batch-Runner** (Bash, HTTP, Cursor) — `execute(): Promise<RunnerOutput>`. Fire-and-forget. Input rein, Output raus, fertig. Gut für Skripte, API-Calls, einfache One-Shot-Tasks und als Fallback, wenn kein geeigneter Connector verfügbar ist.
+
+**Produktentscheidung ab Phase L8/L9:** Im UI ist der Standardfluss **connector-first**. Patchbay startet bevorzugt eine interaktive Session statt eines Batch-Runs. Der bevorzugte Default ist **Codex via `codex app-server`**, danach **Claude Code**, dann weitere verfügbare Connectoren. Batch-Runner bleiben bewusst erhalten, aber als sekundärer Pfad für One-off-Ausführung, Automatisierung und Fallback.
 
 ```typescript
 // Batch (bestehend)
@@ -240,7 +242,9 @@ Details: `./PLAN.md` Phase L, Provider-Tabelle oben.
 ### Nächster Schritt (Phase L8)
 
 - **Persistenter Agent Chat** — Konversationen und strukturierte Events leben jetzt als eigenes Session-/Chat-Modell unter `.project-agents/sessions/`, nicht als primäre Historie in `Run.logs`.
-- **Connector-first UX** — Connector-Sessions haben mit `/sessions` eine eigene chat-zentrierte Hauptfläche im Dashboard.
+- **Connector-first UX** — Connector-Sessions haben mit `/sessions` eine eigene chat-zentrierte Hauptfläche im Dashboard und werden zum primären Arbeitsmodus.
+- **Codex als Default-Session** — Wenn verfügbar, wird `codex app-server` als Standard-Connector vorausgewählt; danach folgen Claude Code, Gemini und weitere Connectoren.
+- **Runner als Fallback** — Batch-Runs bleiben als `One-off Run` / Fallback erhalten, sind aber nicht mehr das primäre mentale Modell des Produkts.
 - **Klarerer Connector-Vertrag im UI** — Connector-Auswahl und Capabilities laufen primär über einen Connector-Layer statt über angereicherte Runner-Metadaten.
 - **Doku-Disziplin** — Vision, Pläne und Implementierung wurden für den ersten L8-Schnitt gemeinsam nachgezogen.
 
