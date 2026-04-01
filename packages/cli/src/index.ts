@@ -11,6 +11,7 @@ import { bootstrapContextFiles, detectProjectMeta } from './init-meta';
 const program = new Command();
 const store = new Store();
 const CLI_AUTH_ONLY_RUNNERS = new Set(['claude-code']);
+const DEFAULT_SUBSCRIPTION_RUNNERS = new Set(['codex']);
 
 function getOrchestrator() {
     return createConfiguredOrchestrator();
@@ -304,6 +305,10 @@ authCmd
                 `Runner '${runner}' must use the official local CLI login. Patchbay does not store auth for it.`
             );
             process.exit(1);
+        }
+
+        if (!opts.apiKey && !opts.subscription && DEFAULT_SUBSCRIPTION_RUNNERS.has(runner)) {
+            opts.subscription = true;
         }
 
         if (!opts.apiKey && !opts.subscription) {

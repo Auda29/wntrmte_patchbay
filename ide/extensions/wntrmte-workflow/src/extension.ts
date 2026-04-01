@@ -598,7 +598,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
       await openClaudeCodeCliTerminal(await getSetupStatus(), promptCliInstall);
     }),
     vscode.commands.registerCommand('wntrmte.configureCodex', async () => {
-      await openRunnerAuthTerminal('codex', await getSetupStatus(), promptCliInstall);
+      await openRunnerAuthTerminal('codex', await getSetupStatus(), promptCliInstall, ['--subscription']);
     }),
     vscode.commands.registerCommand('wntrmte.configureGemini', async () => {
       await openRunnerAuthTerminal('gemini', await getSetupStatus(), promptCliInstall);

@@ -35,6 +35,7 @@ export async function openRunnerAuthTerminal(
   runnerId: string,
   setupStatus: SetupStatus,
   promptInstallCli: () => Promise<void>,
+  authArgs: string[] = [],
 ): Promise<void> {
   if (!setupStatus.cli.available) {
     const action = await vscode.window.showWarningMessage(
@@ -53,7 +54,7 @@ export async function openRunnerAuthTerminal(
   });
   terminal.show(true);
   terminal.sendText(
-    [getPatchbayCliExecutable(), 'auth', 'set', runnerId].map(quoteShellArg).join(' '),
+    [getPatchbayCliExecutable(), 'auth', 'set', runnerId, ...authArgs].map(quoteShellArg).join(' '),
     true
   );
 
