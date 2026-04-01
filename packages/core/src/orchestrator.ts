@@ -55,6 +55,8 @@ export class Orchestrator {
             throw new Error(`Cannot connect agent for task in status ${task.status}.`);
         }
 
+        const shouldResumeSession = task.status === 'awaiting_input';
+
         task.status = 'in_progress';
         this.store.saveTask(task);
 
@@ -64,7 +66,7 @@ export class Orchestrator {
         const contextFiles = this.store.getContextFiles();
 
         const startTimeLabel = new Date().toISOString();
-        const resumableSession = this.findResumableSession(taskId, connectorId);
+        const resumableSession = this.findResumableSession(taskId, connectorId, shouldResumeSession);
         const sessionId = resumableSession?.id ?? randomUUID();
         const conversationId = resumableSession?.conversationId ?? randomUUID();
         const runId = `${startTimeLabel.replace(/[:.]/g, '-')}-${taskId}-${connectorId}`;
@@ -336,14 +338,17 @@ export class Orchestrator {
         this.store.saveSession(entry.sessionRecord);
     }
 
-    private findResumableSession(taskId: string, connectorId: string): SessionRecord | undefined {
-        const task = this.store.getTask(taskId);
-        if (!task || task.status !== 'awaiting_input') {
+    private findResumableSession(taskId: string, connectorId: string, allowResume: boolean): SessionRecord | undefined {
+        if (!allowResume) {
             return undefined;
         }
 
         return this.store.listSessions(taskId)
-            .filter((session) => session.connectorId === connectorId && !!session.providerSessionId)
+            .filter((session) =>
+                session.connectorId === connectorId
+                && session.status === 'awaiting_input'
+                && !!session.providerSessionId
+            )
             .sort((a, b) => new Date(b.lastEventAt).getTime() - new Date(a.lastEventAt).getTime())[0];
     }
 
