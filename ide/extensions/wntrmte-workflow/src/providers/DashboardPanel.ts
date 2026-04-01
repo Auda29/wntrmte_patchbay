@@ -110,9 +110,11 @@ function getHtml(webview: vscode.Webview, status: SetupStatus, nonce: string): s
   const dashboardUrl = escapeHtml(status.dashboard.url);
   const authConfiguredCount = status.auth.configured.length;
   const authSupportedCount = status.auth.supported.length;
+  const codexConfigured = status.auth.available && status.auth.configured.includes('codex');
+  const claudeConfigured = status.auth.available && status.auth.configured.includes('claude-code');
   const authSummary = status.auth.available
-    ? `Auth ${authConfiguredCount}/${authSupportedCount}`
-    : 'Auth unavailable';
+    ? `Connector auth ${authConfiguredCount}/${authSupportedCount}`
+    : 'Connector auth unavailable';
   const cliDetail = status.cli.available
     ? status.cli.version ?? 'available'
     : status.cli.error ?? 'not installed';
@@ -322,19 +324,22 @@ function getHtml(webview: vscode.Webview, status: SetupStatus, nonce: string): s
         ${renderBadge(status.cli.available, cliBadge)}
         ${renderBadge(status.dashboard.reachable, dashboardBadge)}
         ${renderBadge(authBadgeOk, authSummary)}
+        ${renderBadge(codexConfigured, codexConfigured ? 'Codex ready (preferred)' : 'Codex setup needed')}
+        ${renderBadge(claudeConfigured, claudeConfigured ? 'Claude ready' : 'Claude setup optional')}
         <span class="badge">Mode ${escapeHtml(status.configuredMode)} -> ${escapeHtml(status.effectiveMode)}</span>
-        <span class="badge">Runner ${escapeHtml(status.defaultRunner)}</span>
       </div>
       <div class="actions">
         ${primaryWorkspaceAction}
+        <button data-command="wntrmte.configureCodex">Configure Codex (Preferred)</button>
+        <button class="secondary" data-command="wntrmte.configureClaude">Configure Claude Code</button>
+        <button class="secondary" data-command="wntrmte.configureAuth">Configure Connector Auth</button>
         <button class="secondary" data-command="wntrmte.refreshDashboardPanel">Refresh</button>
         <button class="secondary" data-command="wntrmte.openPatchbayDashboardExternal">Open in Browser</button>
         <button class="secondary" data-command="wntrmte.showOutput">Open Patchbay Output</button>
         <button class="secondary" data-command="wntrmte.checkPatchbayCli">Check Patchbay CLI</button>
         <button class="secondary" data-command="wntrmte.showPatchbayCliInstall">CLI Install</button>
         <button class="secondary" data-command="wntrmte.switchMode">Switch Mode</button>
-        <button class="secondary" data-command="wntrmte.setDefaultRunner">Set Default Runner</button>
-        <button class="secondary" data-command="wntrmte.configureAuth">Configure Auth</button>
+        <button class="secondary" data-command="wntrmte.setDefaultRunner">Set Fallback Runner</button>
       </div>
     </div>
     <div class="content">
@@ -360,7 +365,7 @@ function getHtml(webview: vscode.Webview, status: SetupStatus, nonce: string): s
         <div class="card">
           <h2>Patchbay CLI</h2>
           <p>${status.cli.available
-            ? `CLI detected as <code>${escapeHtml(cliDetail)}</code>. Dispatch can use the configured runner once tasks are available.`
+            ? `CLI detected as <code>${escapeHtml(cliDetail)}</code>. Connector sessions can start from the embedded dashboard via Start Session.`
             : `Patchbay CLI is not available yet. Current check result: <code>${escapeHtml(cliDetail)}</code>. Use the install hint to bootstrap <code>patchbay</code> locally.`}</p>
         </div>
         <div class="card">
@@ -370,7 +375,7 @@ function getHtml(webview: vscode.Webview, status: SetupStatus, nonce: string): s
             : `Dashboard is currently offline at <code>${dashboardUrl}</code>${status.dashboard.error ? `. Last probe: <code>${escapeHtml(dashboardDetail)}</code>` : ''}. Start Patchbay or open it in a browser to verify.`}</p>
         </div>
         <div class="card">
-          <h2>Runner Auth</h2>
+          <h2>Connector Auth</h2>
           <p>${getAuthCardCopy(status)}</p>
         </div>
         <div class="card">
@@ -447,11 +452,14 @@ function getNextSteps(status: SetupStatus): string[] {
     steps.push('Start the Patchbay dashboard or verify the configured dashboard URL.');
   }
 
-  if (status.auth.available && status.auth.missing.length > 0) {
-    steps.push(`Configure auth for ${status.auth.missing[0]}${status.auth.missing.length > 1 ? ' and other runners' : ''}.`);
+  if (status.auth.available && status.auth.missing.includes('codex')) {
+    steps.push('Configure Codex first to use the preferred connector-first session flow.');
+  } else if (status.auth.available && status.auth.missing.length > 0) {
+    steps.push(`Configure connector auth for ${status.auth.missing[0]}${status.auth.missing.length > 1 ? ' and additional connectors' : ''}.`);
   }
 
-  steps.push('Confirm the default runner you want Wintermute to use.');
+  steps.push('Open Tasks in the dashboard and use Start Session as the primary path.');
+  steps.push('Keep One-off Run for fallback or automation when no connector session is needed.');
 
   return steps.slice(0, 4);
 }
@@ -470,7 +478,7 @@ function getAuthHeroCopy(status: SetupStatus): string {
 
 function getAuthCardCopy(status: SetupStatus): string {
   if (!status.auth.available) {
-    return `Runner auth could not be checked${status.auth.error ? `: <code>${escapeHtml(status.auth.error)}</code>` : ''}. Install or fix the Patchbay CLI, then refresh this panel.`;
+    return `Connector auth could not be checked${status.auth.error ? `: <code>${escapeHtml(status.auth.error)}</code>` : ''}. Install or fix the Patchbay CLI, then refresh this panel.`;
   }
 
   const configured = status.auth.configured.length > 0
@@ -480,7 +488,7 @@ function getAuthCardCopy(status: SetupStatus): string {
     ? `<code>${escapeHtml(status.auth.missing.join(', '))}</code>`
     : 'none';
 
-  return `Configured: ${configured}. Missing: ${missing}. Wintermute starts the CLI flow for Patchbay-managed auth; Claude Code keeps using the user's local CLI session directly.`;
+  return `Configured: ${configured}. Missing: ${missing}. Wintermute prioritizes connector sessions (Codex first). Claude Code keeps using the user's local CLI session directly.`;
 }
 
 function escapeHtml(value: string): string {

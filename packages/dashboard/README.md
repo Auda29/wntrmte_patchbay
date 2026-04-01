@@ -6,9 +6,11 @@ Next.js web dashboard for Patchbay — the central control panel for AI-assisted
 
 | Route | Description |
 |-------|------------|
-| `/` | Project overview — stats, goal, tech stack, recent runs, project rules |
-| `/tasks` | Kanban board (open / in_progress / blocked / review / done) with dispatch and status controls |
-| `/runs` | Run history — expandable logs, summaries, diffs, blockers, suggested next steps |
+| `/` | Project overview — stats, goal, tech stack, recent execution logs, project rules |
+| `/tasks` | Kanban board (open / in_progress / blocked / review / done) with session-first dispatch |
+| `/sessions` | Primary session workspace — persistent chat transcript, event stream, metadata, reattach/fork actions |
+| `/runs` | Run details — expandable logs, summaries, diffs, blockers, suggested next steps |
+| `/history` | Run timeline across tasks for auditing and fallback diagnostics |
 | `/artifacts` | File browser — context files + diff references with preview pane and auto diff detection |
 | `/decisions` | Decision log — searchable, with New Decision modal |
 
@@ -22,6 +24,10 @@ Next.js web dashboard for Patchbay — the central control panel for AI-assisted
 | `/api/runs` | GET | List runs (optional `?taskId=` filter) |
 | `/api/runs` | POST | Save a run |
 | `/api/dispatch` | POST | Dispatch a task to a runner |
+| `/api/connect` | POST | Start connector session (`default` / `resume` / `fork`) |
+| `/api/agent-input` | POST | Send input to active connector session |
+| `/api/agent-events` | GET | Stream live connector events for a session |
+| `/api/connectors` | GET | List connector availability + capabilities |
 | `/api/agents` | GET | List available runners |
 | `/api/decisions` | POST | Create a decision |
 | `/api/artifacts` | GET | List context files and diff references |

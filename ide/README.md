@@ -10,7 +10,7 @@ A minimalist AI-agent IDE built on VS Code. Inspired by Zed's clean aesthetics, 
 Wintermute is a custom VS Code distribution (VSCodium-style: build scripts + patches, no hard fork) that ships with:
 
 - **Minimalist UI** — no activity bar, no tabs, no minimap, no breadcrumbs by default
-- **Built-in Patchbay client** — task tree, agent dispatch, run logs, and dashboard webview as a first-class feature
+- **Built-in Patchbay client** — task tree, connector sessions, run diagnostics, and dashboard webview as a first-class feature
 - **Open VSX** marketplace instead of Microsoft's proprietary extension gallery
 - **Zero telemetry** — all data collection disabled by default
 - **No Copilot** — GitHub Copilot AI features hidden by default
@@ -36,7 +36,7 @@ Launch the resulting binary from `VSCode-{platform}-{arch}/`.
 Open any project that contains `.project-agents/`. Wintermute will automatically activate the built-in Patchbay client extension and show:
 
 - a task tree in the Explorer
-- run logs for task executions
+- session-first workflows in the embedded dashboard
 - Patchbay-aware task status controls
 
 ### 3. Choose your mode
@@ -54,7 +54,7 @@ npm run dev
 
 By default, Wintermute probes `http://localhost:3000` and switches into connected mode when the dashboard is available. If the dashboard is offline, the Patchbay panel can start it via `Start Dashboard`.
 
-### 4. Dispatch a task through Patchbay
+### 4. Start work through Patchbay
 
 If you want to run tasks from inside Wintermute, install the Patchbay CLI first. The built-in `CLI Install` flow offers:
 
@@ -73,6 +73,8 @@ npm install -g ./packages/cli
 ```
 
 Then use `Wintermute: Dispatch Task to Runner` to select a task and a runner. Wintermute opens an integrated terminal and runs `patchbay run <taskId> <runnerId>` with live output. `Ctrl+C` cancels the runner process.
+
+For the primary workflow, open the embedded dashboard and start a connector session from **Tasks** with **Start Session** (Codex preferred, then Claude Code, then other available connectors). One-off runner dispatch remains available as fallback/automation path.
 
 ## Architecture
 
@@ -114,9 +116,10 @@ Mode is auto-detected (probes `localhost:3000`), or configurable via `wntrmte.wo
 | Feature | Description |
 |---------|------------|
 | **Task Tree** | Tasks grouped by status in the Explorer sidebar |
-| **Run Logs** | View run details, logs, and summaries |
+| **Session Workspace** | Connector-first task work via embedded dashboard sessions |
+| **Run Logs** | Secondary diagnostics for one-off/fallback executions |
 | **Status Bar** | Live count of running/blocked/open tasks |
-| **Agent Dispatch** | Dispatch a task to any Patchbay runner via `patchbay run` CLI |
+| **Agent Dispatch** | One-off fallback dispatch to any Patchbay runner via `patchbay run` CLI |
 | **Dashboard Webview** | Embedded Patchbay dashboard panel with setup state, auto-refresh, and `Start Dashboard` action |
 
 ### Commands
@@ -126,8 +129,8 @@ Mode is auto-detected (probes `localhost:3000`), or configurable via `wntrmte.wo
 - `Wintermute: Set Task Status` — change task status from the tree view
 - `Wintermute: Switch Connection Mode` — toggle auto/offline/connected
 - `Wintermute: Initialize Patchbay Workspace` — delegates to `patchbay init` CLI when available, falls back to local bootstrap
-- `Wintermute: Set Default Runner` — choose the default runner for dispatch
-- `Wintermute: Configure Runner Auth` — QuickPick missing Patchbay-managed auth runners, then choose `Subscription` or `API Key`
+- `Wintermute: Set Default Runner` — choose the default fallback runner for one-off dispatch
+- `Wintermute: Configure Runner Auth` — QuickPick missing Patchbay-managed connector auth runners, then choose `Subscription` or `API Key`
 - `Wintermute: Open Claude Code CLI` — opens a terminal so Claude login stays inside the official Claude Code CLI
 
 `Subscription` stores the auth mode in Patchbay and assumes the underlying runner CLI already has a valid login context. It does not open an OAuth or browser sign-in flow by itself. Claude Code is the exception: Wintermute/Patchbay do not store Claude auth and rely on the user's local Claude Code CLI session directly.

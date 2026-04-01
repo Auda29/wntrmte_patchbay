@@ -28,8 +28,8 @@ export default function RunsViewer() {
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <header>
-                <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">Run History</h1>
-                <p className="text-surface-400">Execution logs and metrics across all agents.</p>
+                <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">Run Details</h1>
+                <p className="text-surface-400">Detailed execution logs for diagnostics, one-off runs, and fallback paths.</p>
             </header>
 
             <div className="space-y-4">
@@ -37,7 +37,7 @@ export default function RunsViewer() {
                     <div className="glass-card rounded-xl border border-surface-800 p-12 flex flex-col items-center justify-center text-center">
                         <TerminalSquare className="w-12 h-12 text-surface-700 mb-4" />
                         <h3 className="text-lg font-medium text-surface-300">No runs yet</h3>
-                        <p className="text-sm text-surface-500 mt-1">Agent executions will appear here.</p>
+                        <p className="text-sm text-surface-500 mt-1">Use Tasks and Sessions for day-to-day work; run logs will appear here when available.</p>
                     </div>
                 ) : (
                     runs.map(run => (

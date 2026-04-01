@@ -31,6 +31,9 @@ export default function DashboardHome() {
             ? `Connected to ${projectOptions?.name || 'Project'}`
             : 'Patchbay is not initialized in the target repository.'}
         </p>
+        <p className="mt-2 text-sm text-surface-500">
+          Primary workflow: Task → Session → Review. Run views remain available for fallback executions and diagnostics.
+        </p>
       </header>
 
       {/* Stats Row */}
@@ -54,7 +57,7 @@ export default function DashboardHome() {
           color="text-red-400"
         />
         <StatCard
-          title="Total Runs"
+          title="Total Executions"
           value={runs.length.toString()}
           icon={GitMerge}
           color="text-brand-400"
@@ -96,11 +99,14 @@ export default function DashboardHome() {
           </section>
 
           <section>
-            <h2 className="mb-4 text-lg font-medium text-surface-50">Recent Runs</h2>
+            <h2 className="mb-1 text-lg font-medium text-surface-50">Recent Execution Logs</h2>
+            <p className="mb-4 text-sm text-surface-500">
+              Secondary view for run-level diagnostics and batch fallback history.
+            </p>
             <div className="space-y-3">
               {runs.length === 0 ? (
                 <div className="glass-card rounded-xl p-8 text-center border border-surface-900/50">
-                  <p className="text-surface-500 text-sm">No task runs recorded yet.</p>
+                  <p className="text-surface-500 text-sm">No executions recorded yet.</p>
                 </div>
               ) : (
                 runs.slice(0, 5).map(run => (

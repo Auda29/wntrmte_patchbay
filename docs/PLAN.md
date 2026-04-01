@@ -881,6 +881,6 @@ Produktentscheidung nach dem ersten L8-Schnitt: Patchbay verschiebt den Standard
 
 #### L9.4: Runner-Rolle neu positionieren
 
-- [ ] Batch-Runner im Produkt klar als `One-off Run`, Automationspfad oder Fallback benennen
-- [ ] Bestehende `/dispatch`, `/reply` und Runner-Historie erhalten, aber nicht mehr als primären mentalen Produktfluss darstellen
-- [ ] Doku, Copy und Navigation an das neue Primärmodell `Task -> Session -> Review` anpassen
+- [x] Batch-Runner im Produkt klar als `One-off Run`, Automationspfad oder Fallback benennen
+- [x] Bestehende `/dispatch`, `/reply` und Runner-Historie erhalten, aber nicht mehr als primären mentalen Produktfluss darstellen
+- [x] Doku, Copy und Navigation an das neue Primärmodell `Task -> Session -> Review` anpassen

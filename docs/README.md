@@ -167,7 +167,7 @@ npm run test:e2e      # Playwright e2e (dashboard)
 Wintermute is a minimalist VS Code distribution (VSCodium-style: build scripts + patches, no hard fork) that ships with:
 
 - **Minimalist UI** — no activity bar, no tabs, no minimap by default
-- **Built-in Patchbay client** — task tree, agent dispatch, run logs, dashboard webview
+- **Built-in Patchbay client** — task tree, session-first workflow, run diagnostics, dashboard webview
 - **Open VSX** marketplace instead of Microsoft's extension gallery
 - **Zero telemetry** — all data collection disabled
 - **No Copilot** — GitHub Copilot features hidden by default
@@ -187,7 +187,7 @@ Binary: `wntrmte` | Data folder: `.wntrmte`
 | `Wintermute: Dispatch Task to Runner` | Select task + runner, opens integrated terminal |
 | `Wintermute: Open Patchbay Dashboard` | Open dashboard as webview panel |
 | `Wintermute: Initialize Patchbay Workspace` | Run `patchbay init` for the current repo |
-| `Wintermute: Configure Runner Auth` | Set up Patchbay-managed authentication for Codex, Gemini, Cursor CLI |
+| `Wintermute: Configure Runner Auth` | Set up Patchbay-managed connector auth for Codex, Gemini, Cursor CLI |
 | `Wintermute: Set Task Status` | Change task status from tree view |
 | `Wintermute: Switch Connection Mode` | Toggle auto/offline/connected |
 
@@ -203,10 +203,11 @@ Patchbay is the orchestration backend and dashboard. It manages tasks, dispatche
 
 | Route | Description |
 |---|---|
-| `/` | Project overview — stats, goal, tech stack, recent runs |
+| `/` | Project overview — stats, goal, tech stack, recent execution logs |
 | `/tasks` | Kanban board with dispatch and status controls |
 | `/sessions` | Persistent connector sessions with full chat and event history |
-| `/runs` | Run history — logs, summaries, diffs, suggested next steps |
+| `/runs` | Run details — deep execution diagnostics, logs, summaries, diffs |
+| `/history` | Run timeline across tasks for auditing and fallback diagnostics |
 | `/artifacts` | File browser — context files + diff references |
 | `/decisions` | Decision log with search and creation |
 
@@ -250,11 +251,11 @@ See [`PLAN.md`](./PLAN.md) for the full Patchbay implementation roadmap.
 
 ## Status
 
-**Phases A-K complete** — schema, orchestrator, dashboard, 7 runner adapters, CLI, extension, multi-turn conversations, project import.
+**Phases A-K complete** — schema, orchestrator, dashboard, runner adapters, CLI, extension, multi-turn conversations, project import.
 
-**Phase L1-L8 first slice complete** — agent connector architecture plus persistent sessions, `/sessions` dashboard UX, and connector-first data flow in the UI.
+**Phase L1-L9 complete** — connector architecture, persistent sessions, connector-first default flow, Codex reattach/fork semantics, and runner positioning as secondary fallback path.
 
-**Next: L6-L7** — Agent Chat UI in the dashboard + Wintermute postMessage relay (L6), `/agents` endpoint with connector capabilities (L7).
+**Current focus:** post-L9 polish (session workspace quality, diagnostics UX, and build/test hardening).
 
 See [`VISION.md`](./VISION.md) for the full product vision and market positioning.
 

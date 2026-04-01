@@ -269,14 +269,14 @@ Eigene Icons in `icons/` erstellen → `prepare_vscode.sh` kopiert sie in `resou
    - Prüfen: `patchbay --version` erfolgreich?
    - Prüfen: `.project-agents/` vorhanden?
    - Anzeigen: aktueller Mode (`auto` / `offline` / `connected`)
-   - Anzeigen: aktueller `defaultRunner`
+   - Anzeigen: aktueller Fallback-Runner (`defaultRunner`)
 
 4. **Direkte Setup-Aktionen im Panel** ✅
    - `Check Patchbay CLI`
    - `Show Patchbay CLI install command`
    - `Open Patchbay Dashboard` / `Open in Browser`
    - `Switch Mode`
-   - `Set Default Runner`
+   - `Set Fallback Runner` (Command bleibt `wntrmte.setDefaultRunner`)
 
 5. **Iframe nur wenn sinnvoll** ✅
    - Bei erreichbarem Dashboard: `iframe` laden
@@ -288,7 +288,7 @@ Eigene Icons in `icons/` erstellen → `prepare_vscode.sh` kopiert sie in `resou
 - `DashboardPanel` ist jetzt eine zustandsfähige Webview mit Setup-State und Connected-State
 - Ein lokaler `SetupInspector` bündelt CLI-, Dashboard- und Workspace-Prüfungen
 - Das Panel aktualisiert sich bei relevanten Konfigurationsänderungen
-- `defaultRunner` und `mode` lassen sich direkt aus dem Panel heraus ändern
+- Fallback-Runner (`defaultRunner`) und `mode` lassen sich direkt aus dem Panel heraus ändern
 - Der Build war erfolgreich; der Phase-5-MVP läuft durch die bestehende Build-/CI-Pipeline
 
 ### Erweiterung nach MVP
@@ -681,8 +681,8 @@ Aktueller Stand:
 - Codex übernimmt echte Provider-Session-IDs sowie explizite Reattach/Fork-Flows (`mode: resume|fork`) über persistierte Sessions im Patchbay-Core/Connector-Layer.
 - Vor weiterem Host-Polish gehen aktuell Build-/Test-Fixes vor.
 
-- [ ] `DashboardPanel` und eingebettete Flows auf die neue Standardaktion `Start Session` ausrichten
+- [x] `DashboardPanel` und eingebettete Flows auf die neue Standardaktion `Start Session` ausrichten
 - [x] Runner-zentrierte Begriffe im Host-Kontext reduzieren; Batch-Runs als Fallback / One-off-Pfad behandeln
 - [x] Eingebetteter Dispatch soll nach Session-Start konsequent in die Session-Fläche führen statt gedanklich im Run-Flow zu bleiben
-- [ ] Start-/Setup-Hinweise im Panel auf Connector-Verfügbarkeit priorisieren, besonders für Codex als Standardpfad
-- [ ] Relay-Integration (`wntrmte.connectAgent`, `wntrmte.sendAgentInput`, ...) als primäre eingebettete Interaktion behandeln; Batch-Dispatch bleibt erhalten, aber sekundär
+- [x] Start-/Setup-Hinweise im Panel auf Connector-Verfügbarkeit priorisieren, besonders für Codex als Standardpfad
+- [x] Relay-Integration (`wntrmte.connectAgent`, `wntrmte.sendAgentInput`, ...) als primäre eingebettete Interaktion behandeln; Batch-Dispatch bleibt erhalten, aber sekundär

@@ -70,7 +70,7 @@ export default function HistoryPage() {
         <div className="space-y-8 animate-in fade-in duration-500">
             <header>
                 <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">History</h1>
-                <p className="text-surface-400">All dispatch runs across every task and runner.</p>
+                <p className="text-surface-400">Execution timeline for diagnostics, batch fallback runs, and auditing.</p>
             </header>
 
             <div className="glass-card rounded-xl border border-surface-800 overflow-hidden">
@@ -78,7 +78,7 @@ export default function HistoryPage() {
                     <div className="p-12 flex flex-col items-center justify-center text-center">
                         <History className="w-12 h-12 text-surface-700 mb-4" />
                         <h3 className="text-lg font-medium text-surface-300">No runs recorded yet</h3>
-                        <p className="text-sm text-surface-500 mt-1">Dispatch a task to see execution history here.</p>
+                        <p className="text-sm text-surface-500 mt-1">Start a session from Tasks to begin the primary workflow.</p>
                     </div>
                 ) : (
                     <table className="w-full text-sm">
@@ -86,7 +86,7 @@ export default function HistoryPage() {
                             <tr className="border-b border-surface-800 text-left">
                                 <th className="px-4 py-3 text-xs font-medium text-surface-500 uppercase tracking-wider">Run ID</th>
                                 <th className="px-4 py-3 text-xs font-medium text-surface-500 uppercase tracking-wider">Task</th>
-                                <th className="px-4 py-3 text-xs font-medium text-surface-500 uppercase tracking-wider">Runner</th>
+                                <th className="px-4 py-3 text-xs font-medium text-surface-500 uppercase tracking-wider">Execution Path</th>
                                 <th className="px-4 py-3 text-xs font-medium text-surface-500 uppercase tracking-wider">Status</th>
                                 <th className="px-4 py-3 text-xs font-medium text-surface-500 uppercase tracking-wider">Started</th>
                                 <th className="px-4 py-3 text-xs font-medium text-surface-500 uppercase tracking-wider">Duration</th>

@@ -241,13 +241,12 @@ Fast alle Konkurrenten sind closed source (ZenFlow, Cursor, T3 Code, Codex App) 
 
 Details: `./PLAN.md` Phase L, Provider-Tabelle oben.
 
-### Nächster Schritt (Phase L9)
+### Nächster Schritt (Post-L9)
 
-- **Persistenter Agent Chat** — Konversationen und strukturierte Events leben jetzt als eigenes Session-/Chat-Modell unter `.project-agents/sessions/`, nicht als primäre Historie in `Run.logs`.
-- **Codex als Referenz-Connector vertiefen** — `codex app-server` bleibt der bevorzugte Standardpfad; Provider-Session-ID, Resume und Fork sind jetzt über persistierte Sessions und explizite Connect-Modi nutzbar.
-- **Sessions als Workspace verfeinern** — `/sessions` ist jetzt die primäre Fläche; als Nächstes geht es um noch stärkere Workspace-Qualität bei Transcript, Tool-Use, Permissions und Meta-Rail.
+- **Sessions als Workspace verfeinern** — `/sessions` ist primäre Fläche; als Nächstes geht es um noch stärkere Workspace-Qualität bei Transcript, Tool-Use, Permissions und Meta-Rail.
 - **Runner als Fallback stabil halten** — Batch-Runs bleiben als `One-off Run` / Fallback erhalten, sind aber nicht mehr das primäre mentale Modell des Produkts.
-- **Doku-Disziplin** — Vision, Pläne und Implementierung wurden für den ersten L8-Schnitt gemeinsam nachgezogen.
+- **Build-/Test-Härtung** — CI-Stabilität und lokale Testpfade weiter robust machen, damit Feature-Iteration wieder schneller wird.
+- **Doku-Disziplin** — Vision, Pläne und Implementierung bei Änderungen in einem Zug fortschreiben.
 
 ### Darüber hinaus (Evaluierung)
 

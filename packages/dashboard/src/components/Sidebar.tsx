@@ -4,12 +4,12 @@ import { LayoutDashboard, CheckCircle2, PlayCircle, GitMerge, FileCode2, History
 export function Sidebar() {
     const navItems = [
         { label: 'Overview', icon: LayoutDashboard, href: '/' },
-        { label: 'Sessions', icon: MessageSquareMore, href: '/sessions' },
         { label: 'Tasks', icon: CheckCircle2, href: '/tasks' },
-        { label: 'Runs', icon: PlayCircle, href: '/runs' },
+        { label: 'Sessions', icon: MessageSquareMore, href: '/sessions' },
         { label: 'Artifacts', icon: FileCode2, href: '/artifacts' },
         { label: 'Decisions', icon: GitMerge, href: '/decisions' },
-        { label: 'History', icon: History, href: '/history' },
+        { label: 'Run Details', icon: PlayCircle, href: '/runs' },
+        { label: 'Run Timeline', icon: History, href: '/history' },
     ];
 
     return (

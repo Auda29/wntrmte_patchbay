@@ -355,7 +355,7 @@ export async function createPatchbayWorkspace(workspaceRoot: string, agentsDirNa
       'Confirm that Wintermute, Patchbay CLI, and the local dashboard are wired up for this workspace.',
       '',
       '- Start or connect the Patchbay dashboard.',
-      '- Check the configured default runner.',
+      '- Check the configured fallback runner.',
       '- Replace this bootstrap task with real project work.',
       '',
     ].join('\n');
