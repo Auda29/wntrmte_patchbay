@@ -25,7 +25,8 @@ test.describe('Dispatch Dialog', () => {
 
     test('dispatch dialog has Start Session button', async ({ page }) => {
         await page.locator('button[title="Start session or one-off run"]').first().click();
-        await expect(page.getByRole('button', { name: 'Start Session' })).toBeVisible();
+        const dialog = page.getByRole('dialog');
+        await expect(dialog.getByRole('button', { name: /Start Session/i }).first()).toBeVisible();
     });
 
     test('dispatch dialog can be closed with Cancel', async ({ page }) => {
