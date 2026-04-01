@@ -12,7 +12,7 @@ import { promisify } from 'util';
 import { randomUUID } from 'crypto';
 import { createInterface } from 'readline';
 import { buildPrompt } from '@patchbay/core';
-import { parseCodexLine } from './stream-parser';
+import { parseCodexLine, parseCodexResponse } from './stream-parser';
 
 const execAsync = promisify(exec);
 
@@ -22,8 +22,12 @@ const execAsync = promisify(exec);
 
 let rpcIdCounter = 0;
 
-function jsonRpcRequest(method: string, params: Record<string, unknown> = {}): string {
-    return JSON.stringify({ jsonrpc: '2.0', id: ++rpcIdCounter, method, params });
+function jsonRpcRequest(method: string, params: Record<string, unknown> = {}): { id: number; payload: string } {
+    const id = ++rpcIdCounter;
+    return {
+        id,
+        payload: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
+    };
 }
 
 function jsonRpcNotification(method: string, params: Record<string, unknown> = {}): string {
@@ -41,6 +45,8 @@ class CodexSession extends BaseSession {
 
     private child: ChildProcess | null = null;
     private stderrChunks: string[] = [];
+    private pendingRequests = new Map<number | string, string>();
+    private pendingResumeMessage: string | null = null;
 
     constructor(sessionId: string, connectorId: string, taskId: string) {
         super();
@@ -56,7 +62,7 @@ class CodexSession extends BaseSession {
         const rl = createInterface({ input: child.stdout! });
 
         rl.on('line', (line: string) => {
-            const events = parseCodexLine(line, this.sessionId, this.connectorId);
+            const events = this.parseLine(line);
             for (const event of events) {
                 if (event.type === 'agent:permission') {
                     this.setStatus('awaiting_permission');
@@ -108,6 +114,62 @@ class CodexSession extends BaseSession {
             }
             this.emitClose();
         });
+    }
+
+    queueResumeMessage(text: string): void {
+        this.pendingResumeMessage = text;
+    }
+
+    sendRequest(method: string, params: Record<string, unknown> = {}): void {
+        if (!this.child?.stdin?.writable) {
+            throw new Error('Session stdin is not writable');
+        }
+        const request = jsonRpcRequest(method, params);
+        this.pendingRequests.set(request.id, method);
+        this.child.stdin.write(request.payload + '\n');
+    }
+
+    private parseLine(line: string) {
+        const trimmed = line.trim();
+        if (!trimmed) {
+            return [];
+        }
+
+        let raw: Record<string, unknown>;
+        try {
+            raw = JSON.parse(trimmed);
+        } catch {
+            return [];
+        }
+
+        if (raw.jsonrpc !== '2.0') {
+            return [];
+        }
+
+        if (raw.id !== undefined) {
+            const requestMethod = this.pendingRequests.get(raw.id as number | string);
+            if (requestMethod) {
+                this.pendingRequests.delete(raw.id as number | string);
+            }
+            const events = parseCodexResponse(raw as {
+                jsonrpc: '2.0';
+                id: number | string;
+                result?: Record<string, unknown>;
+                error?: { code?: number; message?: string; data?: unknown };
+            }, this.sessionId, this.connectorId, requestMethod);
+
+            if (requestMethod === 'thread.resume' && this.pendingResumeMessage && !('error' in raw && raw.error)) {
+                const resumeMessage = this.pendingResumeMessage;
+                this.pendingResumeMessage = null;
+                this.child?.stdin?.write(jsonRpcNotification('user.message', { content: resumeMessage }) + '\n');
+            } else if (requestMethod === 'thread.resume' && 'error' in raw && raw.error) {
+                this.pendingResumeMessage = null;
+            }
+
+            return events;
+        }
+
+        return parseCodexLine(trimmed, this.sessionId, this.connectorId);
     }
 
     async sendInput(text: string): Promise<void> {
@@ -173,7 +235,7 @@ export class CodexConnector extends BaseConnector {
 
     async connect(input: RunnerInput): Promise<AgentSession> {
         const sessionId = input.sessionId ?? randomUUID();
-        const prompt = buildPrompt(input);
+        const prompt = input.resumeSessionId ? input.goal : buildPrompt(input);
         const isWin = process.platform === 'win32';
 
         const env = this.auth?.mode === 'apiKey'
@@ -190,8 +252,12 @@ export class CodexConnector extends BaseConnector {
         const session = new CodexSession(sessionId, this.id, input.taskId);
         session.attach(child);
 
-        // Send initial prompt via JSON-RPC
-        child.stdin!.write(jsonRpcRequest('thread.create', { prompt }) + '\n');
+        if (input.resumeSessionId) {
+            session.queueResumeMessage(prompt);
+            session.sendRequest('thread.resume', { threadId: input.resumeSessionId });
+        } else {
+            session.sendRequest('thread.create', { prompt });
+        }
 
         return session;
     }

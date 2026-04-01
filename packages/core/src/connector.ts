@@ -8,6 +8,7 @@ export interface SessionStartedEvent {
     type: 'session:started';
     sessionId: string;
     connectorId: string;
+    providerSessionId?: string;
     timestamp: string;
 }
 

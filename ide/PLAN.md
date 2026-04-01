@@ -676,6 +676,11 @@ Gefunden beim manuellen Testen: nach dem Dispatch-Dialog gibt es kein Live-Feedb
 
 Wintermute folgt der Produktentscheidung aus `../docs/PLAN.md`: Der eingebettete Patchbay-Flow wird standardmäßig **connector-first**, mit **Codex** als bevorzugtem Default-Connector, danach Claude Code und weitere verfügbare Connectoren. Wintermute bleibt Host + Glue Layer und bildet diese Priorisierung im Dashboard-Embedding ab, ohne eine zweite eigene Session-UX aufzubauen.
 
+Aktueller Stand:
+- Dashboard-seitig ist der connector-first Standardfluss umgesetzt.
+- Codex übernimmt bereits echte Provider-Session-IDs und den ersten Resume-Flow über persistierte Threads im Patchbay-Core/Connector-Layer.
+- Vor weiterem Host-Polish gehen aktuell Build-/Test-Fixes vor.
+
 - [ ] `DashboardPanel` und eingebettete Flows auf die neue Standardaktion `Start Session` ausrichten
 - [x] Runner-zentrierte Begriffe im Host-Kontext reduzieren; Batch-Runs als Fallback / One-off-Pfad behandeln
 - [x] Eingebetteter Dispatch soll nach Session-Start konsequent in die Session-Fläche führen statt gedanklich im Run-Flow zu bleiben

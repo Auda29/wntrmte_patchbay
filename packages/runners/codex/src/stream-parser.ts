@@ -16,9 +16,73 @@ export interface JsonRpcNotification {
     params?: Record<string, unknown>;
 }
 
+export interface JsonRpcResponse {
+    jsonrpc: '2.0';
+    id: number | string;
+    result?: Record<string, unknown>;
+    error?: {
+        code?: number;
+        message?: string;
+        data?: unknown;
+    };
+}
+
+function extractProviderSessionId(payload?: Record<string, unknown>): string | undefined {
+    if (!payload) return undefined;
+
+    const directId = payload.threadId ?? payload.thread_id ?? payload.sessionId ?? payload.session_id ?? payload.id;
+    if (typeof directId === 'string' && directId.trim()) {
+        return directId;
+    }
+
+    const thread = payload.thread as Record<string, unknown> | undefined;
+    const threadId = thread?.id ?? thread?.threadId ?? thread?.thread_id;
+    if (typeof threadId === 'string' && threadId.trim()) {
+        return threadId;
+    }
+
+    const session = payload.session as Record<string, unknown> | undefined;
+    const sessionId = session?.id ?? session?.sessionId ?? session?.session_id;
+    if (typeof sessionId === 'string' && sessionId.trim()) {
+        return sessionId;
+    }
+
+    return undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Parser: JSON-RPC notification line -> AgentEvent[]
 // ---------------------------------------------------------------------------
+
+export function parseCodexResponse(
+    raw: JsonRpcResponse,
+    sessionId: string,
+    connectorId: string,
+    requestMethod?: string,
+): AgentEvent[] {
+    const now = new Date().toISOString();
+
+    if (raw.error) {
+        return [{
+            type: 'session:failed',
+            sessionId,
+            error: raw.error.message ?? 'Codex app-server request failed',
+            timestamp: now,
+        }];
+    }
+
+    if (requestMethod === 'thread.create' || requestMethod === 'thread.resume') {
+        return [{
+            type: 'session:started',
+            sessionId,
+            connectorId,
+            providerSessionId: extractProviderSessionId(raw.result),
+            timestamp: now,
+        }];
+    }
+
+    return [];
+}
 
 export function parseCodexLine(line: string, sessionId: string, connectorId: string): AgentEvent[] {
     const trimmed = line.trim();
@@ -46,6 +110,7 @@ export function parseCodexLine(line: string, sessionId: string, connectorId: str
                 type: 'session:started',
                 sessionId,
                 connectorId,
+                providerSessionId: extractProviderSessionId(params),
                 timestamp: now,
             });
             break;

@@ -872,10 +872,14 @@ Produktentscheidung nach dem ersten L8-Schnitt: Patchbay verschiebt den Standard
 
 #### L9.3: Codex als Referenz-Connector vertiefen
 
-- [ ] `packages/runners/codex/src/connector.ts` — Codex als Referenzpfad für den Standard-Session-Flow härten
-- [ ] Server-/Provider-Session-ID sauber aus dem App-Server übernehmen und in `SessionRecord.providerSessionId` persistieren
-- [ ] Resume/Reattach/Fork für Codex-Threads produktseitig nutzbar machen statt Sessions nur lokal/transient zu behandeln
+- [x] `packages/runners/codex/src/connector.ts` — Codex als Referenzpfad für den Standard-Session-Flow härten
+- [x] Server-/Provider-Session-ID sauber aus dem App-Server übernehmen und in `SessionRecord.providerSessionId` persistieren
+- [x] Resume-Basis für Codex-Threads produktseitig nutzbar machen: persistierte `providerSessionId` wird beim Reconnect eines `awaiting_input`-Tasks als `resumeSessionId` an den Connector weitergereicht; `thread.create`- und `thread.resume`-Responses werden ausgewertet
+- [ ] Reattach/Fork für Codex-Threads weiter ausbauen, damit Sessions nicht nur lokal/transient behandelt werden
 - [ ] Codex-spezifische Capabilities (Streaming, Tool-Use, serverseitige Approvals) im UI stärker als First-Class-Erlebnis ausspielen
+
+Status-Hinweis:
+- Die L9.3-Codeänderungen sind umgesetzt, aber lokale Testausführung war in dieser Umgebung blockiert (`npm test` scheitert aktuell an der WSL/Node-Umgebung: `WSL 1 is not supported`). Build-/Test-Fixes haben deshalb Vorrang vor weiterem L9.3-Polish.
 
 #### L9.4: Runner-Rolle neu positionieren
 

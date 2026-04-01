@@ -64,9 +64,10 @@ export class Orchestrator {
         const contextFiles = this.store.getContextFiles();
 
         const startTimeLabel = new Date().toISOString();
-        const sessionId = randomUUID();
+        const resumableSession = this.findResumableSession(taskId, connectorId);
+        const sessionId = resumableSession?.id ?? randomUUID();
+        const conversationId = resumableSession?.conversationId ?? randomUUID();
         const runId = `${startTimeLabel.replace(/[:.]/g, '-')}-${taskId}-${connectorId}`;
-        const conversationId = randomUUID();
 
         const run: Run = {
             id: runId,
@@ -75,22 +76,29 @@ export class Orchestrator {
             startTime: startTimeLabel,
             status: 'running',
             conversationId,
-            turnIndex: 0,
+            turnIndex: resumableSession ? 1 : 0,
             sessionId,
         };
         this.store.saveRun(run);
 
-        const sessionRecord: SessionRecord = {
-            id: sessionId,
-            taskId,
-            connectorId,
-            status: 'running',
-            startTime: startTimeLabel,
-            title: task.title,
-            conversationId,
-            providerSessionId: sessionId,
-            lastEventAt: startTimeLabel,
-        };
+        const sessionRecord: SessionRecord = resumableSession
+            ? {
+                ...resumableSession,
+                status: 'running',
+                endTime: undefined,
+                title: task.title,
+                lastEventAt: startTimeLabel,
+            }
+            : {
+                id: sessionId,
+                taskId,
+                connectorId,
+                status: 'running',
+                startTime: startTimeLabel,
+                title: task.title,
+                conversationId,
+                lastEventAt: startTimeLabel,
+            };
         this.store.saveSession(sessionRecord);
 
         const input: RunnerInput = {
@@ -102,6 +110,7 @@ export class Orchestrator {
             contextFiles,
             projectRules,
             goal: task.goal || task.description || task.title || '',
+            resumeSessionId: resumableSession?.providerSessionId,
         };
 
         const session = await connector.connect(input);
@@ -202,6 +211,9 @@ export class Orchestrator {
 
             switch (event.type) {
                 case 'session:started':
+                    if (event.providerSessionId) {
+                        sessionRecord.providerSessionId = event.providerSessionId;
+                    }
                     sessionRecord.status = 'running';
                     this.store.saveSession(sessionRecord);
                     break;
@@ -322,6 +334,17 @@ export class Orchestrator {
         entry.sessionRecord.status = 'running';
         entry.sessionRecord.lastEventAt = now;
         this.store.saveSession(entry.sessionRecord);
+    }
+
+    private findResumableSession(taskId: string, connectorId: string): SessionRecord | undefined {
+        const task = this.store.getTask(taskId);
+        if (!task || task.status !== 'awaiting_input') {
+            return undefined;
+        }
+
+        return this.store.listSessions(taskId)
+            .filter((session) => session.connectorId === connectorId && !!session.providerSessionId)
+            .sort((a, b) => new Date(b.lastEventAt).getTime() - new Date(a.lastEventAt).getTime())[0];
     }
 
     private preflight(taskId: string, runnerId: string): {

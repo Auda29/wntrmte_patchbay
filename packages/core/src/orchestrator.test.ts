@@ -103,8 +103,10 @@ class MockConnector implements AgentConnector {
     };
 
     lastSession: MockInteractiveSession | null = null;
+    lastInput: RunnerInput | null = null;
 
     async connect(input: RunnerInput) {
+        this.lastInput = input;
         const session = new MockInteractiveSession(input.sessionId ?? 'fallback-session', this.id, input.taskId);
         this.lastSession = session;
         return session;
@@ -172,6 +174,47 @@ describe('Orchestrator', () => {
             expect(savedSession?.status).toBe('completed');
             expect(savedSession?.summary).toBe('Done');
             expect(events.map((event) => event.type)).toEqual(['agent:question', 'session:completed']);
+        });
+
+        it('persists provider session ids from connector events', async () => {
+            const task = store.createTask('Provider session task', 'Goal');
+            const session = await orchestrator.connectAgent(task.id, 'mock-connector');
+            const now = new Date().toISOString();
+
+            mockConnector.lastSession?.emitEvent({
+                type: 'session:started',
+                sessionId: session.sessionId,
+                connectorId: 'mock-connector',
+                providerSessionId: 'provider-thread-123',
+                timestamp: now,
+            });
+
+            const savedSession = store.getSession(session.sessionId);
+            expect(savedSession?.providerSessionId).toBe('provider-thread-123');
+        });
+
+        it('reuses the existing session id and provider session id when reconnecting an awaiting-input task', async () => {
+            const task = store.createTask('Reconnect task', 'Goal');
+            const existingSession = {
+                id: 'session-existing',
+                taskId: task.id,
+                connectorId: 'mock-connector',
+                status: 'awaiting_input' as const,
+                startTime: new Date(Date.now() - 60_000).toISOString(),
+                title: task.title,
+                conversationId: 'conv-1',
+                providerSessionId: 'provider-thread-existing',
+                lastEventAt: new Date(Date.now() - 1_000).toISOString(),
+                summary: 'Need your confirmation.',
+            };
+            store.saveSession(existingSession);
+            store.saveTask({ ...task, status: 'awaiting_input' });
+
+            const session = await orchestrator.connectAgent(task.id, 'mock-connector');
+
+            expect(session.sessionId).toBe('session-existing');
+            expect(mockConnector.lastSession?.sessionId).toBe('session-existing');
+            expect(mockConnector.lastInput?.resumeSessionId).toBe('provider-thread-existing');
         });
     });
 

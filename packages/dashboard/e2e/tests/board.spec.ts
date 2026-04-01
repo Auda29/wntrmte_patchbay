@@ -22,7 +22,7 @@ test.describe('Task Board', () => {
     });
 
     test('shows dispatch button for open tasks', async ({ page }) => {
-        await expect(page.locator('button[title="Run task"]')).toBeVisible();
+        await expect(page.locator('button[title="Start session or one-off run"]')).toBeVisible();
     });
 
     test('shows New Task button', async ({ page }) => {
