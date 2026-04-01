@@ -1,14 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MessageSquareMore, Clock3, AlertCircle, ArrowRight, Bot, PlayCircle, FolderKanban } from 'lucide-react';
+import { MessageSquareMore } from 'lucide-react';
 import type { SessionRecord } from '@patchbay/core';
 import { AgentChat } from '@/components/AgentChat';
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 function sortSessions(items: SessionRecord[]): SessionRecord[] {
   return [...items].sort((a, b) => {
@@ -63,7 +60,6 @@ export function SessionsPageClient() {
 
   const activeSessions = sessions.filter((session) => session.status === 'running' || session.status === 'awaiting_input');
   const pastSessions = sessions.filter((session) => session.status !== 'running' && session.status !== 'awaiting_input');
-  const completedSessions = sessions.filter((session) => session.status === 'completed');
 
   const selectedStatusTone = selectedSession?.status === 'completed'
     ? 'border-green-900/60 bg-green-950/20 text-green-100'

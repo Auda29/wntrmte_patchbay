@@ -5,8 +5,6 @@ import { Network, Search, Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { NewDecisionModal } from '@/components/NewDecisionModal';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
 export default function DecisionsLog() {
     const { data, error, mutate } = useSWR('/api/state');
     const [showNewDecision, setShowNewDecision] = useState(false);

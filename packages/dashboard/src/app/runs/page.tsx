@@ -4,8 +4,6 @@ import { Run } from '@patchbay/core';
 import { TerminalSquare, Clock, CheckCircle2, XCircle, AlertCircle, FileCode2, AlertTriangle, Lightbulb } from 'lucide-react';
 import { Markdown } from '@/components/Markdown';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
 export default function RunsViewer() {
     const { data, error } = useSWR('/api/state');
 

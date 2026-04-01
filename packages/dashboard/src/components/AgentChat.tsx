@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
-import { Bot, Check, Send, Square, User, X } from 'lucide-react';
+import { Bot, Check, Send, Square, X } from 'lucide-react';
 import type { SessionEventRecord, SessionRecord } from '@patchbay/core';
 import { Markdown } from '@/components/Markdown';
 
@@ -20,10 +20,9 @@ type ChatEvent =
 
 interface AgentChatProps {
   sessionId?: string | null;
-  onClose?: () => void;
 }
 
-export function AgentChat({ sessionId, onClose }: AgentChatProps) {
+export function AgentChat({ sessionId }: AgentChatProps) {
   const [events, setEvents] = useState<ChatEvent[]>([]);
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -133,23 +132,6 @@ export function AgentChat({ sessionId, onClose }: AgentChatProps) {
   }, [events]);
 
   const hasLiveSession = isSessionActive;
-
-  const statusCopy = useMemo(() => {
-    switch (session?.status) {
-      case 'running':
-        return 'Live session';
-      case 'awaiting_input':
-        return 'Awaiting reply';
-      case 'completed':
-        return 'Completed session';
-      case 'failed':
-        return 'Failed session';
-      case 'cancelled':
-        return 'Cancelled session';
-      default:
-        return 'Session';
-    }
-  }, [session?.status]);
 
   const sendAction = async (payload: { action: 'input' | 'approve' | 'deny' | 'cancel'; text?: string; permissionId?: string }) => {
     if (!sessionId) {

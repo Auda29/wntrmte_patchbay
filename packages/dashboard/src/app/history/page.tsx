@@ -3,8 +3,6 @@ import useSWR from 'swr';
 import { Run } from '@patchbay/core';
 import { History, CheckCircle2, XCircle, Clock, AlertCircle, Download } from 'lucide-react';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
 function formatDuration(start: string, end?: string): string {
     if (!end) return 'Running...';
     const ms = new Date(end).getTime() - new Date(start).getTime();

@@ -4,8 +4,6 @@ import { FileCode2, FolderOpen, ExternalLink, FileText } from 'lucide-react';
 import { useState } from 'react';
 import { DiffViewer } from '@/components/DiffViewer';
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
 export default function ArtifactsViewer() {
     const { data, error } = useSWR('/api/artifacts');
     const [selectedFile, setSelectedFile] = useState<{ name: string; content: string } | null>(null);

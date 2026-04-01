@@ -4,28 +4,16 @@ import Link from 'next/link';
 import { LayoutDashboard, CheckCircle2, PlayCircle, GitMerge, FileCode2, History, MessageSquareMore, ChevronRight } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
-export function Sidebar() {
-    const pathname = usePathname();
-    
-    const primaryNav = [
-        { label: 'Overview', icon: LayoutDashboard, href: '/' },
-        { label: 'Task Board', icon: CheckCircle2, href: '/tasks' },
-        { label: 'Sessions', icon: MessageSquareMore, href: '/sessions' },
-    ];
+interface NavItem {
+    label: string;
+    icon: typeof LayoutDashboard;
+    href: string;
+}
 
-    const knowledgeNav = [
-        { label: 'Artifacts', icon: FileCode2, href: '/artifacts' },
-        { label: 'Decisions', icon: GitMerge, href: '/decisions' },
-    ];
-
-    const diagnosticNav = [
-        { label: 'Run Details', icon: PlayCircle, href: '/runs' },
-        { label: 'Run Timeline', icon: History, href: '/history' },
-    ];
-
-    const NavGroup = ({ title, items }: { title: string, items: typeof primaryNav }) => (
+function NavGroup({ title, items, pathname }: { title: string; items: NavItem[]; pathname: string }) {
+    return (
         <div className="mb-6">
-            <h3 className="px-4 text-xs font-semibold text-surface-500 uppercase tracking-wider mb-2">{title}</h3>
+            <h3 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-surface-500">{title}</h3>
             <div className="space-y-1">
                 {items.map((item) => {
                     const isActive = pathname === item.href;
@@ -34,23 +22,43 @@ export function Sidebar() {
                             key={item.label}
                             href={item.href}
                             className={`group relative flex items-center justify-between overflow-hidden rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
-                                isActive 
-                                    ? 'bg-brand-950/45 text-brand-100' 
+                                isActive
+                                    ? 'bg-brand-950/45 text-brand-100'
                                     : 'text-surface-400 hover:bg-surface-900/50 hover:text-surface-100'
                             }`}
                         >
                             <div className="flex items-center gap-3">
                                 <div className={`absolute inset-y-0 left-0 w-1 bg-brand-400 transform transition-transform duration-300 ${isActive ? 'translate-x-0 shadow-[0_0_12px_rgba(76,196,234,0.45)]' : '-translate-x-full group-hover:translate-x-0 group-hover:bg-surface-600'}`} />
-                                <item.icon className={`w-4 h-4 ${isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-300'}`} />
+                                <item.icon className={`h-4 w-4 ${isActive ? 'text-brand-400' : 'text-surface-500 group-hover:text-surface-300'}`} />
                                 {item.label}
                             </div>
-                            {isActive && <ChevronRight className="w-3.5 h-3.5 text-brand-500/50" />}
+                            {isActive ? <ChevronRight className="h-3.5 w-3.5 text-brand-500/50" /> : null}
                         </Link>
                     );
                 })}
             </div>
         </div>
     );
+}
+
+export function Sidebar() {
+    const pathname = usePathname();
+    
+    const primaryNav: NavItem[] = [
+        { label: 'Overview', icon: LayoutDashboard, href: '/' },
+        { label: 'Task Board', icon: CheckCircle2, href: '/tasks' },
+        { label: 'Sessions', icon: MessageSquareMore, href: '/sessions' },
+    ];
+
+    const knowledgeNav: NavItem[] = [
+        { label: 'Artifacts', icon: FileCode2, href: '/artifacts' },
+        { label: 'Decisions', icon: GitMerge, href: '/decisions' },
+    ];
+
+    const diagnosticNav: NavItem[] = [
+        { label: 'Run Details', icon: PlayCircle, href: '/runs' },
+        { label: 'Run Timeline', icon: History, href: '/history' },
+    ];
 
     return (
         <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-surface-800/90 bg-[linear-gradient(180deg,rgba(8,11,16,0.96)_0%,rgba(13,17,23,0.92)_100%)] shadow-[16px_0_40px_rgba(0,0,0,0.18)] backdrop-blur-xl">
@@ -67,9 +75,9 @@ export function Sidebar() {
             </div>
 
             <nav className="flex-1 px-3 overflow-y-auto">
-                <NavGroup title="Workflow" items={primaryNav} />
-                <NavGroup title="Knowledge Base" items={knowledgeNav} />
-                <NavGroup title="Diagnostics" items={diagnosticNav} />
+                <NavGroup title="Workflow" items={primaryNav} pathname={pathname} />
+                <NavGroup title="Knowledge Base" items={knowledgeNav} pathname={pathname} />
+                <NavGroup title="Diagnostics" items={diagnosticNav} pathname={pathname} />
             </nav>
 
             <div className="p-4 border-t border-surface-900/50 bg-surface-950/30">
