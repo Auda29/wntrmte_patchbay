@@ -514,6 +514,9 @@ Mehrere UX- und Plattform-Fixes aus realem Test-Workspace-Feedback.
 - [x] Webview-Refresh weiter beruhigt
   - Stabile CSP-Nonce pro Panel verhindert unnötige komplette HTML-Resets
   - Eingebettetes Dashboard pollt Daten selbst, ohne dass Wintermute die UI jedes Mal spürbar neu aufbaut
+- [x] Panel-Render-Strategie weiter entschärft
+  - Verbundene Dashboard-Webviews ersetzen ihr komplettes HTML nicht mehr bei jedem Setup-/Status-Poll
+  - Dadurch bleiben eingebettete Tab-Wechsel schneller und Refreshes springen nicht mehr zurück auf `Overview`
 - [x] Windows-Startmenü-Branding korrigiert
   - `build.sh` post-processiert die erzeugte `*.VisualElementsManifest.xml`
   - `ShortDisplayName` wird auf `Wintermute` gesetzt statt `Code - OSS`
@@ -686,3 +689,11 @@ Aktueller Stand:
 - [x] Eingebetteter Dispatch soll nach Session-Start konsequent in die Session-Fläche führen statt gedanklich im Run-Flow zu bleiben
 - [x] Start-/Setup-Hinweise im Panel auf Connector-Verfügbarkeit priorisieren, besonders für Codex als Standardpfad
 - [x] Relay-Integration (`wntrmte.connectAgent`, `wntrmte.sendAgentInput`, ...) als primäre eingebettete Interaktion behandeln; Batch-Dispatch bleibt erhalten, aber sekundär
+- [x] Eingebetteter Session-Start robuster gemacht
+  - Nach `Start Session` landet der User zuverlässiger in `/sessions`, auch wenn der neue Session-Record erst kurz nach dem Redirect sichtbar wird
+  - Das reduziert den Eindruck, dass ein Session-Start im Host "nichts getan" hätte
+
+### L9.x: Nachgezogene Host-/Connector-Polish-Punkte — DONE
+
+- [x] Realer Codex-App-Server auf Windows validiert: Connector-Parsing toleriert Responses/Notifications ohne explizites `jsonrpc`
+- [x] Host- und Dashboard-Doku an die shipped Embedding-/Session-Polish-Änderungen angeglichen

@@ -180,6 +180,8 @@ Binary: `wntrmte` | Data folder: `.wntrmte`
 
 **Connected mode** — connects to the Patchbay dashboard via HTTP/SSE. Auto-detected (probes `localhost:3000`).
 
+When Wintermute embeds the dashboard, the webview now avoids unnecessary full HTML re-renders while the dashboard stays connected. That keeps tab switches responsive inside the IDE and prevents refresh-driven jumps back to `Overview`.
+
 ### Extension commands
 
 | Command | Description |
@@ -200,6 +202,8 @@ See [`ide/README.md`](../ide/README.md) for full build instructions and extensio
 Patchbay is the orchestration backend and dashboard. It manages tasks, dispatches runners, streams agent sessions, and persists everything in `.project-agents/`.
 
 For the preferred Codex session path, Patchbay talks to `codex app-server` over JSON-RPC, performs the app-server handshake, opens or resumes a thread, then starts a turn and streams the resulting `item/*` and `turn/*` events into the dashboard chat UI.
+
+The Codex connector is hardened against real `codex app-server` stdout behavior on Windows as well: Patchbay accepts responses and notifications that omit the explicit `jsonrpc` field, as long as the payload still matches the expected app-server method/result shape.
 
 Longer term, Patchbay should also let users add MCP servers that connected agents can use as part of their workspace tooling, so project-specific capabilities can be exposed without hardcoding every integration into Patchbay itself.
 
@@ -258,6 +262,8 @@ See [`PLAN.md`](./PLAN.md) for the full Patchbay implementation roadmap.
 **Phases A-K complete** — schema, orchestrator, dashboard, runner adapters, CLI, extension, multi-turn conversations, project import.
 
 **Phase L1-L10 complete** — connector architecture, persistent sessions, connector-first default flow, Codex reattach/fork semantics, runner positioning as secondary fallback path, and a major UI/UX overhaul for better performance and a minimalist agent workspace.
+
+**Recent polish shipped:** embedded Wintermute dashboard refreshes no longer force unnecessary iframe resets, `/sessions` is more reliable immediately after starting a new interactive session, and the Codex connector tolerates app-server payloads that omit `jsonrpc`.
 
 **Current focus:** post-L10 polish (diagnostics UX, build/test hardening, and tightening the extensibility story around user-added MCP servers for agent workflows).
 

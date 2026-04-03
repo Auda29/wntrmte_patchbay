@@ -111,6 +111,8 @@ The bundled `wntrmte-workflow` extension is a native [Patchbay](https://github.c
 
 Mode is auto-detected (probes `localhost:3000`), or configurable via `wntrmte.workflow.mode`.
 
+When connected, the embedded dashboard now keeps the webview stable during routine setup/status polling instead of replacing the entire iframe HTML on every refresh. That keeps tab switches inside Wintermute more responsive and avoids accidental jumps back to `Overview` after dashboard refreshes.
+
 ### Features
 
 | Feature | Description |

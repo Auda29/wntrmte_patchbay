@@ -878,6 +878,7 @@ Produktentscheidung nach dem ersten L8-Schnitt: Patchbay verschiebt den Standard
 - [x] Reattach/Fork für Codex-Threads ausbauen: expliziter `mode: resume|fork`-Pfad über `/connect`, Reattach/Fork-Aktionen in `/sessions`, `thread.fork`-Pfad im Codex-Connector
 - [x] Codex-spezifische Capabilities im UI sichtbarer machen: Session-Meta-Rail inkl. `providerSessionId`, direkte Reattach-/Fork-Aktionen aus dem Sessions-Workspace
 - [x] Reconnect-Semantik finalisiert: Auto-Reconnect im `default`-Pfad übernimmt bestehende Session-ID/Conversation bei `awaiting_input`; `fork` erzeugt immer einen neuen lokalen Session-Record und verwendet nur die Provider-Thread-Referenz als Quelle
+- [x] Codex-Parser an reales `codex app-server`-Verhalten angepasst: Responses und Notifications ohne explizites `jsonrpc` werden weiterhin als gültige App-Server-Payloads erkannt und korrekt auf `AgentEvent`s gemappt
 
 #### L9.4: Runner-Rolle neu positionieren
 
@@ -900,10 +901,13 @@ Das Dashboard wurde überarbeitet, um der `VISION.md` besser zu entsprechen (wen
 - [x] Globaler `SWRProvider` mit `keepPreviousData: true` eingeführt.
 - [x] Blockierende `if (isLoading)`-Checks aus den Seiten entfernt, um sofortige (instant) Tabwechsel zu ermöglichen.
 - [x] Auto-Refresh-Problem behoben: Dialoge (wie Dispatch oder Edit) werden bei Hintergrund-Updates nicht mehr ungewollt geschlossen.
+- [x] Wintermute-Embedding stabilisiert: Das verbundene Dashboard-Webview ersetzt sein komplettes HTML nicht mehr bei jedem Status-Poll; dadurch bleiben Sessions/Tasks innerhalb Wintermute sichtbar schneller und Refreshes springen nicht mehr zurück auf `Overview`.
+- [x] Sessions-Initialzustand nach `Start Session` robuster gemacht: `/sessions` pollt kurz weiter, wenn man mit `taskId` landet und der neue Session-Record noch nicht sofort sichtbar ist.
 
 #### L10.2: Navigation & Layout
 - [x] Sidebar-Navigation logisch gruppiert: **Workflow** (Overview, Tasks, Sessions), **Knowledge Base** (Artifacts, Decisions), **Diagnostics** (Runs, History).
 - [x] Visuelles Feedback für den aktiven Tab in der Sidebar verbessert.
+- [x] Primäre Sidebar-Routen werden vorab prefetched, damit der erste Wechsel zwischen Overview, Tasks und Sessions weniger oft eine spürbare Compile-Pause erzeugt.
 
 #### L10.3: Sessions Workspace (Minimalismus)
 - [x] Sessions-Tab von einem klobigen 3-Spalten-Layout auf ein fokussiertes 2-Spalten-Layout umgebaut.

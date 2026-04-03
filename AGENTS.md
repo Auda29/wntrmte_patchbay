@@ -57,6 +57,9 @@ Use `connect(): AgentSession` when the provider supports a real session model wi
 - Cursor/ACP: ACP over JSON-RPC/stdio
 - HTTP/local: adapter-based, capability-dependent
 
+Implementation note:
+- Codex app-server payloads may omit the explicit `jsonrpc` field on stdout even when the payload still matches the expected request/notification shape; connector parsing should be tolerant of that wire-level variation.
+
 ### Batch runners
 
 Use `execute(): Promise<RunnerOutput>` for fire-and-forget jobs, scripts, fetches, or fallback execution when no suitable connector is available.
@@ -73,5 +76,10 @@ Use `execute(): Promise<RunnerOutput>` for fire-and-forget jobs, scripts, fetche
 ## Current status
 
 Phases A-K are complete. Phase L is substantially complete through the connector-first/session-first product direction, including persistent sessions, provider session IDs, resume/fork flows, dashboard session UX, and Wintermute embedding/relay behavior.
+
+Recent post-L10 polish shipped:
+- Wintermute keeps the embedded dashboard webview stable during routine status polling instead of forcing a full HTML reset each time.
+- `/sessions` is more reliable immediately after `Start Session` because the page tolerates the new session record appearing a moment later.
+- Codex connector parsing was hardened against real app-server payloads that omit `jsonrpc`.
 
 The active focus is post-L10 polish: diagnostics UX, build/test hardening, and tightening docs so they match the shipped connector behavior.

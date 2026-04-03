@@ -224,6 +224,7 @@ For JSON-RPC based providers, don't assume "one request starts the whole session
 - Separate "conversation identity" from "user input". With Codex, `thread/start`, `thread/resume`, or `thread/fork` establishes the thread, while `turn/start` or `turn/steer` sends the actual user message.
 - Distinguish server notifications from server-initiated requests. Codex approvals arrive as JSON-RPC requests that the client must answer with a JSON-RPC response payload, not as fire-and-forget notifications.
 - Treat item lifecycle events as the source of truth for streaming state. Codex emits `item/started`, `item/agentMessage/delta`, `item/completed`, and `turn/completed`; map those into `agent:message`, `agent:tool_use`, `agent:permission`, `session:completed`, and `session:failed`.
+- Be tolerant about wire shape details from real provider CLIs. In practice, Codex app-server payloads on stdout may omit the explicit `jsonrpc: "2.0"` field even though they still follow the expected `method` / `id` / `result` structure; connector parsers should key off the actual request/notification shape, not only strict field presence.
 
 ## ACP (Agent Client Protocol)
 
