@@ -25,7 +25,10 @@ export function SessionsPageClient() {
   const taskId = searchParams.get('taskId') || undefined;
   const selectedSessionId = searchParams.get('sessionId');
   const query = taskId ? `/api/sessions?taskId=${encodeURIComponent(taskId)}` : '/api/sessions';
-  const { data, error } = useSWR<SessionRecord[]>(query);
+  const { data, error } = useSWR<SessionRecord[]>(query, {
+    refreshInterval: (currentSessions) =>
+      taskId && !selectedSessionId && (currentSessions?.length ?? 0) === 0 ? 1000 : 0,
+  });
   const [actionBusy, setActionBusy] = useState<'resume' | 'fork' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 

@@ -5,6 +5,7 @@ export class DashboardPanel {
   private _panel: vscode.WebviewPanel | undefined;
   private _lastTitle = '';
   private _lastHtml = '';
+  private _lastStatus: SetupStatus | undefined;
   private _nonce = getNonce();
 
   constructor() {}
@@ -33,6 +34,7 @@ export class DashboardPanel {
     this._panel = undefined;
     this._lastTitle = '';
     this._lastHtml = '';
+    this._lastStatus = undefined;
     this._nonce = getNonce();
   }
 
@@ -50,22 +52,27 @@ export class DashboardPanel {
     this._panel = undefined;
     this._lastTitle = '';
     this._lastHtml = '';
+    this._lastStatus = undefined;
     this._nonce = getNonce();
   }
 
   private applyRender(panel: vscode.WebviewPanel, status: SetupStatus): void {
     const title = getPanelTitle(status);
-    const html = getHtml(panel.webview, status, this._nonce);
 
     if (title !== this._lastTitle) {
       panel.title = title;
       this._lastTitle = title;
     }
 
-    if (html !== this._lastHtml) {
-      panel.webview.html = html;
-      this._lastHtml = html;
+    if (this.shouldReplaceHtml(status)) {
+      const html = getHtml(panel.webview, status, this._nonce);
+      if (html !== this._lastHtml) {
+        panel.webview.html = html;
+        this._lastHtml = html;
+      }
     }
+
+    this._lastStatus = status;
   }
 
   private ensurePanel(column: vscode.ViewColumn): vscode.WebviewPanel {
@@ -97,12 +104,32 @@ export class DashboardPanel {
       this._panel = undefined;
       this._lastTitle = '';
       this._lastHtml = '';
+      this._lastStatus = undefined;
       this._nonce = getNonce();
     });
 
     this._panel = panel;
     return panel;
   }
+
+  private shouldReplaceHtml(status: SetupStatus): boolean {
+    if (!this._lastStatus) {
+      return true;
+    }
+
+    const wasConnected = isEmbeddedDashboardConnected(this._lastStatus);
+    const isConnected = isEmbeddedDashboardConnected(status);
+
+    if (wasConnected && isConnected && this._lastStatus.dashboard.url === status.dashboard.url) {
+      return false;
+    }
+
+    return true;
+  }
+}
+
+function isEmbeddedDashboardConnected(status: SetupStatus): boolean {
+  return status.hasWorkspace && status.workspaceReady && status.dashboard.reachable;
 }
 
 function getHtml(webview: vscode.Webview, status: SetupStatus, nonce: string): string {

@@ -1,8 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { LayoutDashboard, CheckCircle2, PlayCircle, GitMerge, FileCode2, History, MessageSquareMore, ChevronRight } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface NavItem {
     label: string;
@@ -43,6 +44,7 @@ function NavGroup({ title, items, pathname }: { title: string; items: NavItem[];
 
 export function Sidebar() {
     const pathname = usePathname();
+    const router = useRouter();
     
     const primaryNav: NavItem[] = [
         { label: 'Overview', icon: LayoutDashboard, href: '/' },
@@ -59,6 +61,12 @@ export function Sidebar() {
         { label: 'Run Details', icon: PlayCircle, href: '/runs' },
         { label: 'Run Timeline', icon: History, href: '/history' },
     ];
+
+    useEffect(() => {
+        for (const item of [...primaryNav, ...knowledgeNav, ...diagnosticNav]) {
+            router.prefetch(item.href);
+        }
+    }, [router]);
 
     return (
         <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-surface-800/90 bg-[linear-gradient(180deg,rgba(8,11,16,0.96)_0%,rgba(13,17,23,0.92)_100%)] shadow-[16px_0_40px_rgba(0,0,0,0.18)] backdrop-blur-xl">

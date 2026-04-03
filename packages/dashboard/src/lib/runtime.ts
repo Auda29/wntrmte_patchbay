@@ -2,12 +2,20 @@ import { createConfiguredOrchestrator } from '@patchbay/server';
 import type { Orchestrator } from '@patchbay/core';
 import { REPO_ROOT } from './store';
 
-let orchestrator: Orchestrator | null = null;
+const globalForPatchbay = globalThis as typeof globalThis & {
+  __patchbayDashboardOrchestrator__?: Orchestrator;
+  __patchbayDashboardOrchestratorRepoRoot__?: string;
+};
 
 export function getOrchestrator(): Orchestrator {
-  if (!orchestrator) {
-    orchestrator = createConfiguredOrchestrator(REPO_ROOT);
+  // Keep interactive sessions alive across Next.js dev reloads.
+  if (
+    !globalForPatchbay.__patchbayDashboardOrchestrator__
+    || globalForPatchbay.__patchbayDashboardOrchestratorRepoRoot__ !== REPO_ROOT
+  ) {
+    globalForPatchbay.__patchbayDashboardOrchestrator__ = createConfiguredOrchestrator(REPO_ROOT);
+    globalForPatchbay.__patchbayDashboardOrchestratorRepoRoot__ = REPO_ROOT;
   }
 
-  return orchestrator;
+  return globalForPatchbay.__patchbayDashboardOrchestrator__;
 }
