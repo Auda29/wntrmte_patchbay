@@ -253,10 +253,6 @@ class CodexSession extends BaseSession {
             return [];
         }
 
-        if (raw.jsonrpc !== '2.0') {
-            return [];
-        }
-
         if (raw.id !== undefined && typeof raw.method === 'string') {
             return this.parseServerRequest(raw as {
                 jsonrpc: '2.0';

@@ -11,13 +11,13 @@ import type { AgentEvent } from '@patchbay/core';
 // ---------------------------------------------------------------------------
 
 export interface JsonRpcNotification {
-    jsonrpc: '2.0';
+    jsonrpc?: '2.0';
     method: string;
     params?: Record<string, unknown>;
 }
 
 export interface JsonRpcResponse {
-    jsonrpc: '2.0';
+    jsonrpc?: '2.0';
     id: number | string;
     result?: Record<string, unknown>;
     error?: {
@@ -137,8 +137,8 @@ export function parseCodexLine(line: string, sessionId: string, connectorId: str
         return [];
     }
 
-    // Only handle JSON-RPC notifications (no "id" field)
-    if (raw.jsonrpc !== '2.0' || !raw.method || raw.id !== undefined) return [];
+    // Codex app-server may omit the `jsonrpc` field on stdout notifications.
+    if (!raw.method || raw.id !== undefined) return [];
 
     const now = new Date().toISOString();
     const params = (raw.params ?? {}) as Record<string, unknown>;

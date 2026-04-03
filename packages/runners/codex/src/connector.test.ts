@@ -36,7 +36,6 @@ describe('Codex stream parser', () => {
     it('maps thread.fork responses to session started with provider session id', () => {
         const [event] = parseCodexResponse(
             {
-                jsonrpc: '2.0',
                 id: 2,
                 result: { threadId: 'thread-forked' },
             },
@@ -70,7 +69,6 @@ describe('Codex stream parser', () => {
     it('maps agent message deltas from item notifications', () => {
         const [event] = parseCodexLine(
             JSON.stringify({
-                jsonrpc: '2.0',
                 method: 'item/agentMessage/delta',
                 params: { delta: 'Hello world' },
             }),
@@ -88,7 +86,6 @@ describe('Codex stream parser', () => {
     it('maps turn completion to a completed session event', () => {
         const [event] = parseCodexLine(
             JSON.stringify({
-                jsonrpc: '2.0',
                 method: 'turn/completed',
                 params: { turn: { status: 'completed' } },
             }),
@@ -98,6 +95,39 @@ describe('Codex stream parser', () => {
 
         expect(event).toEqual(expect.objectContaining({
             type: 'session:completed',
+        }));
+    });
+
+    it('accepts thread.start responses without jsonrpc', () => {
+        const [event] = parseCodexResponse(
+            {
+                id: 3,
+                result: { thread: { id: 'thread-no-jsonrpc' } },
+            },
+            'session-1',
+            'codex',
+            'thread/start',
+        );
+
+        expect(event).toEqual(expect.objectContaining({
+            type: 'session:started',
+            providerSessionId: 'thread-no-jsonrpc',
+        }));
+    });
+
+    it('accepts notifications without jsonrpc', () => {
+        const [event] = parseCodexLine(
+            JSON.stringify({
+                method: 'thread/started',
+                params: { thread: { id: 'thread-no-jsonrpc' } },
+            }),
+            'session-1',
+            'codex',
+        );
+
+        expect(event).toEqual(expect.objectContaining({
+            type: 'session:started',
+            providerSessionId: 'thread-no-jsonrpc',
         }));
     });
 });
