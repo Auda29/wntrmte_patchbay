@@ -11,6 +11,22 @@ interface NavItem {
     href: string;
 }
 
+const primaryNav: NavItem[] = [
+    { label: 'Overview', icon: LayoutDashboard, href: '/' },
+    { label: 'Task Board', icon: CheckCircle2, href: '/tasks' },
+    { label: 'Sessions', icon: MessageSquareMore, href: '/sessions' },
+];
+
+const knowledgeNav: NavItem[] = [
+    { label: 'Artifacts', icon: FileCode2, href: '/artifacts' },
+    { label: 'Decisions', icon: GitMerge, href: '/decisions' },
+];
+
+const diagnosticNav: NavItem[] = [
+    { label: 'Run Details', icon: PlayCircle, href: '/runs' },
+    { label: 'Run Timeline', icon: History, href: '/history' },
+];
+
 function NavGroup({ title, items, pathname }: { title: string; items: NavItem[]; pathname: string }) {
     return (
         <div className="mb-6">
@@ -45,22 +61,6 @@ function NavGroup({ title, items, pathname }: { title: string; items: NavItem[];
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
-    
-    const primaryNav: NavItem[] = [
-        { label: 'Overview', icon: LayoutDashboard, href: '/' },
-        { label: 'Task Board', icon: CheckCircle2, href: '/tasks' },
-        { label: 'Sessions', icon: MessageSquareMore, href: '/sessions' },
-    ];
-
-    const knowledgeNav: NavItem[] = [
-        { label: 'Artifacts', icon: FileCode2, href: '/artifacts' },
-        { label: 'Decisions', icon: GitMerge, href: '/decisions' },
-    ];
-
-    const diagnosticNav: NavItem[] = [
-        { label: 'Run Details', icon: PlayCircle, href: '/runs' },
-        { label: 'Run Timeline', icon: History, href: '/history' },
-    ];
 
     useEffect(() => {
         for (const item of [...primaryNav, ...knowledgeNav, ...diagnosticNav]) {
