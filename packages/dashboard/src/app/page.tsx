@@ -2,7 +2,7 @@
 import React from 'react';
 import useSWR from 'swr';
 import { Project, Task, Run } from '@patchbay/core';
-import { Activity, GitMerge, FileCode2, CheckCircle2, Clock, Pencil } from 'lucide-react';
+import { Activity, GitMerge, FileCode2, CheckCircle2, Clock, Pencil, Code2 } from 'lucide-react';
 import { EditProjectModal } from '@/components/EditProjectModal';
 
 export default function DashboardHome() {
@@ -22,14 +22,9 @@ export default function DashboardHome() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="mb-2 text-3xl font-semibold tracking-tight text-surface-50">Dashboard</h1>
-        <p className="text-surface-400">
-          {data?.project
-            ? `Connected to ${projectOptions?.name || 'Project'}`
-            : 'Patchbay is not initialized in the target repository.'}
-        </p>
-        <p className="mt-2 text-sm text-surface-500">
-          Primary workflow: Task → Session → Review. Run views remain available for fallback executions and diagnostics.
+        <h1 className="mb-1 text-3xl font-semibold tracking-tight text-surface-50">Dashboard</h1>
+        <p className="font-mono text-xs text-surface-600">
+          {projectOptions?.name ?? 'wntrmte_patchbay'}
         </p>
       </header>
 
@@ -66,9 +61,9 @@ export default function DashboardHome() {
         <div className="lg:col-span-2 space-y-6">
           <section className="glass-card rounded-xl p-6 border border-surface-900/50 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-all duration-500 group-hover:bg-brand-500/20" />
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <h2 className="flex items-center gap-2 text-lg font-medium text-surface-50">
-                <FileCode2 className="w-5 h-5 text-brand-400" />
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <h2 className="flex items-center gap-2 font-mono text-xs font-medium tracking-widest uppercase text-surface-500">
+                <Code2 className="w-4 h-4 text-brand-400" />
                 Project Goal
               </h2>
               <button
@@ -80,7 +75,7 @@ export default function DashboardHome() {
                 Edit
               </button>
             </div>
-            <p className="text-surface-300 leading-relaxed font-light">
+            <p className="font-mono text-xs text-surface-500 leading-relaxed font-light">
               {projectOptions?.goal || 'No goal defined.'}
             </p>
 
@@ -96,10 +91,7 @@ export default function DashboardHome() {
           </section>
 
           <section>
-            <h2 className="mb-1 text-lg font-medium text-surface-50">Recent Execution Logs</h2>
-            <p className="mb-4 text-sm text-surface-500">
-              Secondary view for run-level diagnostics and batch fallback history.
-            </p>
+            <h2 className="mb-3 font-mono text-xs font-medium tracking-widest uppercase text-surface-500">Recent Runs</h2>
             <div className="space-y-3">
               {runs.length === 0 ? (
                 <div className="glass-card rounded-xl p-8 text-center border border-surface-900/50">
@@ -139,16 +131,8 @@ export default function DashboardHome() {
         {/* Sidebar / Rules */}
         <div className="space-y-6">
           <section className="glass rounded-xl p-6 border border-surface-900/50">
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <h2 className="text-lg font-medium text-surface-50">Project Rules</h2>
-              <button
-                type="button"
-                onClick={() => setShowEditProject(true)}
-                className="inline-flex items-center gap-2 rounded-md border border-surface-800 bg-surface-950/60 px-3 py-1.5 text-xs font-medium text-surface-300 transition-colors hover:border-surface-700 hover:text-white"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-                Edit
-              </button>
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <h2 className="font-mono text-xs font-medium tracking-widest uppercase text-surface-500">Rules</h2>
             </div>
             <ul className="space-y-3">
               {projectOptions?.rules?.length ? projectOptions.rules.map((rule, idx) => (
