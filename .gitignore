@@ -46,3 +46,6 @@ WintermuteTest/
 # Logs
 *.log
 npm-debug.log*
+
+.pi/
+.pi-lens/
