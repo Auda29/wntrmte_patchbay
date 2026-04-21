@@ -7,6 +7,51 @@ import { MessageSquareMore } from 'lucide-react';
 import type { SessionRecord } from '@patchbay/core';
 import { AgentChat } from '@/components/AgentChat';
 
+const SESSION_STATUS_COLORS: Record<string, string> = {
+  running: '#3b82f6',
+  awaiting_input: '#a855f7',
+  completed: '#22c55e',
+  failed: '#ef4444',
+  cancelled: '#546e7a',
+};
+
+interface SessionListItemProps {
+  session: SessionRecord;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+function SessionListItem({ session, isActive, onClick }: SessionListItemProps) {
+  const dotColor = SESSION_STATUS_COLORS[session.status] ?? '#7f96a3';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative w-full overflow-hidden rounded-lg text-left transition-colors ${
+        isActive ? 'bg-brand-950/35' : 'hover:bg-surface-900/50'
+      }`}
+      style={{ borderLeft: `2px solid ${isActive ? '#48d6ff' : 'transparent'}` }}
+    >
+      <div className="px-3 py-2.5">
+        <div className="mb-1 flex items-start justify-between gap-2">
+          <span className="truncate font-mono text-[10px] text-surface-400">{session.id.slice(0, 18)}…</span>
+          <span className="flex shrink-0 items-center gap-1 font-mono text-[9px]" style={{ color: dotColor }}>
+            <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: dotColor }} />
+            {session.status}
+          </span>
+        </div>
+        <div className="mb-1.5 truncate text-xs font-medium text-surface-200">{session.title}</div>
+        <div className="flex items-center gap-2">
+          <span className="rounded border border-brand-900/80 bg-brand-950/50 px-1.5 py-0.5 font-mono text-[9px] text-brand-400">
+            {session.connectorId}
+          </span>
+          <span className="truncate font-mono text-[9px] text-surface-600">{session.taskId}</span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 function sortSessions(items: SessionRecord[]): SessionRecord[] {
   return [...items].sort((a, b) => {
     const aActive = a.status === 'running' || a.status === 'awaiting_input';
@@ -120,10 +165,8 @@ export function SessionsPageClient() {
     <div className="flex h-full flex-col animate-in fade-in duration-500">
       <header className="mb-6 flex items-end justify-between">
         <div>
-          <h1 className="mb-2 text-3xl font-semibold tracking-tight text-white">Sessions</h1>
-          <p className="text-surface-400">
-            Interactive workspaces for live agent sessions and transcripts.
-          </p>
+          <h1 className="mb-1 text-3xl font-semibold tracking-tight text-white">Sessions</h1>
+          <p className="font-mono text-xs text-surface-600">Interactive agent workspaces</p>
         </div>
       </header>
 
@@ -143,27 +186,16 @@ export function SessionsPageClient() {
                     <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-brand-400">Active</div>
                     <div className="space-y-1">
                       {activeSessions.map((session) => (
-                        <button
+                        <SessionListItem
                           key={session.id}
-                          type="button"
+                          session={session}
+                          isActive={selectedSession?.id === session.id}
                           onClick={() => {
                             const next = new URLSearchParams(searchParams.toString());
                             next.set('sessionId', session.id);
                             router.push(`/sessions?${next.toString()}`);
                           }}
-                          className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
-                            selectedSession?.id === session.id
-                              ? 'bg-brand-950/40 border border-brand-500/50 shadow-sm'
-                              : 'border border-transparent hover:bg-surface-900/50'
-                          }`}
-                        >
-                          <div className="truncate text-sm font-medium text-surface-100">{session.title}</div>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-surface-500">
-                            <span className="truncate">{session.connectorId}</span>
-                            <span>•</span>
-                            <span className="truncate">{session.taskId}</span>
-                          </div>
-                        </button>
+                        />
                       ))}
                     </div>
                   </div>
@@ -174,27 +206,16 @@ export function SessionsPageClient() {
                     <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Past</div>
                     <div className="space-y-1">
                       {pastSessions.map((session) => (
-                        <button
+                        <SessionListItem
                           key={session.id}
-                          type="button"
+                          session={session}
+                          isActive={selectedSession?.id === session.id}
                           onClick={() => {
                             const next = new URLSearchParams(searchParams.toString());
                             next.set('sessionId', session.id);
                             router.push(`/sessions?${next.toString()}`);
                           }}
-                          className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
-                            selectedSession?.id === session.id
-                              ? 'bg-brand-950/40 border border-brand-500/50 shadow-sm'
-                              : 'border border-transparent hover:bg-surface-900/50'
-                          }`}
-                        >
-                          <div className="truncate text-sm font-medium text-surface-100">{session.title}</div>
-                          <div className="mt-1 flex items-center gap-2 text-xs text-surface-500">
-                            <span className="truncate">{session.connectorId}</span>
-                            <span>•</span>
-                            <span className="truncate">{new Date(session.lastEventAt).toLocaleDateString()}</span>
-                          </div>
-                        </button>
+                        />
                       ))}
                     </div>
                   </div>

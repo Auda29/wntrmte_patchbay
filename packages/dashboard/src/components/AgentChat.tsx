@@ -207,7 +207,7 @@ export function AgentChat({ sessionId }: AgentChatProps) {
                   <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-950/60 text-brand-400 ring-1 ring-brand-900/50">
                     <Bot className="h-3.5 w-3.5" />
                   </div>
-                  <div className="flex-1 rounded-2xl rounded-tl-sm bg-surface-900/40 px-4 py-3 text-sm text-surface-100">
+                  <div className="flex-1 rounded-2xl rounded-tl-sm bg-surface-900/40 px-4 py-3 font-mono text-xs text-surface-100 leading-relaxed">
                     <Markdown>{event.content}</Markdown>
                   </div>
                 </div>
@@ -251,18 +251,18 @@ export function AgentChat({ sessionId }: AgentChatProps) {
                       type="button"
                       onClick={() => void sendAction({ action: 'approve', permissionId: event.permissionId })}
                       disabled={submitting || !hasLiveSession}
-                      className="inline-flex items-center gap-1.5 rounded bg-brand-500/20 px-3 py-1.5 text-xs font-medium text-brand-300 transition-colors hover:bg-brand-500/30 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded border border-green-500/20 bg-[linear-gradient(180deg,rgba(20,83,45,0.8),rgba(5,46,22,0.9))] px-3 py-1.5 font-mono text-xs font-medium text-green-300 shadow-[0_3px_0_rgba(0,50,20,0.7)] transition-colors hover:brightness-110 disabled:opacity-50"
                     >
-                      <Check className="h-3.5 w-3.5" />
+                      <Check className="h-3 w-3" />
                       Approve
                     </button>
                     <button
                       type="button"
                       onClick={() => void sendAction({ action: 'deny', permissionId: event.permissionId })}
                       disabled={submitting || !hasLiveSession}
-                      className="inline-flex items-center gap-1.5 rounded bg-red-950/30 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-900/40 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded border border-red-500/20 bg-[linear-gradient(180deg,rgba(127,29,29,0.8),rgba(69,10,10,0.9))] px-3 py-1.5 font-mono text-xs font-medium text-red-300 shadow-[0_3px_0_rgba(100,0,0,0.6)] transition-colors hover:brightness-110 disabled:opacity-50"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      <X className="h-3 w-3" />
                       Deny
                     </button>
                   </div>

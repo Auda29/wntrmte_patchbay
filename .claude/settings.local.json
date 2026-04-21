@@ -26,7 +26,14 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:code.visualstudio.com)",
-      "Bash(grep -E '\\\\.tsx$|\\\\.ts$')"
+      "Bash(grep -E '\\\\.tsx$|\\\\.ts$')",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(gunzip -c \"C:\\\\Users\\\\wecke\\\\.claude\\\\projects\\\\C--Users-wecke-Projects-wntrmte-patchbay--claude-worktrees-elated-hodgkin-963bf6\\\\07faec9d-802e-41ae-9fd5-86aad17c2d7e\\\\tool-results\\\\webfetch-1776781750198-ll1flq.bin\")",
+      "Bash(tar -x -C /tmp/design-bundle)",
+      "Read(//tmp/**)",
+      "Bash(gh pr create --title 'Align dashboard UI with Wintermute+Patchbay design system' --body ' *)",
+      "Read(//c/Program Files/**)",
+      "Bash(command -v gh.exe)"
     ]
   }
 }

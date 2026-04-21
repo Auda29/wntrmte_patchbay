@@ -68,8 +68,8 @@ export default function TasksBoard() {
         <div className="space-y-8 animate-in fade-in duration-500 h-full flex flex-col">
             <header className="flex justify-between items-end">
                 <div>
-                    <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">Task Board</h1>
-                    <p className="text-surface-400">Manage and orchestrate agent tasks.</p>
+                    <h1 className="text-3xl font-semibold tracking-tight text-white mb-1">Task Board</h1>
+                    <p className="font-mono text-xs text-surface-600">Task → Session → Review</p>
                 </div>
                 <button
                     onClick={() => setShowNewTask(true)}
