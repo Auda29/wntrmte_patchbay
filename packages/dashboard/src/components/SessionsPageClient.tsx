@@ -72,7 +72,7 @@ export function SessionsPageClient() {
   const query = taskId ? `/api/sessions?taskId=${encodeURIComponent(taskId)}` : '/api/sessions';
   const { data, error } = useSWR<SessionRecord[]>(query, {
     refreshInterval: (currentSessions) =>
-      taskId && !selectedSessionId && (currentSessions?.length ?? 0) === 0 ? 1000 : 0,
+      taskId && !selectedSessionId && (currentSessions?.length ?? 0) === 0 ? 1000 : 2000,
   });
   const [actionBusy, setActionBusy] = useState<'resume' | 'fork' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);

@@ -12,7 +12,7 @@ import { promisify } from 'util';
 import { randomUUID } from 'crypto';
 import { createInterface } from 'readline';
 import { buildPrompt } from '@patchbay/core';
-import { parseCodexLine, parseCodexResponse } from './stream-parser';
+import { extractProviderSessionId, parseCodexLine, parseCodexResponse } from './stream-parser';
 
 const execAsync = promisify(exec);
 
@@ -289,8 +289,7 @@ class CodexSession extends BaseSession {
                 }
             } else if (requestMethod === 'thread/start') {
                 const result = raw.result as Record<string, unknown> | undefined;
-                const thread = result?.thread as Record<string, unknown> | undefined;
-                this.threadId = typeof thread?.id === 'string' ? thread.id : null;
+                this.threadId = extractProviderSessionId(result) ?? null;
                 if (this.threadId && this.initialInput) {
                     const initialInput = this.initialInput;
                     this.initialInput = null;
@@ -298,8 +297,7 @@ class CodexSession extends BaseSession {
                 }
             } else if (requestMethod === 'thread/resume' || requestMethod === 'thread/fork') {
                 const result = raw.result as Record<string, unknown> | undefined;
-                const thread = result?.thread as Record<string, unknown> | undefined;
-                this.threadId = typeof thread?.id === 'string' ? thread.id : null;
+                this.threadId = extractProviderSessionId(result) ?? null;
                 if (this.threadId && this.initialInput) {
                     const initialInput = this.initialInput;
                     this.initialInput = null;

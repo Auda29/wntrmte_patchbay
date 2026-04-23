@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCodexLine, parseCodexResponse } from './stream-parser';
+import { extractProviderSessionId, parseCodexLine, parseCodexResponse } from './stream-parser';
 
 describe('Codex stream parser', () => {
     it('extracts provider session id from thread lifecycle notifications', () => {
@@ -46,6 +46,10 @@ describe('Codex stream parser', () => {
 
         expect(event?.type).toBe('session:started');
         expect(event && 'providerSessionId' in event ? event.providerSessionId : undefined).toBe('thread-forked');
+    });
+
+    it('extracts provider session id from top-level threadId payloads', () => {
+        expect(extractProviderSessionId({ threadId: 'thread-top-level' })).toBe('thread-top-level');
     });
 
     it('maps JSON-RPC errors to failed session events', () => {

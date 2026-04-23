@@ -69,7 +69,7 @@ function getToolName(item?: Record<string, unknown>): string {
     return 'unknown';
 }
 
-function extractProviderSessionId(payload?: Record<string, unknown>): string | undefined {
+export function extractProviderSessionId(payload?: Record<string, unknown>): string | undefined {
     if (!payload) return undefined;
 
     const directId = payload.threadId ?? payload.thread_id ?? payload.sessionId ?? payload.session_id ?? payload.id;
